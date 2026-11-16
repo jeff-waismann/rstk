@@ -563,6 +563,23 @@ select {
   color: #5facff;
 }
 
+.heart.disabled-sold-out {
+  opacity: 0.65;
+  cursor: not-allowed;
+  font-size: 15px;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+}
+
+.heart.disabled-sold-out:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+  opacity: 1;
+  border-color: #EF4444;
+  transform: scale(1.08);
+}
+
 /* Selo diagonal ESGOTADO */
 .ribbon-sold-out {
   position: absolute;

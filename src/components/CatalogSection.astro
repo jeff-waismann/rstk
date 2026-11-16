@@ -111,13 +111,13 @@ const sortedProducts = [...products].sort(
               </span>
             )}
             <button
-              class="heart"
+              class={`heart ${isSoldOut ? 'disabled-sold-out' : ''}`}
               type="button"
               data-save={album.id}
               aria-pressed="false"
-              aria-label={`Adicionar ${album.title} à seleção`}
+              aria-label={isSoldOut ? `Produto esgotado: ${album.title}` : `Adicionar ${album.title} à seleção`}
             >
-              ♡
+              {isSoldOut ? '✕' : '♡'}
             </button>
           </div>
           <div class="card-info">

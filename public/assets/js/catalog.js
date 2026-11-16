@@ -315,7 +315,7 @@
                   </button>
                   <span class="lp">${escapeHTML(unitsLabel)}</span>
                   ${isSoldOut ? '<span class="ribbon-sold-out" aria-label="Esgotado">ESGOTADO</span>' : ''}
-                  <button class="heart ${isSelected ? 'on' : ''}" type="button" data-save="${id}" aria-pressed="${isSelected}" aria-label="${isSelected ? 'Remover' : 'Adicionar'} ${escapeHTML(p.title)} ${isSelected ? 'da' : 'à'} seleção">${isSelected ? '♥' : '♡'}</button>
+                  <button class="heart ${isSelected ? 'on' : ''} ${isSoldOut ? 'disabled-sold-out' : ''}" type="button" data-save="${id}" aria-pressed="${isSelected}" aria-label="${isSoldOut ? 'Produto esgotado: ' + escapeHTML(p.title) : (isSelected ? 'Remover' : 'Adicionar') + ' ' + escapeHTML(p.title) + ' à seleção'}">${isSelected ? '♥' : (isSoldOut ? '✕' : '♡')}</button>
                 </div>
                 <div class="card-info">
                   <p class="artist">${escapeHTML(p.artist)}</p>
@@ -382,6 +382,14 @@
 
   function toggleSave(id) {
     const numericId = Number(id);
+    const album = catalog.find((p) => Number(p.id) === numericId);
+    const isSoldOut = album && (!album.active || (typeof album.stock === 'number' && album.stock <= 0));
+
+    if (isSoldOut && !selected.has(numericId)) {
+      toast(`O vinil "${album.title}" está esgotado e não pode ser adicionado à lista.`);
+      return;
+    }
+
     if (selected.has(numericId)) selected.delete(numericId);
     else selected.add(numericId);
 
@@ -425,9 +433,10 @@
             }</dd></div>
           </dl>
           <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.75rem;">
-            <button class="primary" type="button" data-save="${numericId}">${
-              isSaved ? '♥ Na sua seleção · remover' : '♡ Adicionar à seleção'
+            <button class="primary" type="button" data-save="${numericId}" style="${isSoldOut && !isSaved ? 'background:#334155;border-color:#475569;' : ''}">${
+              isSaved ? '♥ Na sua seleção · remover' : (isSoldOut ? '✕ Disco Esgotado' : '♡ Adicionar à seleção')
             }</button>
+            <div id="modal-sold-out-notice" style="color:#DC2626;font-size:12px;font-weight:700;text-align:center;padding:4px 0;" hidden></div>
             ${
               isSoldOut
                 ? `<button class="whatsapp-action" type="button" data-buy-now="${numericId}" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#DC2626;color:#FFF;font-weight:700;padding:0.75rem 1rem;border-radius:999px;border:none;cursor:pointer;width:100%;text-decoration:none;">
@@ -494,13 +503,22 @@
 
   function toast(message) {
     const toastEl = $('toast');
-    if (!toastEl) return;
-    toastEl.textContent = message;
-    toastEl.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      toastEl.hidden = true;
-    }, 2800);
+    if (toastEl) {
+      toastEl.textContent = message;
+      toastEl.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastEl.hidden = true;
+      }, 3200);
+    }
+    const modalNotice = $('modal-sold-out-notice');
+    if (modalNotice) {
+      modalNotice.textContent = message;
+      modalNotice.hidden = false;
+      setTimeout(() => {
+        if (modalNotice) modalNotice.hidden = true;
+      }, 3200);
+    }
   }
 
   async function dispatchWhatsAppOrder(event, sourceEl, singleAlbumId = null) {
