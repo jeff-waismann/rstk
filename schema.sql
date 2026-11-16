@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS rstk_products (
   cover_url TEXT NOT NULL,
   external_source TEXT DEFAULT '',
   price_cents INTEGER NOT NULL DEFAULT 18999,
+  stock INTEGER NOT NULL DEFAULT 30,
   active INTEGER NOT NULL DEFAULT 1,
   featured_hero INTEGER NOT NULL DEFAULT 0,
   sort_order INTEGER NOT NULL DEFAULT 0,
@@ -66,8 +67,25 @@ CREATE TABLE IF NOT EXISTS rstk_login_attempts (
   updated_at INTEGER NOT NULL DEFAULT 0
 );
 
+-- 7. Registro de Pedidos (Disparados via WhatsApp & Checkout)
+CREATE TABLE IF NOT EXISTS rstk_orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  order_number TEXT UNIQUE NOT NULL,
+  items_json TEXT NOT NULL,
+  total_cents INTEGER NOT NULL DEFAULT 0,
+  item_count INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'whatsapp_aberto', -- 'whatsapp_aberto', 'confirmado', 'concluido', 'cancelado'
+  origin TEXT DEFAULT 'whatsapp_catalog',
+  user_agent TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Índices de Otimização
 CREATE INDEX IF NOT EXISTS idx_rstk_products_active ON rstk_products(active, sort_order);
 CREATE INDEX IF NOT EXISTS idx_rstk_products_genre ON rstk_products(genre);
 CREATE INDEX IF NOT EXISTS idx_rstk_media_created ON rstk_media(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_rstk_sessions_expires ON rstk_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_rstk_orders_created ON rstk_orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rstk_orders_status ON rstk_orders(status);

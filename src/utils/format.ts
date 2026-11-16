@@ -11,6 +11,7 @@ export interface VinylAlbum {
   coverUrl?: string;
   source?: string;
   priceCents: number;
+  stock?: number;
   active: boolean;
   featuredHero: boolean;
   sortOrder: number;

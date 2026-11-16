@@ -15,6 +15,7 @@ const EMPTY_FORM = {
   cover: '',
   source: '',
   priceStr: '189,99',
+  stock: 30,
   active: true,
   featuredHero: false
 };
@@ -52,7 +53,8 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
   function openNew() {
     setForm({
       ...EMPTY_FORM,
-      priceStr: centsToInput(defaultPriceCents)
+      priceStr: centsToInput(defaultPriceCents),
+      stock: 30
     });
     setModalOpen(true);
   }
@@ -70,6 +72,7 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
       cover: album.cover || '',
       source: album.source || '',
       priceStr: centsToInput(album.priceCents ?? defaultPriceCents),
+      stock: typeof album.stock === 'number' ? album.stock : 30,
       active: Boolean(album.active),
       featuredHero: Boolean(album.featuredHero)
     });
@@ -92,6 +95,7 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
         cover: form.cover,
         source: form.source,
         priceCents: inputToCents(form.priceStr),
+        stock: Math.max(0, Math.round(Number(form.stock) || 0)),
         active: form.active,
         featuredHero: form.featuredHero
       };
@@ -208,6 +212,7 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
                 <th className="py-3.5 px-4">Formato</th>
                 <th className="py-3.5 px-4">Data</th>
                 <th className="py-3.5 px-4">Preço</th>
+                <th className="py-3.5 px-4">Estoque</th>
                 <th className="py-3.5 px-4">Status</th>
                 <th className="py-3.5 px-4 text-right">Ações</th>
               </tr>
@@ -243,6 +248,20 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
                     <td className="py-3 px-4 text-xs text-[#64748B] font-mono">{album.date}</td>
                     <td className="py-3 px-4 text-xs font-bold text-[#006782]">
                       {formatBRL(album.priceCents ?? defaultPriceCents)}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                          (album.stock ?? 30) > 5
+                            ? 'bg-cyan-50 text-[#006782] border border-cyan-200'
+                            : (album.stock ?? 30) > 0
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : 'bg-rose-50 text-[#F75656] border border-rose-200'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[13px]">inventory_2</span>
+                        <span>{album.stock ?? 30} un.</span>
+                      </span>
                     </td>
                     <td className="py-3 px-4">
                       <button
@@ -382,6 +401,21 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
                     onChange={(e) => setForm({ ...form, priceStr: e.target.value })}
                     placeholder="189,99"
                     className="w-full text-sm font-mono border border-[#E2E8F0] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00C6F7]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#0F172A] mb-1">
+                    Estoque (unidades)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="9999"
+                    required
+                    value={form.stock}
+                    onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                    className="w-full text-sm border border-[#E2E8F0] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00C6F7]"
                   />
                 </div>
               </div>

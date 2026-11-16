@@ -414,10 +414,16 @@
             <div><dt>Formato na lista</dt><dd>${album.units} ${Number(album.units) === 1 ? 'LP' : 'LPs'}</dd></div>
             <div><dt>Data da edição na lista</dt><dd>${dateBR(album.date)}</dd></div>
             <div><dt>Preço de lançamento</dt><dd>${escapeHTML(priceDisplay)}</dd></div>
+            <div><dt>Estoque disponível</dt><dd>${typeof album.stock === 'number' ? `${album.stock} un.` : '30 un.'}</dd></div>
           </dl>
-          <button class="primary" type="button" data-save="${numericId}">${
-            isSaved ? '♥ Na sua seleção · remover' : '♡ Adicionar à seleção'
-          }</button>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.75rem;">
+            <button class="primary" type="button" data-save="${numericId}">${
+              isSaved ? '♥ Na sua seleção · remover' : '♡ Adicionar à seleção'
+            }</button>
+            <button class="whatsapp-action" type="button" data-buy-now="${numericId}" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#25D366;color:#000;font-weight:700;padding:0.75rem 1rem;border-radius:999px;border:none;cursor:pointer;width:100%;text-decoration:none;">
+              Comprar este vinil via WhatsApp ↗
+            </button>
+          </div>
           <p class="note">${escapeHTML(noteText)}</p>
           ${
             sourceHref !== '#'
@@ -483,6 +489,119 @@
     }, 2800);
   }
 
+  async function dispatchWhatsAppOrder(event, sourceEl, singleAlbumId = null) {
+    if (event) event.preventDefault();
+
+    let items = [];
+    if (singleAlbumId) {
+      const p = catalog.find((x) => Number(x.id) === Number(singleAlbumId));
+      if (p) {
+        items = [{
+          id: Number(p.id),
+          title: p.title,
+          artist: p.artist,
+          units: Number(p.units) || 1,
+          priceCents: p.priceCents ?? settings.priceCents ?? 18999,
+          quantity: 1,
+          cover: p.cover
+        }];
+      }
+    } else if (selected.size > 0) {
+      const selectedItems = catalog.filter((p) => selected.has(Number(p.id)));
+      items = selectedItems.map((p) => ({
+        id: Number(p.id),
+        title: p.title,
+        artist: p.artist,
+        units: Number(p.units) || 1,
+        priceCents: p.priceCents ?? settings.priceCents ?? 18999,
+        quantity: 1,
+        cover: p.cover
+      }));
+    } else if (openAlbumId) {
+      const p = catalog.find((x) => Number(x.id) === Number(openAlbumId));
+      if (p) {
+        items = [{
+          id: Number(p.id),
+          title: p.title,
+          artist: p.artist,
+          units: Number(p.units) || 1,
+          priceCents: p.priceCents ?? settings.priceCents ?? 18999,
+          quantity: 1,
+          cover: p.cover
+        }];
+      }
+    }
+
+    const totalCents = items.reduce((s, it) => s + it.priceCents * it.quantity, 0) || (settings.priceCents ?? 18999);
+    let orderNumber = '';
+
+    if (sourceEl) {
+      sourceEl.setAttribute('aria-busy', 'true');
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          totalCents,
+          origin: singleAlbumId ? 'modal_single_buy' : (sourceEl?.id === 'whatsapp-modal' ? 'modal_selection' : 'floating_whatsapp'),
+          notes: items.length
+            ? `Pedido de ${items.length} vinil(is) solicitado via WhatsApp`
+            : 'Consulta geral de catálogo via WhatsApp'
+        }),
+        signal: controller.signal,
+        keepalive: true
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.order?.orderNumber) {
+          orderNumber = data.order.orderNumber;
+          for (const it of items) {
+            const found = catalog.find((c) => Number(c.id) === Number(it.id));
+            if (found && typeof found.stock === 'number') {
+              found.stock = Math.max(0, found.stock - it.quantity);
+            }
+          }
+          draw();
+          if ($('detail')?.open && openAlbumId) {
+            showDetail(openAlbumId, false);
+          }
+          toast(`Pedido #${orderNumber} gravado! Abrindo WhatsApp...`);
+        }
+      }
+    } catch (err) {
+      console.warn('Registro de pedido offline ou excedeu tempo limite:', err);
+    } finally {
+      if (sourceEl) {
+        sourceEl.removeAttribute('aria-busy');
+      }
+    }
+
+    const phone = String(settings.whatsappNumber || '553488293565').replace(/\D/g, '');
+    let message = '';
+    if (singleAlbumId && items.length === 1) {
+      message = `Olá, RSTK! Gostaria de encomendar no atacado o vinil lacrado:\n\n• ${items[0].artist} — ${items[0].title} (${items[0].units} ${Number(items[0].units) === 1 ? 'LP' : 'LPs'})\n\nPodem confirmar o envio e as condições de pagamento?`;
+    } else if (selected.size > 0) {
+      message = selectionText();
+    } else {
+      message = settings.whatsappDefaultMessage || `Olá, RSTK! Tenho interesse nos vinis lacrados e importados para minha loja. Gostaria de saber mais sobre as vendas no atacado e a oferta de lançamento de ${formatPriceBRL(settings.priceCents ?? 18999)}.`;
+    }
+
+    if (orderNumber) {
+      message += `\n\n*(Pedido registrado: #${orderNumber})*`;
+    }
+
+    const finalUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(finalUrl, '_blank', 'noopener,noreferrer');
+  }
+
   // --- Event Listeners ---
   $('copy')?.addEventListener('click', async () => {
     try {
@@ -534,13 +653,18 @@
     syncUrlState();
   });
 
+  $('whatsapp-modal')?.addEventListener('click', (e) => dispatchWhatsAppOrder(e, $('whatsapp-modal')));
+  $('whatsapp-floating')?.addEventListener('click', (e) => dispatchWhatsAppOrder(e, $('whatsapp-floating')));
+
   document.addEventListener('click', (event) => {
     const target = event.target instanceof Element
-      ? event.target.closest('[data-detail],[data-save],[data-genre],[data-close],[data-clear]')
+      ? event.target.closest('[data-detail],[data-save],[data-genre],[data-close],[data-clear],[data-buy-now]')
       : null;
     if (!target) return;
 
-    if (target.hasAttribute('data-detail')) {
+    if (target.hasAttribute('data-buy-now')) {
+      dispatchWhatsAppOrder(event, target, Number(target.getAttribute('data-buy-now')));
+    } else if (target.hasAttribute('data-detail')) {
       showDetail(Number(target.getAttribute('data-detail')));
     } else if (target.hasAttribute('data-save')) {
       toggleSave(Number(target.getAttribute('data-save')));

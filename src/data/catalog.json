@@ -14,7 +14,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 1
+    "sortOrder": 1,
+    "stock": 30
   },
   {
     "id": 2,
@@ -31,7 +32,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 2
+    "sortOrder": 2,
+    "stock": 30
   },
   {
     "id": 3,
@@ -48,7 +50,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 3
+    "sortOrder": 3,
+    "stock": 30
   },
   {
     "id": 4,
@@ -65,7 +68,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 4
+    "sortOrder": 4,
+    "stock": 30
   },
   {
     "id": 5,
@@ -82,7 +86,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 5
+    "sortOrder": 5,
+    "stock": 30
   },
   {
     "id": 6,
@@ -99,7 +104,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 6
+    "sortOrder": 6,
+    "stock": 30
   },
   {
     "id": 7,
@@ -116,7 +122,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": true,
-    "sortOrder": 7
+    "sortOrder": 7,
+    "stock": 30
   },
   {
     "id": 8,
@@ -133,7 +140,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 8
+    "sortOrder": 8,
+    "stock": 30
   },
   {
     "id": 9,
@@ -150,7 +158,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 9
+    "sortOrder": 9,
+    "stock": 30
   },
   {
     "id": 10,
@@ -167,7 +176,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 10
+    "sortOrder": 10,
+    "stock": 30
   },
   {
     "id": 11,
@@ -184,7 +194,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 11
+    "sortOrder": 11,
+    "stock": 30
   },
   {
     "id": 12,
@@ -201,7 +212,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 12
+    "sortOrder": 12,
+    "stock": 30
   },
   {
     "id": 13,
@@ -218,7 +230,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 13
+    "sortOrder": 13,
+    "stock": 30
   },
   {
     "id": 14,
@@ -235,7 +248,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 14
+    "sortOrder": 14,
+    "stock": 30
   },
   {
     "id": 15,
@@ -252,7 +266,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 15
+    "sortOrder": 15,
+    "stock": 30
   },
   {
     "id": 16,
@@ -269,7 +284,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 16
+    "sortOrder": 16,
+    "stock": 30
   },
   {
     "id": 17,
@@ -286,7 +302,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 17
+    "sortOrder": 17,
+    "stock": 30
   },
   {
     "id": 18,
@@ -303,7 +320,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 18
+    "sortOrder": 18,
+    "stock": 30
   },
   {
     "id": 19,
@@ -320,7 +338,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 19
+    "sortOrder": 19,
+    "stock": 30
   },
   {
     "id": 20,
@@ -337,7 +356,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 20
+    "sortOrder": 20,
+    "stock": 30
   },
   {
     "id": 21,
@@ -354,7 +374,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 21
+    "sortOrder": 21,
+    "stock": 30
   },
   {
     "id": 22,
@@ -371,7 +392,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 22
+    "sortOrder": 22,
+    "stock": 30
   },
   {
     "id": 23,
@@ -388,7 +410,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 23
+    "sortOrder": 23,
+    "stock": 30
   },
   {
     "id": 24,
@@ -405,7 +428,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": true,
-    "sortOrder": 24
+    "sortOrder": 24,
+    "stock": 30
   },
   {
     "id": 25,
@@ -422,7 +446,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 25
+    "sortOrder": 25,
+    "stock": 30
   },
   {
     "id": 26,
@@ -439,7 +464,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 26
+    "sortOrder": 26,
+    "stock": 30
   },
   {
     "id": 27,
@@ -456,7 +482,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 27
+    "sortOrder": 27,
+    "stock": 30
   },
   {
     "id": 28,
@@ -473,7 +500,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": true,
-    "sortOrder": 28
+    "sortOrder": 28,
+    "stock": 30
   },
   {
     "id": 29,
@@ -490,7 +518,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 29
+    "sortOrder": 29,
+    "stock": 30
   },
   {
     "id": 30,
@@ -507,7 +536,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 30
+    "sortOrder": 30,
+    "stock": 30
   },
   {
     "id": 31,
@@ -524,7 +554,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 31
+    "sortOrder": 31,
+    "stock": 30
   },
   {
     "id": 32,
@@ -541,7 +572,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 32
+    "sortOrder": 32,
+    "stock": 30
   },
   {
     "id": 33,
@@ -558,7 +590,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 33
+    "sortOrder": 33,
+    "stock": 30
   },
   {
     "id": 34,
@@ -575,7 +608,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 34
+    "sortOrder": 34,
+    "stock": 30
   },
   {
     "id": 35,
@@ -592,7 +626,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 35
+    "sortOrder": 35,
+    "stock": 30
   },
   {
     "id": 36,
@@ -609,7 +644,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 36
+    "sortOrder": 36,
+    "stock": 30
   },
   {
     "id": 37,
@@ -626,7 +662,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 37
+    "sortOrder": 37,
+    "stock": 30
   },
   {
     "id": 38,
@@ -643,7 +680,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 38
+    "sortOrder": 38,
+    "stock": 30
   },
   {
     "id": 39,
@@ -660,7 +698,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 39
+    "sortOrder": 39,
+    "stock": 30
   },
   {
     "id": 40,
@@ -677,7 +716,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 40
+    "sortOrder": 40,
+    "stock": 30
   },
   {
     "id": 41,
@@ -694,7 +734,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 41
+    "sortOrder": 41,
+    "stock": 30
   },
   {
     "id": 42,
@@ -711,7 +752,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 42
+    "sortOrder": 42,
+    "stock": 30
   },
   {
     "id": 43,
@@ -728,7 +770,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 43
+    "sortOrder": 43,
+    "stock": 30
   },
   {
     "id": 44,
@@ -745,7 +788,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 44
+    "sortOrder": 44,
+    "stock": 30
   },
   {
     "id": 45,
@@ -762,7 +806,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 45
+    "sortOrder": 45,
+    "stock": 30
   },
   {
     "id": 46,
@@ -779,7 +824,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 46
+    "sortOrder": 46,
+    "stock": 30
   },
   {
     "id": 47,
@@ -796,7 +842,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 47
+    "sortOrder": 47,
+    "stock": 30
   },
   {
     "id": 48,
@@ -813,7 +860,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 48
+    "sortOrder": 48,
+    "stock": 30
   },
   {
     "id": 49,
@@ -830,7 +878,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 49
+    "sortOrder": 49,
+    "stock": 30
   },
   {
     "id": 50,
@@ -847,7 +896,8 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 50
+    "sortOrder": 50,
+    "stock": 30
   },
   {
     "id": 51,
@@ -864,6 +914,7 @@
     "priceCents": 18999,
     "active": true,
     "featuredHero": false,
-    "sortOrder": 51
+    "sortOrder": 51,
+    "stock": 30
   }
 ]

@@ -122,5 +122,36 @@ export const apiService = {
     return requestJson(`/api/users/${encodeURIComponent(id)}`, {
       method: 'DELETE'
     });
+  },
+
+  // Orders & Stock
+  async getOrders({ status = '', search = '', limit = 100 } = {}) {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (search) params.set('search', search);
+    if (limit) params.set('limit', String(limit));
+    return requestJson(`/api/orders?${params.toString()}`, { cache: 'no-store' });
+  },
+
+  async createOrder(orderData) {
+    return requestJson('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData)
+    });
+  },
+
+  async updateOrder(id, { status, notes, restoreStock = false } = {}) {
+    return requestJson('/api/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status, notes, restoreStock })
+    });
+  },
+
+  async deleteOrder(id) {
+    return requestJson(`/api/orders?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
   }
 };

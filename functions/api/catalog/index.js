@@ -18,6 +18,7 @@ function mapProductRow(row) {
     cover: row.cover_url,
     source: row.external_source || '',
     priceCents: Number.isFinite(Number(row.price_cents)) ? Number(row.price_cents) : 18999,
+    stock: Number.isFinite(Number(row.stock)) ? Number(row.stock) : 30,
     active: Boolean(row.active),
     featuredHero: Boolean(row.featured_hero),
     sortOrder: Number(row.sort_order) || Number(row.id)
@@ -45,6 +46,8 @@ function validateProductPayload(body, defaultPriceCents = 18999) {
   const priceCents = Number.isFinite(priceCentsRaw) && priceCentsRaw >= 0
     ? Math.round(priceCentsRaw)
     : defaultPriceCents;
+  const stockRaw = Number(body.stock);
+  const stock = Number.isFinite(stockRaw) && stockRaw >= 0 ? Math.round(stockRaw) : 30;
   const active = body.active === false || body.active === 0 ? 0 : 1;
   const featuredHero = body.featuredHero ? 1 : 0;
   const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Math.round(Number(body.sortOrder)) : 0;
@@ -61,6 +64,7 @@ function validateProductPayload(body, defaultPriceCents = 18999) {
       cover,
       externalSource,
       priceCents,
+      stock,
       active,
       featuredHero,
       sortOrder
@@ -140,8 +144,8 @@ export async function onRequestPost({ request, env }) {
     const result = await env.DB.prepare(
       `INSERT INTO rstk_products (
         artist, title, source_title, units, media, release_date, genre,
-        cover_url, external_source, price_cents, active, featured_hero, sort_order, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+        cover_url, external_source, price_cents, stock, active, featured_hero, sort_order, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
     )
       .bind(
         d.artist,
@@ -154,6 +158,7 @@ export async function onRequestPost({ request, env }) {
         d.cover,
         d.externalSource,
         d.priceCents,
+        d.stock,
         d.active,
         d.featuredHero,
         nextSortOrder
@@ -213,6 +218,7 @@ export async function onRequestPut({ request, env }) {
         cover_url = ?,
         external_source = ?,
         price_cents = ?,
+        stock = ?,
         active = ?,
         featured_hero = ?,
         sort_order = ?,
@@ -230,6 +236,7 @@ export async function onRequestPut({ request, env }) {
         d.cover,
         d.externalSource,
         d.priceCents,
+        d.stock,
         d.active,
         d.featuredHero,
         sortOrder,

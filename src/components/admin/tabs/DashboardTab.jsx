@@ -3,6 +3,7 @@ import { formatBRL } from '../../../services/currency.js';
 
 export default function DashboardTab({ products = [], settings = {}, onNavigate }) {
   const activeCount = products.filter((p) => p.active !== false).length;
+  const totalStock = products.reduce((acc, p) => acc + (typeof p.stock === 'number' ? p.stock : 30), 0);
   const uniqueArtists = new Set(products.map((p) => p.artist)).size;
   const uniqueGenres = new Set(products.map((p) => p.genre)).size;
   const doubleLps = products.filter((p) => Number(p.units) >= 2).length;
@@ -25,7 +26,7 @@ export default function DashboardTab({ products = [], settings = {}, onNavigate 
           </div>
           <p className="text-3xl font-extrabold text-[#0F172A]">{activeCount}</p>
           <p className="text-xs text-[#64748B] mt-1">
-            {products.length} cadastrados ({doubleLps} LPs duplos)
+            {totalStock} unidades em estoque ({doubleLps} LPs duplos)
           </p>
         </div>
 
@@ -96,6 +97,22 @@ export default function DashboardTab({ products = [], settings = {}, onNavigate 
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <button
+              type="button"
+              onClick={() => onNavigate('pedidos')}
+              className="flex items-start gap-3 p-4 rounded-xl border border-[#00C6F7]/50 hover:border-[#00C6F7] bg-cyan-50/30 text-left transition-all"
+            >
+              <span className="material-symbols-outlined text-[#006782] text-[24px]">
+                shopping_bag
+              </span>
+              <div>
+                <p className="text-sm font-bold text-[#0F172A]">Pedidos WhatsApp</p>
+                <p className="text-xs text-[#64748B] mt-0.5">
+                  Ver pedidos registrados pelo catálogo e histórico de baixas de estoque.
+                </p>
+              </div>
+            </button>
+
             <button
               type="button"
               onClick={() => onNavigate('catalogo')}
