@@ -1,0 +1,2 @@
+# Cloudflare Pages SPA rewrite for Agile Admin
+/admin/*  /admin/index.html  200

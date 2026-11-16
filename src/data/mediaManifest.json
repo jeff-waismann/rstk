@@ -1,0 +1,418 @@
+[
+  {
+    "id": "m_logo_rstk",
+    "filename": "logo-rstk.png",
+    "r2_key": "assets/images/logo-rstk.png",
+    "url": "/assets/images/logo-rstk.png",
+    "mime_type": "image/png",
+    "size_bytes": 321849
+  },
+  {
+    "id": "m_cover_01",
+    "filename": "album-01.jpg",
+    "r2_key": "assets/covers/album-01.jpg",
+    "url": "/assets/covers/album-01.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 163570
+  },
+  {
+    "id": "m_cover_02",
+    "filename": "album-02.jpg",
+    "r2_key": "assets/covers/album-02.jpg",
+    "url": "/assets/covers/album-02.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 70047
+  },
+  {
+    "id": "m_cover_03",
+    "filename": "album-03.jpg",
+    "r2_key": "assets/covers/album-03.jpg",
+    "url": "/assets/covers/album-03.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 55761
+  },
+  {
+    "id": "m_cover_04",
+    "filename": "album-04.jpg",
+    "r2_key": "assets/covers/album-04.jpg",
+    "url": "/assets/covers/album-04.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 82237
+  },
+  {
+    "id": "m_cover_05",
+    "filename": "album-05.jpg",
+    "r2_key": "assets/covers/album-05.jpg",
+    "url": "/assets/covers/album-05.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 92624
+  },
+  {
+    "id": "m_cover_06",
+    "filename": "album-06.jpg",
+    "r2_key": "assets/covers/album-06.jpg",
+    "url": "/assets/covers/album-06.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 119268
+  },
+  {
+    "id": "m_cover_07",
+    "filename": "album-07.jpg",
+    "r2_key": "assets/covers/album-07.jpg",
+    "url": "/assets/covers/album-07.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 37983
+  },
+  {
+    "id": "m_cover_08",
+    "filename": "album-08.jpg",
+    "r2_key": "assets/covers/album-08.jpg",
+    "url": "/assets/covers/album-08.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 166073
+  },
+  {
+    "id": "m_cover_09",
+    "filename": "album-09.jpg",
+    "r2_key": "assets/covers/album-09.jpg",
+    "url": "/assets/covers/album-09.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 89349
+  },
+  {
+    "id": "m_cover_10",
+    "filename": "album-10.jpg",
+    "r2_key": "assets/covers/album-10.jpg",
+    "url": "/assets/covers/album-10.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 52582
+  },
+  {
+    "id": "m_cover_11",
+    "filename": "album-11.jpg",
+    "r2_key": "assets/covers/album-11.jpg",
+    "url": "/assets/covers/album-11.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 58745
+  },
+  {
+    "id": "m_cover_12",
+    "filename": "album-12.jpg",
+    "r2_key": "assets/covers/album-12.jpg",
+    "url": "/assets/covers/album-12.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 159638
+  },
+  {
+    "id": "m_cover_13",
+    "filename": "album-13.jpg",
+    "r2_key": "assets/covers/album-13.jpg",
+    "url": "/assets/covers/album-13.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 38465
+  },
+  {
+    "id": "m_cover_14",
+    "filename": "album-14.jpg",
+    "r2_key": "assets/covers/album-14.jpg",
+    "url": "/assets/covers/album-14.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 68385
+  },
+  {
+    "id": "m_cover_15",
+    "filename": "album-15.jpg",
+    "r2_key": "assets/covers/album-15.jpg",
+    "url": "/assets/covers/album-15.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 211232
+  },
+  {
+    "id": "m_cover_16",
+    "filename": "album-16.jpg",
+    "r2_key": "assets/covers/album-16.jpg",
+    "url": "/assets/covers/album-16.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 112902
+  },
+  {
+    "id": "m_cover_17",
+    "filename": "album-17.jpg",
+    "r2_key": "assets/covers/album-17.jpg",
+    "url": "/assets/covers/album-17.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 183593
+  },
+  {
+    "id": "m_cover_18",
+    "filename": "album-18.jpg",
+    "r2_key": "assets/covers/album-18.jpg",
+    "url": "/assets/covers/album-18.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 125075
+  },
+  {
+    "id": "m_cover_19",
+    "filename": "album-19.jpg",
+    "r2_key": "assets/covers/album-19.jpg",
+    "url": "/assets/covers/album-19.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 78882
+  },
+  {
+    "id": "m_cover_20",
+    "filename": "album-20.jpg",
+    "r2_key": "assets/covers/album-20.jpg",
+    "url": "/assets/covers/album-20.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 139762
+  },
+  {
+    "id": "m_cover_21",
+    "filename": "album-21.jpg",
+    "r2_key": "assets/covers/album-21.jpg",
+    "url": "/assets/covers/album-21.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 113385
+  },
+  {
+    "id": "m_cover_22",
+    "filename": "album-22.jpg",
+    "r2_key": "assets/covers/album-22.jpg",
+    "url": "/assets/covers/album-22.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 140954
+  },
+  {
+    "id": "m_cover_23",
+    "filename": "album-23.jpg",
+    "r2_key": "assets/covers/album-23.jpg",
+    "url": "/assets/covers/album-23.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 117076
+  },
+  {
+    "id": "m_cover_24",
+    "filename": "album-24.jpg",
+    "r2_key": "assets/covers/album-24.jpg",
+    "url": "/assets/covers/album-24.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 141172
+  },
+  {
+    "id": "m_cover_25",
+    "filename": "album-25.jpg",
+    "r2_key": "assets/covers/album-25.jpg",
+    "url": "/assets/covers/album-25.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 183749
+  },
+  {
+    "id": "m_cover_26",
+    "filename": "album-26.jpg",
+    "r2_key": "assets/covers/album-26.jpg",
+    "url": "/assets/covers/album-26.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 40782
+  },
+  {
+    "id": "m_cover_27",
+    "filename": "album-27.jpg",
+    "r2_key": "assets/covers/album-27.jpg",
+    "url": "/assets/covers/album-27.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 54801
+  },
+  {
+    "id": "m_cover_28",
+    "filename": "album-28.jpg",
+    "r2_key": "assets/covers/album-28.jpg",
+    "url": "/assets/covers/album-28.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 89427
+  },
+  {
+    "id": "m_cover_29",
+    "filename": "album-29.jpg",
+    "r2_key": "assets/covers/album-29.jpg",
+    "url": "/assets/covers/album-29.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 76398
+  },
+  {
+    "id": "m_cover_30",
+    "filename": "album-30.jpg",
+    "r2_key": "assets/covers/album-30.jpg",
+    "url": "/assets/covers/album-30.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 107097
+  },
+  {
+    "id": "m_cover_31",
+    "filename": "album-31.jpg",
+    "r2_key": "assets/covers/album-31.jpg",
+    "url": "/assets/covers/album-31.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 161557
+  },
+  {
+    "id": "m_cover_32",
+    "filename": "album-32.jpg",
+    "r2_key": "assets/covers/album-32.jpg",
+    "url": "/assets/covers/album-32.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 27625
+  },
+  {
+    "id": "m_cover_33",
+    "filename": "album-33.jpg",
+    "r2_key": "assets/covers/album-33.jpg",
+    "url": "/assets/covers/album-33.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 119113
+  },
+  {
+    "id": "m_cover_34",
+    "filename": "album-34.jpg",
+    "r2_key": "assets/covers/album-34.jpg",
+    "url": "/assets/covers/album-34.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 101419
+  },
+  {
+    "id": "m_cover_35",
+    "filename": "album-35.jpg",
+    "r2_key": "assets/covers/album-35.jpg",
+    "url": "/assets/covers/album-35.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 147861
+  },
+  {
+    "id": "m_cover_36",
+    "filename": "album-36.jpg",
+    "r2_key": "assets/covers/album-36.jpg",
+    "url": "/assets/covers/album-36.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 112417
+  },
+  {
+    "id": "m_cover_37",
+    "filename": "album-37.jpg",
+    "r2_key": "assets/covers/album-37.jpg",
+    "url": "/assets/covers/album-37.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 102354
+  },
+  {
+    "id": "m_cover_38",
+    "filename": "album-38.jpg",
+    "r2_key": "assets/covers/album-38.jpg",
+    "url": "/assets/covers/album-38.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 120574
+  },
+  {
+    "id": "m_cover_39",
+    "filename": "album-39.jpg",
+    "r2_key": "assets/covers/album-39.jpg",
+    "url": "/assets/covers/album-39.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 101540
+  },
+  {
+    "id": "m_cover_40",
+    "filename": "album-40.jpg",
+    "r2_key": "assets/covers/album-40.jpg",
+    "url": "/assets/covers/album-40.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 94206
+  },
+  {
+    "id": "m_cover_41",
+    "filename": "album-41.jpg",
+    "r2_key": "assets/covers/album-41.jpg",
+    "url": "/assets/covers/album-41.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 100588
+  },
+  {
+    "id": "m_cover_42",
+    "filename": "album-42.png",
+    "r2_key": "assets/covers/album-42.png",
+    "url": "/assets/covers/album-42.png",
+    "mime_type": "image/png",
+    "size_bytes": 97359
+  },
+  {
+    "id": "m_cover_43",
+    "filename": "album-43.jpg",
+    "r2_key": "assets/covers/album-43.jpg",
+    "url": "/assets/covers/album-43.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 36792
+  },
+  {
+    "id": "m_cover_44",
+    "filename": "album-44.webp",
+    "r2_key": "assets/covers/album-44.webp",
+    "url": "/assets/covers/album-44.webp",
+    "mime_type": "image/webp",
+    "size_bytes": 65304
+  },
+  {
+    "id": "m_cover_45",
+    "filename": "album-45.png",
+    "r2_key": "assets/covers/album-45.png",
+    "url": "/assets/covers/album-45.png",
+    "mime_type": "image/png",
+    "size_bytes": 117887
+  },
+  {
+    "id": "m_cover_46",
+    "filename": "album-46.jpg",
+    "r2_key": "assets/covers/album-46.jpg",
+    "url": "/assets/covers/album-46.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 42786
+  },
+  {
+    "id": "m_cover_47",
+    "filename": "album-47.jpg",
+    "r2_key": "assets/covers/album-47.jpg",
+    "url": "/assets/covers/album-47.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 123089
+  },
+  {
+    "id": "m_cover_48",
+    "filename": "album-48.jpg",
+    "r2_key": "assets/covers/album-48.jpg",
+    "url": "/assets/covers/album-48.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 88569
+  },
+  {
+    "id": "m_cover_49",
+    "filename": "album-49.jpg",
+    "r2_key": "assets/covers/album-49.jpg",
+    "url": "/assets/covers/album-49.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 43093
+  },
+  {
+    "id": "m_cover_50",
+    "filename": "album-50.jpg",
+    "r2_key": "assets/covers/album-50.jpg",
+    "url": "/assets/covers/album-50.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 76646
+  },
+  {
+    "id": "m_cover_51",
+    "filename": "album-51.jpg",
+    "r2_key": "assets/covers/album-51.jpg",
+    "url": "/assets/covers/album-51.jpg",
+    "mime_type": "image/jpeg",
+    "size_bytes": 72523
+  }
+]

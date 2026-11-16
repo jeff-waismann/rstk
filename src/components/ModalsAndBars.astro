@@ -1,0 +1,68 @@
+---
+import type { SiteSettings } from '../utils/format';
+
+interface Props {
+  settings: SiteSettings;
+}
+
+const { settings } = Astro.props;
+const defaultWhatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(
+  settings.whatsappDefaultMessage
+)}`;
+---
+
+<div class="selectionbar" id="selectionbar" hidden>
+  <span><strong id="bar-count">0</strong> álbum(ns) na sua seleção</span>
+  <button class="primary" id="view-selection" type="button">Revisar seleção →</button>
+</div>
+
+<a
+  class="whatsapp-floating"
+  id="whatsapp-floating"
+  href={defaultWhatsappUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label="Consultar os discos selecionados no WhatsApp"
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
+    <path d="M20.7 11.6a8.7 8.7 0 0 1-12.9 7.7L3 20.7l1.3-4.6A8.7 8.7 0 1 1 20.7 11.6Z" />
+    <path d="M8 7.5c.5-.4 1 .1 1.4 1.2.2.5-.4.9-.6 1.2.6 1.4 1.7 2.5 3.2 3.2.4-.3.8-1 1.3-.7 1 .4 1.7.8 1.5 1.5-.3 1.1-1.3 1.6-2.6 1.2-3.4-1.1-5.4-3.1-6-5.2-.3-1 .1-1.8 1-2.4Z" />
+  </svg>
+  <span>WhatsApp</span>
+</a>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<dialog id="detail" aria-labelledby="detail-title">
+  <div id="detail-body"></div>
+</dialog>
+
+<dialog id="selection" class="selection-dialog" aria-labelledby="selection-title">
+  <button class="close" id="close-selection" type="button" aria-label="Fechar seleção">×</button>
+  <h2 id="selection-title">Sua seleção</h2>
+  <p class="copy-note">Revise os títulos e copie a lista para consultar a RSTK.</p>
+  <ul class="selected-list" id="selected-list"></ul>
+  <div class="actions">
+    <a
+      class="whatsapp-action"
+      id="whatsapp-modal"
+      href={defaultWhatsappUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Consultar no WhatsApp ↗
+    </a>
+    <button class="primary" id="copy" type="button">Copiar lista</button>
+    <button class="secondary" id="download" type="button">Baixar lista .txt</button>
+    <button class="text-button" id="empty-selection" type="button">Esvaziar seleção</button>
+  </div>
+  <textarea
+    id="copy-fallback"
+    aria-label="Lista para copiar manualmente"
+    hidden
+    readonly
+  ></textarea>
+  <p class="copy-note">
+    Esta seleção não envia um pedido nem garante reserva. Confirme valores, estoque e edição com a RSTK.
+  </p>
+</dialog>

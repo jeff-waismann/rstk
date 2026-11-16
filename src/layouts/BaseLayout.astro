@@ -1,0 +1,110 @@
+---
+import type { SiteSettings, VinylAlbum } from '../utils/format';
+
+interface Props {
+  settings: SiteSettings;
+  products: VinylAlbum[];
+  heroCovers: VinylAlbum[];
+  canonicalPath?: string;
+  noindex?: boolean;
+}
+
+const {
+  settings,
+  products,
+  heroCovers,
+  canonicalPath = '/',
+  noindex = false
+} = Astro.props;
+
+const baseUrl = (settings.siteUrl || 'https://rstk-catalogo.pages.dev').replace(/\/$/, '');
+const canonicalUrl = `${baseUrl}${canonicalPath === '/' ? '/' : canonicalPath}`;
+const ogImageUrl = settings.ogImage?.startsWith('http')
+  ? settings.ogImage
+  : `${baseUrl}${settings.ogImage || '/assets/covers/album-28.jpg'}`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WholesaleStore',
+      '@id': `${baseUrl}/#organization`,
+      name: settings.brandAlt || 'RSTK Atacado',
+      url: baseUrl,
+      logo: `${baseUrl}${settings.logoUrl || '/assets/images/logo-rstk.png'}`,
+      description: settings.seoDescription
+    },
+    {
+      '@type': 'ItemList',
+      name: settings.heroEyebrow || 'Catálogo Novembro 2026',
+      numberOfItems: products.length,
+      itemListElement: products.slice(0, 51).map((album, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        item: {
+          '@type': 'Product',
+          name: `${album.artist} — ${album.title}`,
+          category: album.genre,
+          image: album.cover.startsWith('http') ? album.cover : `${baseUrl}${album.cover}`,
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: 'BRL',
+            price: ((album.priceCents ?? settings.priceCents) / 100).toFixed(2),
+            availability: 'https://schema.org/InStock'
+          }
+        }
+      }))
+    }
+  ]
+};
+---
+
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>{settings.seoTitle}</title>
+    <meta name="description" content={settings.seoDescription} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Open Graph / Twitter Card -->
+    <meta property="og:site_name" content={settings.brandAlt || 'RSTK Atacado'} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={settings.seoTitle} />
+    <meta property="og:description" content={settings.seoDescription} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={settings.seoTitle} />
+    <meta name="twitter:description" content={settings.seoDescription} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <!-- Preload critical LCP hero covers -->
+    {heroCovers.map((album) => (
+      <link rel="preload" as="image" href={album.cover} />
+    ))}
+
+    <!-- Apply saved theme before paint to prevent FOUC -->
+    <script is:inline>
+      (function () {
+        try {
+          var savedTheme = JSON.parse(localStorage.getItem('rstk-theme') || 'null');
+          if (savedTheme === 'dark' || savedTheme === 'light') {
+            document.documentElement.dataset.theme = savedTheme;
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <link rel="stylesheet" href="/assets/css/catalog.css" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

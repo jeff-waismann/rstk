@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rstk-catalogo",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "dist",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "smartweb-db",
+      "database_id": "d43d8dbd-9928-4b42-a31d-26327dbab11d"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "rstk-media"
+    }
+  ],
+  "vars": {
+    "SITE_NAME": "RSTK Atacado",
+    "ENVIRONMENT": "production"
+  }
+}

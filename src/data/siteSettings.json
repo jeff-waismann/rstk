@@ -1,0 +1,30 @@
+{
+  "brandName": "RSTK",
+  "brandAlt": "RSTK ATACADO",
+  "logoUrl": "/assets/images/logo-rstk.png",
+  "headerTagline": "Vinis importados · Atacado",
+  "heroEyebrow": "Catálogo Novembro 2026",
+  "heroTitle": "Vinis lacrados e importados",
+  "heroSubtitle": "Somente vendas no atacado pra lojistas",
+  "launchLabel": "Preço único de lançamento",
+  "priceCents": 18999,
+  "validityText": "Até 30/11/2026 ou enquanto durar o estoque.",
+  "validityDate": "30/11/2026",
+  "heroCaption": "Álbuns que atravessam gerações",
+  "heroFeaturedIds": [
+    7,
+    28,
+    24
+  ],
+  "browseTitle": "Explore o catálogo",
+  "browseSubtitle": "Do primeiro play ao próximo favorito.",
+  "whatsappNumber": "553488293565",
+  "whatsappDefaultMessage": "Olá, RSTK! Tenho interesse nos vinis lacrados e importados para minha loja. Gostaria de saber mais sobre as vendas no atacado e a oferta de lançamento de R$ 189,99.",
+  "detailNote": "Preço único de lançamento até 30/11/2026 ou enquanto durar o estoque. A capa identifica o álbum; confirme os detalhes da edição física antes do pedido.",
+  "footerTextPrimary": "Vinis lacrados e importados · Somente vendas no atacado pra lojistas. Preço único de lançamento: R$ 189,99 até 30/11/2026 ou enquanto durar o estoque.",
+  "footerTextSecondary": "Capas de referência dos álbuns; a arte e os detalhes da edição física podem variar. Datas conforme a lista fornecida. Gêneros organizados para facilitar a navegação.",
+  "seoTitle": "RSTK • Catálogo Novembro 2026 | Vinis Lacrados no Atacado",
+  "seoDescription": "Catálogo RSTK Atacado de vinis lacrados e importados para lojistas. Mais de 50 títulos clássicos e contemporâneos em LP com preço único de lançamento.",
+  "ogImage": "/assets/covers/album-28.jpg",
+  "siteUrl": "https://rstk.pages.dev"
+}

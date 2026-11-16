@@ -1,0 +1,31 @@
+---
+import type { SiteSettings } from '../utils/format';
+
+interface Props {
+  settings: SiteSettings;
+}
+
+const { settings } = Astro.props;
+---
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="RSTK Atacado — início">
+      <img
+        id="brand-logo"
+        src={settings.logoUrl || '/assets/images/logo-rstk.png'}
+        alt={settings.brandAlt || 'RSTK ATACADO'}
+        width="205"
+        height="88"
+        fetchpriority="high"
+      />
+    </a>
+    <div class="top-right">
+      <span class="micro" id="header-tagline">{settings.headerTagline}</span>
+      <div class="theme" role="group" aria-label="Tema de aparência">
+        <button id="light" type="button" aria-pressed="true">☀ Claro</button>
+        <button id="dark" type="button" aria-pressed="false">☾ Escuro</button>
+      </div>
+    </div>
+  </div>
+</header>

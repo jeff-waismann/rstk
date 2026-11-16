@@ -1,0 +1,19 @@
+# Dependências & Builds locais
+node_modules/
+.wrangler/
+.astro/
+dist/
+.env
+.env.*
+
+# Arquivo legado standalone (7.3 MB com base64 inline)
+legacy/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

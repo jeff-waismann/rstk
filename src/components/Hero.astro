@@ -1,0 +1,66 @@
+---
+import { formatPriceBRL, type SiteSettings, type VinylAlbum } from '../utils/format';
+
+interface Props {
+  settings: SiteSettings;
+  productsCount: number;
+  artistsCount: number;
+  heroCovers: VinylAlbum[];
+}
+
+const { settings, productsCount, artistsCount, heroCovers } = Astro.props;
+const formattedPrice = formatPriceBRL(settings.priceCents);
+---
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow" id="hero-eyebrow">{settings.heroEyebrow}</div>
+      <h1>
+        <span id="hero-title-main" class="hero-title-main">{settings.heroTitle}</span>
+        <br />
+        <span id="hero-subtitle">{settings.heroSubtitle}</span>
+      </h1>
+
+      <div class="launch">
+        <span class="launch-label" id="launch-label">{settings.launchLabel}</span>
+        <strong class="launch-price" id="launch-price">{formattedPrice}</strong>
+        <p id="launch-validity">
+          {settings.validityDate ? (
+            <>
+              Até <b>{settings.validityDate}</b> ou enquanto durar o estoque.
+            </>
+          ) : (
+            settings.validityText
+          )}
+        </p>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <strong id="stat-titles">{productsCount}</strong>
+          <span>Títulos</span>
+        </div>
+        <div class="stat">
+          <strong id="stat-artists">{artistsCount}</strong>
+          <span>Artistas</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sleeves" aria-label="Capas de discos em destaque" id="hero-covers">
+      {heroCovers.map((album) => (
+        <img
+          class="sleeve"
+          src={album.cover}
+          alt={`${album.artist} — ${album.title}`}
+          width="235"
+          height="235"
+          fetchpriority="high"
+          decoding="async"
+        />
+      ))}
+      <span class="hero-caption" id="hero-caption">{settings.heroCaption}</span>
+    </div>
+  </div>
+</section>

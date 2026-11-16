@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import CatalogSection from '../components/CatalogSection.astro';
+import Footer from '../components/Footer.astro';
+import ModalsAndBars from '../components/ModalsAndBars.astro';
+import catalogData from '../data/catalog.json';
+import siteSettingsData from '../data/siteSettings.json';
+import type { SiteSettings, VinylAlbum } from '../utils/format';
+
+const settings = siteSettingsData as SiteSettings;
+const allProducts = (catalogData as VinylAlbum[]).filter((item) => item.active !== false);
+
+const artists = [...new Set(allProducts.map((p) => p.artist))].sort((a, b) =>
+  a.localeCompare(b, 'pt-BR')
+);
+const genres = [...new Set(allProducts.map((p) => p.genre))].sort((a, b) =>
+  a.localeCompare(b, 'pt-BR')
+);
+
+const featuredIds = Array.isArray(settings.heroFeaturedIds)
+  ? settings.heroFeaturedIds
+  : [7, 28, 24];
+
+const heroCovers = featuredIds
+  .map((id) => allProducts.find((p) => p.id === id))
+  .filter((item): item is VinylAlbum => Boolean(item));
+---
+
+<BaseLayout settings={settings} products={allProducts} heroCovers={heroCovers}>
+  <Header settings={settings} />
+
+  <main>
+    <Hero
+      settings={settings}
+      productsCount={allProducts.length}
+      artistsCount={artists.length}
+      heroCovers={heroCovers}
+    />
+
+    <CatalogSection
+      settings={settings}
+      products={allProducts}
+      artists={artists}
+      genres={genres}
+    />
+  </main>
+
+  <Footer settings={settings} />
+  <ModalsAndBars settings={settings} />
+
+  <script
+    id="rstk-bootstrap"
+    type="application/json"
+    set:html={JSON.stringify({ settings, products: allProducts })}
+  />
+  <script defer src="/assets/js/catalog.js"></script>
+</BaseLayout>

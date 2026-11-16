@@ -1,0 +1,131 @@
+---
+import type { SiteSettings, VinylAlbum } from '../utils/format';
+
+interface Props {
+  settings: SiteSettings;
+  products: VinylAlbum[];
+  artists: string[];
+  genres: string[];
+}
+
+const { settings, products, artists, genres } = Astro.props;
+const sortedProducts = [...products].sort(
+  (a, b) => a.artist.localeCompare(b.artist, 'pt-BR') || a.id - b.id
+);
+---
+
+<section class="browse wrap" id="catalogo">
+  <div class="browse-head">
+    <div>
+      <h2 id="browse-title">{settings.browseTitle}</h2>
+      <p id="browse-subtitle">{settings.browseSubtitle}</p>
+    </div>
+    <button class="saved" id="saved-toggle" type="button" aria-pressed="false">
+      ♡ Minha seleção <span id="saved-count">0</span>
+    </button>
+  </div>
+
+  <div class="controls">
+    <label class="search" for="search">
+      <span class="sr">Buscar artista ou álbum</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <circle cx="10.5" cy="10.5" r="6.5"></circle>
+        <path d="m16 16 5 5"></path>
+      </svg>
+      <input
+        id="search"
+        type="search"
+        placeholder="Busque por artista ou álbum…"
+        autocomplete="off"
+      />
+    </label>
+
+    <label class="sr" for="artist">Filtrar por artista</label>
+    <select id="artist">
+      <option value="">Todos os artistas</option>
+      {artists.map((artist) => (
+        <option value={artist}>{artist}</option>
+      ))}
+    </select>
+
+    <label class="sr" for="format">Filtrar por quantidade de LPs</label>
+    <select id="format">
+      <option value="">Todos os formatos</option>
+      <option value="1">1 LP</option>
+      <option value="2">2 LPs</option>
+    </select>
+
+    <label class="sr" for="sort">Ordenação</label>
+    <select id="sort">
+      <option value="artist">Artista: A → Z</option>
+      <option value="title">Álbum: A → Z</option>
+      <option value="new">Edição: mais recente</option>
+      <option value="old">Edição: mais antiga</option>
+    </select>
+  </div>
+
+  <div class="chips" id="genres" role="group" aria-label="Filtrar por gênero">
+    <button class="chip active" type="button" data-genre="" aria-pressed="true">
+      Todos os gêneros
+    </button>
+    {genres.map((genre) => (
+      <button class="chip" type="button" data-genre={genre} aria-pressed="false">
+        {genre}
+      </button>
+    ))}
+  </div>
+
+  <div class="result-row">
+    <span id="result-count" role="status" aria-live="polite">
+      {sortedProducts.length} de {sortedProducts.length} títulos
+    </span>
+    <button class="text-button" id="clear" type="button">Limpar filtros ↗</button>
+  </div>
+
+  <div class="grid" id="grid">
+    {sortedProducts.map((album) => {
+      const unitLabel = `${album.units} ${album.units === 1 ? 'LP' : 'LPs'}`;
+      return (
+        <article class="card" data-id={album.id}>
+          <div class="art">
+            <button
+              class="art-open"
+              type="button"
+              data-detail={album.id}
+              aria-label={`Ver detalhes de ${album.title}`}
+            >
+              <img
+                src={album.cover}
+                loading="lazy"
+                decoding="async"
+                width="600"
+                height="600"
+                alt={`Capa de ${album.title}, ${album.artist}`}
+              />
+            </button>
+            <span class="lp">{unitLabel}</span>
+            <button
+              class="heart"
+              type="button"
+              data-save={album.id}
+              aria-pressed="false"
+              aria-label={`Adicionar ${album.title} à seleção`}
+            >
+              ♡
+            </button>
+          </div>
+          <div class="card-info">
+            <p class="artist">{album.artist}</p>
+            <button class="title" type="button" data-detail={album.id}>
+              {album.title}
+            </button>
+            <p class="genre">{album.genre}</p>
+            <button class="detail-btn" type="button" data-detail={album.id}>
+              Conheça o disco <span>↗</span>
+            </button>
+          </div>
+        </article>
+      );
+    })}
+  </div>
+</section>

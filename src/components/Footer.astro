@@ -1,0 +1,23 @@
+---
+import type { SiteSettings } from '../utils/format';
+
+interface Props {
+  settings: SiteSettings;
+}
+
+const { settings } = Astro.props;
+---
+
+<footer class="footer">
+  <div class="wrap">
+    <div>
+      <strong id="footer-brand">{settings.brandName || 'RSTK'}</strong>
+      <p id="footer-text-primary">{settings.footerTextPrimary}</p>
+      <p id="footer-text-secondary">{settings.footerTextSecondary}</p>
+    </div>
+    <div class="footer-actions">
+      <button class="text-button" id="top" type="button">Voltar ao topo ↑</button>
+      <a class="admin-link" href="/admin/">Área Administrativa</a>
+    </div>
+  </div>
+</footer>
