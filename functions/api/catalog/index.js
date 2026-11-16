@@ -96,9 +96,7 @@ export async function onRequestGet({ request, env }) {
       }
     }
 
-    const sql = includeInactive
-      ? 'SELECT * FROM rstk_products ORDER BY sort_order ASC, id ASC'
-      : 'SELECT * FROM rstk_products WHERE active = 1 ORDER BY sort_order ASC, id ASC';
+    const sql = 'SELECT * FROM rstk_products ORDER BY sort_order ASC, id ASC';
 
     const { results } = await env.DB.prepare(sql).all();
     const products = (results || []).map(mapProductRow);

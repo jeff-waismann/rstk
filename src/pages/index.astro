@@ -10,7 +10,7 @@ import siteSettingsData from '../data/siteSettings.json';
 import type { SiteSettings, VinylAlbum } from '../utils/format';
 
 const settings = siteSettingsData as SiteSettings;
-const allProducts = (catalogData as VinylAlbum[]).filter((item) => item.active !== false);
+const allProducts = catalogData as VinylAlbum[];
 
 const artists = [...new Set(allProducts.map((p) => p.artist))].sort((a, b) =>
   a.localeCompare(b, 'pt-BR')

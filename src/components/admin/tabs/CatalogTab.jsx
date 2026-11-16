@@ -225,16 +225,25 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
                   </td>
                 </tr>
               ) : (
-                filtered.map((album) => (
+                filtered.map((album) => {
+                  const isSoldOut = !album.active || (typeof album.stock === 'number' && album.stock <= 0);
+                  return (
                   <tr key={album.id} className="hover:bg-[#F7F9FB]/70 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={album.cover}
-                          alt={album.title}
-                          className="w-12 h-12 rounded-lg object-cover border border-[#E2E8F0] flex-shrink-0"
-                          loading="lazy"
-                        />
+                        <div className="relative flex-shrink-0">
+                          <img
+                            src={album.cover}
+                            alt={album.title}
+                            className={`w-12 h-12 rounded-lg object-cover border border-[#E2E8F0] ${isSoldOut ? 'opacity-80' : ''}`}
+                            loading="lazy"
+                          />
+                          {isSoldOut && (
+                            <span className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white text-[8px] font-black uppercase px-1 py-0.2 rounded shadow-xs tracking-tighter">
+                              Esgotado
+                            </span>
+                          )}
+                        </div>
                         <div className="min-w-0">
                           <p className="font-bold text-[#0F172A] truncate">{album.title}</p>
                           <p className="text-xs text-[#64748B] truncate">{album.artist}</p>
@@ -270,15 +279,16 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
                           album.active
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-slate-100 text-[#64748B] border border-slate-200'
+                            : 'bg-rose-50 text-[#F75656] border border-rose-200'
                         }`}
+                        title={album.active ? 'Clique para marcar como Oculto / Esgotado' : 'Clique para marcar como Ativo'}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${
-                            album.active ? 'bg-emerald-500' : 'bg-slate-400'
+                            album.active ? 'bg-emerald-500' : 'bg-[#DC2626]'
                           }`}
                         />
-                        {album.active ? 'Ativo' : 'Oculto'}
+                        {album.active ? 'Ativo' : 'Oculto (Esgotado)'}
                       </button>
                     </td>
                     <td className="py-3 px-4 text-right whitespace-nowrap">
@@ -301,8 +311,9 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
+                );
+              })
+            )}
             </tbody>
           </table>
         </div>

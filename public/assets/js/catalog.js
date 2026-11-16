@@ -307,12 +307,14 @@
               const id = Number(p.id);
               const isSelected = selected.has(id);
               const unitsLabel = `${p.units} ${Number(p.units) === 1 ? 'LP' : 'LPs'}`;
-              return `<article class="card" data-id="${id}">
+              const isSoldOut = !p.active || (typeof p.stock === 'number' && p.stock <= 0);
+              return `<article class="card ${isSoldOut ? 'sold-out' : ''}" data-id="${id}">
                 <div class="art">
                   <button class="art-open" type="button" data-detail="${id}" aria-label="Ver detalhes de ${escapeHTML(p.title)}">
                     <img src="${escapeHTML(sanitizeHref(p.cover))}" loading="lazy" decoding="async" width="600" height="600" alt="Capa de ${escapeHTML(p.title)}, ${escapeHTML(p.artist)}">
                   </button>
                   <span class="lp">${escapeHTML(unitsLabel)}</span>
+                  ${isSoldOut ? '<span class="ribbon-sold-out" aria-label="Esgotado">ESGOTADO</span>' : ''}
                   <button class="heart ${isSelected ? 'on' : ''}" type="button" data-save="${id}" aria-pressed="${isSelected}" aria-label="${isSelected ? 'Remover' : 'Adicionar'} ${escapeHTML(p.title)} ${isSelected ? 'da' : 'à'} seleção">${isSelected ? '♥' : '♡'}</button>
                 </div>
                 <div class="card-info">
@@ -402,9 +404,13 @@
 
     const detailBody = $('detail-body');
     if (detailBody) {
+      const isSoldOut = !album.active || (typeof album.stock === 'number' && album.stock <= 0);
       const sourceHref = sanitizeHref(album.source);
       detailBody.innerHTML = `<div class="modal-grid">
-        <img class="modal-art" src="${escapeHTML(sanitizeHref(album.cover))}" alt="Capa de ${escapeHTML(album.title)}">
+        <div class="modal-art-box">
+          <img class="modal-art" src="${escapeHTML(sanitizeHref(album.cover))}" alt="Capa de ${escapeHTML(album.title)}">
+          ${isSoldOut ? '<span class="ribbon-sold-out modal-ribbon" aria-label="Esgotado">ESGOTADO</span>' : ''}
+        </div>
         <div class="modal-info">
           <button class="close" type="button" data-close aria-label="Fechar detalhes">×</button>
           <p class="eyebrow">${escapeHTML(album.artist)}</p>
@@ -414,15 +420,23 @@
             <div><dt>Formato na lista</dt><dd>${album.units} ${Number(album.units) === 1 ? 'LP' : 'LPs'}</dd></div>
             <div><dt>Data da edição na lista</dt><dd>${dateBR(album.date)}</dd></div>
             <div><dt>Preço de lançamento</dt><dd>${escapeHTML(priceDisplay)}</dd></div>
-            <div><dt>Estoque disponível</dt><dd>${typeof album.stock === 'number' ? `${album.stock} un.` : '30 un.'}</dd></div>
+            <div><dt>Disponibilidade</dt><dd style="${isSoldOut ? 'color:#DC2626;font-weight:700;' : ''}">${
+              isSoldOut ? '🔴 ESGOTADO' : (typeof album.stock === 'number' ? `${album.stock} un. em estoque` : '30 un.')
+            }</dd></div>
           </dl>
           <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.75rem;">
             <button class="primary" type="button" data-save="${numericId}">${
               isSaved ? '♥ Na sua seleção · remover' : '♡ Adicionar à seleção'
             }</button>
-            <button class="whatsapp-action" type="button" data-buy-now="${numericId}" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#25D366;color:#000;font-weight:700;padding:0.75rem 1rem;border-radius:999px;border:none;cursor:pointer;width:100%;text-decoration:none;">
-              Comprar este vinil via WhatsApp ↗
-            </button>
+            ${
+              isSoldOut
+                ? `<button class="whatsapp-action" type="button" data-buy-now="${numericId}" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#DC2626;color:#FFF;font-weight:700;padding:0.75rem 1rem;border-radius:999px;border:none;cursor:pointer;width:100%;text-decoration:none;">
+                    Consultar fila de espera via WhatsApp ↗
+                  </button>`
+                : `<button class="whatsapp-action" type="button" data-buy-now="${numericId}" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#25D366;color:#000;font-weight:700;padding:0.75rem 1rem;border-radius:999px;border:none;cursor:pointer;width:100%;text-decoration:none;">
+                    Comprar este vinil via WhatsApp ↗
+                  </button>`
+            }
           </div>
           <p class="note">${escapeHTML(noteText)}</p>
           ${
@@ -710,7 +724,7 @@
       const payload = await response.json();
       if (!payload || !payload.success || !Array.isArray(payload.products)) return;
 
-      const nextProducts = payload.products.filter((p) => p.active !== false && p.active !== 0);
+      const nextProducts = payload.products;
       const nextSettings = payload.settings ? { ...settings, ...payload.settings } : settings;
 
       const changed =

@@ -563,6 +563,57 @@ select {
   color: #5facff;
 }
 
+/* Selo diagonal ESGOTADO */
+.ribbon-sold-out {
+  position: absolute;
+  top: 18px;
+  left: -40px;
+  width: 140px;
+  background: #DC2626;
+  background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+  color: #FFFFFF !important;
+  text-align: center;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 4px 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  z-index: 6;
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+
+.modal-art-box {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  aspect-ratio: 1;
+}
+
+.modal-ribbon {
+  top: 30px;
+  left: -50px;
+  width: 190px;
+  font-size: 13px;
+  padding: 6px 0;
+  letter-spacing: 2px;
+}
+
+.card.sold-out .art img {
+  filter: grayscale(35%) contrast(90%);
+  opacity: 0.85;
+}
+
+.card.sold-out .detail-btn {
+  color: #EF4444;
+}
+
 .card-info {
   padding: 13px 1px 0;
 }

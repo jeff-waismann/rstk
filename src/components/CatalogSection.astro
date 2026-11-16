@@ -85,8 +85,9 @@ const sortedProducts = [...products].sort(
   <div class="grid" id="grid">
     {sortedProducts.map((album) => {
       const unitLabel = `${album.units} ${album.units === 1 ? 'LP' : 'LPs'}`;
+      const isSoldOut = !album.active || Math.max(0, Number(album.stock ?? 30)) === 0;
       return (
-        <article class="card" data-id={album.id}>
+        <article class={`card ${isSoldOut ? 'sold-out' : ''}`} data-id={album.id}>
           <div class="art">
             <button
               class="art-open"
@@ -104,6 +105,11 @@ const sortedProducts = [...products].sort(
               />
             </button>
             <span class="lp">{unitLabel}</span>
+            {isSoldOut && (
+              <span class="ribbon-sold-out" aria-label="Esgotado">
+                ESGOTADO
+              </span>
+            )}
             <button
               class="heart"
               type="button"
