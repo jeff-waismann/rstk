@@ -330,22 +330,21 @@
     const arr = getFiltered();
     const resultEl = $('result-count');
     if (resultEl) {
-      resultEl.textContent = `${arr.length} de ${catalog.length} títulos${
-        savedOnly ? ' · Meu pedido' : ''
-      }`;
+      resultEl.textContent = `${arr.length} de ${catalog.length} títulos${savedOnly ? ' · Meu pedido' : ''
+        }`;
     }
 
     const gridEl = $('grid');
     if (gridEl) {
       gridEl.innerHTML = arr.length
         ? arr
-            .map((p) => {
-              const id = Number(p.id);
-              const isInCart = selected.has(id);
-              const currentQty = isInCart ? (selected.get(id) || 1) : 1;
-              const unitLabel = formatAlbumUnits(p.units);
-              const isSoldOut = !p.active || (typeof p.stock === 'number' && p.stock <= 0);
-              return `<article class="card ${isSoldOut ? 'sold-out' : ''}" data-id="${id}">
+          .map((p) => {
+            const id = Number(p.id);
+            const isInCart = selected.has(id);
+            const currentQty = isInCart ? (selected.get(id) || 1) : 1;
+            const unitLabel = formatAlbumUnits(p.units);
+            const isSoldOut = !p.active || (typeof p.stock === 'number' && p.stock <= 0);
+            return `<article class="card ${isSoldOut ? 'sold-out' : ''}" data-id="${id}">
                 <div class="art">
                   <button class="art-open" type="button" data-detail="${id}" aria-label="Ver detalhes de ${escapeHTML(p.title)}">
                     <img src="${escapeHTML(sanitizeHref(p.cover))}" loading="lazy" decoding="async" width="600" height="600" alt="Capa de ${escapeHTML(p.title)}, ${escapeHTML(p.artist)}">
@@ -391,8 +390,8 @@
                   </div>
                 </div>
               </article>`;
-            })
-            .join('')
+          })
+          .join('')
         : '<div class="empty"><h3>Nenhum disco por aqui.</h3><p>Tente outra busca ou limpe os filtros.</p><button class="primary" type="button" data-clear>Ver todos os títulos</button></div>';
     }
 
@@ -555,9 +554,8 @@
             <div><dt>Formato na lista</dt><dd>${formatAlbumUnits(album.units)}</dd></div>
             <div><dt>Data da edição na lista</dt><dd>${dateBR(album.date)}</dd></div>
             <div><dt>Preço de lançamento</dt><dd>${escapeHTML(priceDisplay)}</dd></div>
-            <div><dt>Disponibilidade</dt><dd style="${isSoldOut ? 'color:#DC2626;font-weight:700;' : ''}">${
-              isSoldOut ? '🔴 ESGOTADO' : (typeof album.stock === 'number' ? `${album.stock} un. em estoque` : '30 un.')
-            }</dd></div>
+            <div><dt>Disponibilidade</dt><dd style="${isSoldOut ? 'color:#DC2626;font-weight:700;' : ''}">${isSoldOut ? '🔴 ESGOTADO' : (typeof album.stock === 'number' ? `${album.stock} un. em estoque` : '30 un.')
+        }</dd></div>
           </dl>
           <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.75rem;">
             <div style="display:flex;align-items:center;gap:10px;">
@@ -588,11 +586,10 @@
             <div id="modal-sold-out-notice" style="color:#DC2626;font-size:12px;font-weight:700;text-align:center;padding:4px 0;" hidden></div>
           </div>
           <p class="note">${escapeHTML(noteText)}</p>
-          ${
-            sourceHref !== '#'
-              ? `<a class="source" href="${escapeHTML(sourceHref)}" target="_blank" rel="noopener noreferrer">Fonte da capa ↗</a>`
-              : ''
-          }
+          ${sourceHref !== '#'
+          ? `<a class="source" href="${escapeHTML(sourceHref)}" target="_blank" rel="noopener noreferrer">Fonte da capa ↗</a>`
+          : ''
+        }
         </div>
       </div>`;
     }
@@ -613,14 +610,14 @@
 
       listEl.innerHTML = items.length
         ? items
-            .map((p) => {
-              const id = Number(p.id);
-              const qty = selected.get(id) || 1;
-              const unitPrice = p.priceCents ?? settings.priceCents ?? 18999;
-              const subtotal = unitPrice * qty;
-              totalCents += subtotal;
-              totalQty += qty;
-              return `<li>
+          .map((p) => {
+            const id = Number(p.id);
+            const qty = selected.get(id) || 1;
+            const unitPrice = p.priceCents ?? settings.priceCents ?? 18999;
+            const subtotal = unitPrice * qty;
+            totalCents += subtotal;
+            totalQty += qty;
+            return `<li>
                 <img src="${escapeHTML(sanitizeHref(p.cover))}" alt="">
                 <div style="flex:1;min-width:0;">
                   <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(p.title)}</strong>
@@ -650,9 +647,9 @@
                   <button type="button" class="cart-item-remove" data-cart-remove="${id}" aria-label="Remover ${escapeHTML(p.title)}">×</button>
                 </div>
               </li>`;
-            })
-            .join('') +
-          `<li style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;font-weight:700;border-top:2px solid var(--line);border-bottom:none;">
+          })
+          .join('') +
+        `<li style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;font-weight:700;border-top:2px solid var(--line);border-bottom:none;">
             <span>Total (${totalQty} ${totalQty === 1 ? 'vinil' : 'vinis'}):</span>
             <span style="font-size:16px;color:var(--blue);">${formatPriceBRL(totalCents)}</span>
           </li>`
@@ -865,7 +862,7 @@
         if (checkData?.loggedIn && checkData?.client) {
           currentClient = checkData.client;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (!currentClient) {
