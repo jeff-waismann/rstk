@@ -255,15 +255,13 @@ function AdminApp() {
         }`}
       >
         <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-lg bg-[#1E293B] text-[#00C6F7] flex items-center justify-center">
-              <span className="material-symbols-outlined text-[20px]">album</span>
-            </span>
-            <div>
-              <p className="text-sm font-extrabold tracking-tight text-white">RSTK Admin</p>
-              <p className="text-[10px] uppercase tracking-widest text-slate-400">Cloudflare CMS</p>
-            </div>
-          </div>
+          <a href="/admin" className="flex items-center" title="Smartweb Agile Admin">
+            <img
+              src="/assets/images/logo-smartweb.svg"
+              alt="Smartweb"
+              className="h-6 w-auto max-w-[170px] object-contain"
+            />
+          </a>
           <button
             type="button"
             className="lg:hidden text-slate-400"
