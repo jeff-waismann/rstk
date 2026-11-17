@@ -92,22 +92,8 @@ const siteSettings = {
 
       <div id="portal-alert" class="alert-box" hidden></div>
 
-      {/* Seção Principal de Pedidos: Tabela Limpa e Profissional */}
+      {/* Seção Principal: Tabela de Pedidos Identica ao Painel Admin */}
       <div class="portal-content">
-        <div class="orders-section-header">
-          <div class="orders-title-group">
-            <div class="orders-title-row">
-              <h2>Histórico de Pedidos</h2>
-              <span id="orders-count-badge" class="orders-count-badge">0 pedidos</span>
-            </div>
-            <p>Acompanhe todos os pedidos da sua loja em tempo real. Clique em qualquer linha para abrir os detalhes completos em pop-up.</p>
-          </div>
-          <button type="button" id="btn-refresh-orders" class="btn-refresh">
-            <span class="refresh-icon">↻</span>
-            <span>Atualizar</span>
-          </button>
-        </div>
-
         <div id="orders-loading" class="orders-loading">
           <div class="spinner"></div>
           <p>Carregando histórico de pedidos da sua loja...</p>
@@ -120,18 +106,30 @@ const siteSettings = {
           <a href="/" class="btn-primary-portal">Explorar Catálogo de Vinis →</a>
         </div>
 
-        {/* Tabela de Pedidos Profissional (1 Linha por Pedido) */}
-        <div id="orders-table-card" class="orders-table-card" hidden>
+        {/* Card da Tabela de Pedidos Estilo Admin */}
+        <div id="orders-table-card" class="orders-card-admin" hidden>
+          <div class="orders-card-header">
+            <div>
+              <h3 class="orders-card-title">Histórico de Pedidos & Revendas</h3>
+              <p class="orders-card-sub">Pedidos associados a sua conta de revenda (B2B) ou enviados via WhatsApp.</p>
+            </div>
+            <div class="orders-card-right">
+              <span id="orders-count-badge" class="orders-count-text">0 pedido(s)</span>
+              <button type="button" id="btn-refresh-orders" class="btn-refresh-admin" title="Atualizar pedidos">
+                <span class="refresh-icon">↻</span>
+              </button>
+            </div>
+          </div>
+
           <div class="orders-table-scroll">
-            <table class="orders-table">
+            <table class="admin-orders-table">
               <thead>
                 <tr>
-                  <th class="th-code">Pedido</th>
-                  <th class="th-date">Data / Hora</th>
-                  <th class="th-qty">Discos</th>
-                  <th class="th-total">Valor Total</th>
-                  <th class="th-status">Status</th>
-                  <th class="th-action text-right">Ação</th>
+                  <th class="th-code">PEDIDO / DATA</th>
+                  <th class="th-items">ITENS</th>
+                  <th class="th-total">VALOR TOTAL</th>
+                  <th class="th-status">STATUS</th>
+                  <th class="th-actions text-right">AÇÕES</th>
                 </tr>
               </thead>
               <tbody id="orders-tbody">
@@ -145,65 +143,81 @@ const siteSettings = {
   </main>
 
   {/* ========================================================
-      MODAL / POP-UP DE DETALHES DO PEDIDO
+      MODAL / POP-UP DE GESTÃO DO PEDIDO (IDENTICO AO ADMIN)
       ======================================================== */}
   <div id="order-modal" class="modal-backdrop" hidden>
-    <div class="modal-container" role="dialog" aria-modal="true" aria-labelledby="modal-order-number">
+    <div class="modal-admin-window" role="dialog" aria-modal="true" aria-labelledby="modal-order-number">
       {/* Header do Pop-up */}
-      <div class="modal-header">
+      <div class="modal-admin-header">
         <div>
-          <span class="modal-eyebrow">Detalhes do Pedido</span>
-          <h3 id="modal-order-number" class="modal-title">#PED-XXXXXX</h3>
-          <span id="modal-order-date" class="modal-date">—</span>
+          <span class="modal-eyebrow">Gestão do Pedido</span>
+          <h3 id="modal-order-number" class="modal-order-code">#PED-XXXXXX</h3>
         </div>
-        <button type="button" id="modal-close-btn" class="modal-close" aria-label="Fechar janela">
+        <button type="button" id="modal-close-btn" class="modal-close-icon" aria-label="Fechar modal">
           ✕
         </button>
       </div>
 
       {/* Conteúdo com Scroll */}
-      <div class="modal-body">
-        {/* Banner de Aviso / Notificação de Alterações */}
+      <div class="modal-admin-body">
+        {/* Banner de Aviso de Alterações (se houver) */}
         <div id="modal-notice-container"></div>
 
-        {/* Lista de Discos Solicitados */}
-        <div class="modal-discs-section">
-          <div class="modal-discs-header">
-            <h4>Discos Solicitados</h4>
-            <span id="modal-items-count-badge" class="modal-count-badge">0 discos</span>
+        {/* Card de Status Atual do Pedido */}
+        <div class="modal-status-bar">
+          <div>
+            <span class="status-bar-caption">Status Atual:</span>
+            <div id="modal-status-pill-wrap"></div>
           </div>
-          <div id="modal-discs-list" class="modal-discs-list">
-            {/* Itens inseridos dinamicamente */}
+          <div class="status-bar-date-col">
+            <span class="status-bar-caption">Data do Pedido:</span>
+            <span id="modal-order-date" class="status-bar-date-val">—</span>
+          </div>
+        </div>
+
+        {/* Ajuste de Itens e Quantidades (Listagem idêntica ao admin) */}
+        <div class="modal-items-container">
+          <div class="modal-items-top-bar">
+            <h4 id="modal-items-title" class="modal-items-heading">
+              Itens do Pedido (0)
+            </h4>
+            <span id="modal-items-total-preview" class="modal-items-total-tag">
+              Total: R$ 0,00
+            </span>
+          </div>
+
+          <div id="modal-discs-list" class="modal-items-divide-list">
+            {/* Linhas de itens renderizadas dinamicamente */}
           </div>
         </div>
 
         {/* Observações do Pedido */}
-        <div id="modal-notes-box" class="modal-notes-box" hidden>
-          <span class="modal-notes-label">Observações da Loja:</span>
-          <p id="modal-notes-text" class="modal-notes-text"></p>
+        <div id="modal-notes-box" class="modal-admin-notes" hidden>
+          <span class="notes-caption">Observações do Pedido:</span>
+          <p id="modal-notes-text" class="notes-val"></p>
         </div>
       </div>
 
       {/* Rodapé do Pop-up */}
-      <div class="modal-footer">
-        <div class="modal-footer-left">
-          <span class="modal-footer-caption">Total do Pedido:</span>
-          <strong id="modal-total-cents" class="modal-footer-total">R$ 0,00</strong>
+      <div class="modal-admin-footer">
+        <div class="modal-footer-total-box">
+          <span class="caption">Valor Total:</span>
+          <strong id="modal-total-cents" class="total-val">R$ 0,00</strong>
         </div>
 
-        <div class="modal-footer-actions">
-          <a id="modal-whatsapp-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn-modal-whatsapp">
+        <div class="modal-footer-btn-group">
+          <a id="modal-whatsapp-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn-admin-whatsapp">
             <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor">
               <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.586-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.941-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.288.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.302c-.087.087-.179.18-.077.355.101.174.45 1.742 1.488 2.063.267.082.477.068.654-.044.224-.143.636-.738.809-.991.173-.253.347-.211.583-.125.237.086 1.503.708 1.763.838.26.13.433.195.498.304.065.109.065.636-.079 1.041z"/>
             </svg>
-            <span>Chamar no WhatsApp</span>
+            <span>WhatsApp</span>
           </a>
 
-          <button type="button" id="modal-approve-btn" class="btn-modal-approve" hidden>
+          <button type="button" id="modal-approve-btn" class="btn-admin-approve" hidden>
             <span>✓ Confirmar Alterações</span>
           </button>
 
-          <button type="button" id="modal-secondary-close" class="btn-modal-close">
+          <button type="button" id="modal-secondary-close" class="btn-admin-close">
             Fechar
           </button>
         </div>
@@ -236,7 +250,9 @@ const siteSettings = {
       var modalOrderNumber = document.getElementById('modal-order-number');
       var modalOrderDate = document.getElementById('modal-order-date');
       var modalNoticeContainer = document.getElementById('modal-notice-container');
-      var modalCountBadge = document.getElementById('modal-items-count-badge');
+      var modalStatusPillWrap = document.getElementById('modal-status-pill-wrap');
+      var modalItemsTitle = document.getElementById('modal-items-title');
+      var modalItemsTotalPreview = document.getElementById('modal-items-total-preview');
       var modalDiscsList = document.getElementById('modal-discs-list');
       var modalNotesBox = document.getElementById('modal-notes-box');
       var modalNotesText = document.getElementById('modal-notes-text');
@@ -279,46 +295,52 @@ const siteSettings = {
           .replace(/'/g, '&#39;');
       }
 
+      // Mapeamento de Status IDÊNTICO ao Admin (cores pastéis, bordas suaves e bolinha)
       var STATUS_MAP = {
+        despachado: {
+          label: 'Despachado',
+          badgeClass: 'badge-purple',
+          dotClass: 'dot-purple'
+        },
+        concluido: {
+          label: 'Concluído / Despachado',
+          badgeClass: 'badge-purple',
+          dotClass: 'dot-purple'
+        },
         enviado: {
           label: 'Enviado / Em Análise',
-          badgeClass: 'badge-status-enviado',
-          icon: '📋'
+          badgeClass: 'badge-sky',
+          dotClass: 'dot-sky'
         },
         whatsapp_aberto: {
           label: 'Enviado / Em Análise',
-          badgeClass: 'badge-status-enviado',
-          icon: '📋'
+          badgeClass: 'badge-sky',
+          dotClass: 'dot-sky'
         },
         aprovado: {
-          label: 'Aprovado pela RSTK',
-          badgeClass: 'badge-status-aprovado',
-          icon: '✓'
+          label: 'Aprovado',
+          badgeClass: 'badge-emerald',
+          dotClass: 'dot-emerald'
         },
         confirmado: {
-          label: 'Aprovado pela RSTK',
-          badgeClass: 'badge-status-aprovado',
-          icon: '✓'
+          label: 'Aprovado',
+          badgeClass: 'badge-emerald',
+          dotClass: 'dot-emerald'
         },
         aprovado_com_alteracoes: {
           label: 'Aprovado c/ Alterações',
-          badgeClass: 'badge-status-alteracoes',
-          icon: '⚠️'
+          badgeClass: 'badge-amber',
+          dotClass: 'dot-amber'
         },
         alteracoes_aceitas: {
           label: 'Alterações Aprovadas',
-          badgeClass: 'badge-status-aceito',
-          icon: '✓'
-        },
-        despachado: {
-          label: 'Despachado / Enviado',
-          badgeClass: 'badge-status-despachado',
-          icon: '🚚'
+          badgeClass: 'badge-teal',
+          dotClass: 'dot-teal'
         },
         cancelado: {
           label: 'Cancelado',
-          badgeClass: 'badge-status-cancelado',
-          icon: '✕'
+          badgeClass: 'badge-red',
+          dotClass: 'dot-red'
         }
       };
 
@@ -372,21 +394,19 @@ const siteSettings = {
           if (res.ok && data.success && Array.isArray(data.orders)) {
             ordersData = data.orders;
             if (ordersData.length === 0) {
-              if (countBadgeEl) countBadgeEl.textContent = '0 pedidos';
+              if (countBadgeEl) countBadgeEl.textContent = '0 pedido(s)';
               emptyEl.hidden = false;
               emptyEl.style.display = 'block';
             } else {
-              if (countBadgeEl) countBadgeEl.textContent = ordersData.length + (ordersData.length === 1 ? ' pedido' : ' pedidos');
+              if (countBadgeEl) countBadgeEl.textContent = ordersData.length + ' pedido(s)';
               renderOrdersTable(ordersData);
               tableCardEl.hidden = false;
               tableCardEl.style.display = 'block';
 
-              // Se o modal estiver aberto, atualiza os dados do pedido selecionado
+              // Se o modal estiver aberto, atualiza o pedido selecionado
               if (selectedOrder) {
                 var refreshed = ordersData.find(function (o) { return o.id === selectedOrder.id; });
-                if (refreshed) {
-                  openOrderModal(refreshed);
-                }
+                if (refreshed) openOrderModal(refreshed);
               }
             }
           } else {
@@ -406,45 +426,87 @@ const siteSettings = {
 
         orders.forEach(function (order) {
           var statusInfo = STATUS_MAP[order.status] || STATUS_MAP.enviado;
-          var tr = document.createElement('tr');
-          tr.className = 'order-row';
-          tr.setAttribute('data-order-id', order.id);
+          var items = order.items || [];
+          var firstItem = items[0] || {};
+          var remainingCount = items.length > 1 ? items.length - 1 : 0;
 
-          var hasChanges = Boolean(
-            (order.changes && order.changes.length > 0) ||
-            order.status === 'aprovado_com_alteracoes' ||
-            order.status === 'alteracoes_aceitas'
+          // Capas sobrepostas (estilo admin -space-x-2)
+          var coversHtml = items.slice(0, 3).map(function (it) {
+            return `<img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="item-stack-thumb" loading="lazy" />`;
+          }).join('');
+
+          var titleSummary = (firstItem.title || 'Disco de Vinil') + (remainingCount > 0 ? ` (+${remainingCount})` : '');
+
+          var whatsappSupportUrl = 'https://wa.me/553488293565?text=' + encodeURIComponent(
+            'Olá, RSTK! Gostaria de falar sobre o pedido #' + order.orderNumber + ' da minha loja (' + (clientData.nomeFantasia || clientData.razaoSocial) + ').'
           );
 
+          var tr = document.createElement('tr');
+          tr.className = 'admin-row-item';
+
           tr.innerHTML = `
-            <td class="td-code">
-              <span class="order-code-badge">#${order.orderNumber}</span>
+            <td class="td-order-code">
+              <a href="javascript:void(0)" class="order-code-link" data-order-id="${order.id}">
+                #${order.orderNumber}
+              </a>
+              <span class="order-date-sub">${formatDateTimeBR(order.createdAt)}</span>
             </td>
-            <td class="td-date">
-              <span class="order-date-text">${formatDateTimeBR(order.createdAt)}</span>
+
+            <td class="td-items-col">
+              <div class="items-cell-flex">
+                <div class="covers-overlap-stack">
+                  ${coversHtml}
+                </div>
+                <div class="items-meta-text">
+                  <p class="items-title-first">${escapeHtml(titleSummary)}</p>
+                  <span class="items-total-qty">${order.itemCount} un.</span>
+                </div>
+              </div>
             </td>
-            <td class="td-qty">
-              <span class="qty-pill"><strong>${order.itemCount}</strong> disco(s)</span>
+
+            <td class="td-total-col">
+              <span class="total-price-admin">${formatBRL(order.totalCents)}</span>
             </td>
-            <td class="td-total">
-              <strong class="total-val">${formatBRL(order.totalCents)}</strong>
-            </td>
-            <td class="td-status">
-              <span class="badge-status-pill ${statusInfo.badgeClass}">
-                <span class="badge-status-dot"></span>
-                <span>${statusInfo.label}</span>
+
+            <td class="td-status-col">
+              <span class="admin-status-pill ${statusInfo.badgeClass}">
+                <span class="admin-status-dot ${statusInfo.dotClass}"></span>
+                <span class="admin-status-text">${statusInfo.label}</span>
               </span>
             </td>
-            <td class="td-action text-right">
-              <button type="button" class="btn-open-order" data-order-id="${order.id}">
-                <span>Ver Detalhes</span>
-                <span class="arrow-icon">→</span>
-              </button>
+
+            <td class="td-actions-col text-right">
+              <div class="row-actions-group">
+                <a href="${whatsappSupportUrl}" target="_blank" rel="noopener noreferrer" class="btn-row-whatsapp" title="Falar no WhatsApp sobre este pedido">
+                  <svg viewBox="0 0 24 24" class="w-3-5 h-3-5" fill="currentColor">
+                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.586-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.941-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.288.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.302c-.087.087-.179.18-.077.355.101.174.45 1.742 1.488 2.063.267.082.477.068.654-.044.224-.143.636-.738.809-.991.173-.253.347-.211.583-.125.237.086 1.503.708 1.763.838.26.13.433.195.498.304.065.109.065.636-.079 1.041z"/>
+                  </svg>
+                  <span>WhatsApp</span>
+                </a>
+
+                <button type="button" class="btn-row-details-blue" data-order-id="${order.id}">
+                  <span>📝 Detalhes</span>
+                </button>
+              </div>
             </td>
           `;
 
-          // Clicar em qualquer lugar da linha abre o modal de detalhes
+          // Event Listeners para abrir o modal
+          var codeLink = tr.querySelector('.order-code-link');
+          var detailsBtn = tr.querySelector('.btn-row-details-blue');
+
+          codeLink.addEventListener('click', function (e) {
+            e.stopPropagation();
+            openOrderModal(order);
+          });
+
+          detailsBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            openOrderModal(order);
+          });
+
           tr.addEventListener('click', function (e) {
+            if (e.target.closest('a, button')) return;
             openOrderModal(order);
           });
 
@@ -453,16 +515,25 @@ const siteSettings = {
       }
 
       // ========================================================
-      // GESTÃO DO POP-UP (MODAL DE DETALHES)
+      // GESTÃO DO POP-UP (MODAL DE DETALHES - IGUAL AO ADMIN)
       // ========================================================
       function openOrderModal(order) {
         selectedOrder = order;
         var statusInfo = STATUS_MAP[order.status] || STATUS_MAP.enviado;
 
         modalOrderNumber.textContent = '#' + order.orderNumber;
-        modalOrderDate.textContent = 'Realizado em ' + formatDateTimeBR(order.createdAt);
-        modalCountBadge.textContent = order.itemCount + (order.itemCount === 1 ? ' disco' : ' discos');
+        modalOrderDate.textContent = formatDateTimeBR(order.createdAt);
+        modalItemsTitle.textContent = `Itens do Pedido (${(order.items || []).length})`;
+        modalItemsTotalPreview.textContent = `Total: ${formatBRL(order.totalCents)}`;
         modalTotalCents.textContent = formatBRL(order.totalCents);
+
+        // Badge de Status Atual no Modal
+        modalStatusPillWrap.innerHTML = `
+          <span class="admin-status-pill ${statusInfo.badgeClass}">
+            <span class="admin-status-dot ${statusInfo.dotClass}"></span>
+            <span class="admin-status-text">${statusInfo.label}</span>
+          </span>
+        `;
 
         // Mapeia alterações efetuadas pela equipe RSTK
         var changesMap = {};
@@ -489,27 +560,22 @@ const siteSettings = {
           order.clientApprovedAt
         );
 
-        var isApprovedClean = Boolean(
-          (order.status === 'aprovado' || order.status === 'confirmado') &&
-          !hasChanges
-        );
-
         var isDispatched = Boolean(
           order.status === 'despachado' ||
           order.dispatchedAt
         );
 
-        // Banner informativo dentro do Pop-up
+        // Banner de Alerta de Alterações no Modal
         modalNoticeContainer.innerHTML = '';
         if (isPendingApproval) {
           modalNoticeContainer.innerHTML = `
-            <div class="modal-notice-card notice-warning">
-              <div class="notice-top">
-                <span class="notice-icon">⚠️</span>
-                <div class="notice-desc">
-                  <strong>Atenção: A RSTK ajustou itens deste pedido por disponibilidade em estoque</strong>
-                  <p>Veja os itens em destaque amarelo ou vermelho abaixo. O valor total atualizado é <strong>${formatBRL(order.totalCents)}</strong>.</p>
-                  ${order.adminNotes ? `<p class="admin-quote"><strong>Mensagem da RSTK:</strong> "${escapeHtml(order.adminNotes)}"</p>` : ''}
+            <div class="admin-notice-box notice-box-amber">
+              <div class="notice-flex-row">
+                <span class="notice-symbol">⚠️</span>
+                <div>
+                  <strong>Atenção: A equipe RSTK realizou alterações neste pedido</strong>
+                  <p>Houve ajuste na composição por disponibilidade de estoque. Confira os itens em destaque abaixo. O valor total atualizado é <strong>${formatBRL(order.totalCents)}</strong>.</p>
+                  ${order.adminNotes ? `<p class="admin-quote-note"><em>Mensagem da RSTK: "${escapeHtml(order.adminNotes)}"</em></p>` : ''}
                 </div>
               </div>
             </div>
@@ -518,10 +584,10 @@ const siteSettings = {
           modalApproveBtn.style.display = 'inline-flex';
         } else if (isChangesApproved) {
           modalNoticeContainer.innerHTML = `
-            <div class="modal-notice-card notice-success">
-              <div class="notice-top">
-                <span class="notice-icon">✓</span>
-                <div class="notice-desc">
+            <div class="admin-notice-box notice-box-teal">
+              <div class="notice-flex-row">
+                <span class="notice-symbol">✓</span>
+                <div>
                   <strong>Alterações aprovadas pela sua loja!</strong>
                   <p>Você confirmou a composição atualizada deste pedido${order.clientApprovedAt ? ' em ' + formatDateTimeBR(order.clientApprovedAt) : ''}. A equipe RSTK foi notificada para despachar.</p>
                 </div>
@@ -532,10 +598,10 @@ const siteSettings = {
           modalApproveBtn.style.display = 'none';
         } else if (isDispatched) {
           modalNoticeContainer.innerHTML = `
-            <div class="modal-notice-card notice-dispatched">
-              <div class="notice-top">
-                <span class="notice-icon">🚚</span>
-                <div class="notice-desc">
+            <div class="admin-notice-box notice-box-purple">
+              <div class="notice-flex-row">
+                <span class="notice-symbol">🚚</span>
+                <div>
                   <strong>Pedido Despachado com Sucesso!</strong>
                   <p>Seus vinis já foram despachados pela equipe RSTK${order.dispatchedAt ? ' em ' + formatDateTimeBR(order.dispatchedAt) : ''}.</p>
                 </div>
@@ -544,37 +610,9 @@ const siteSettings = {
           `;
           modalApproveBtn.hidden = true;
           modalApproveBtn.style.display = 'none';
-        } else if (isApprovedClean) {
-          modalNoticeContainer.innerHTML = `
-            <div class="modal-notice-card notice-success">
-              <div class="notice-top">
-                <span class="notice-icon">✓</span>
-                <div class="notice-desc">
-                  <strong>Pedido 100% Aprovado pela RSTK!</strong>
-                  <p>Todos os itens solicitados foram confirmados em estoque e estão em fase de separação.</p>
-                </div>
-              </div>
-            </div>
-          `;
-          modalApproveBtn.hidden = true;
-          modalApproveBtn.style.display = 'none';
-        } else {
-          modalNoticeContainer.innerHTML = `
-            <div class="modal-notice-card notice-info">
-              <div class="notice-top">
-                <span class="notice-icon">📋</span>
-                <div class="notice-desc">
-                  <strong>Pedido Enviado — Em Análise pela RSTK</strong>
-                  <p>Nossa equipe está conferindo os títulos e estoque para faturamento. Qualquer atualização aparecerá aqui.</p>
-                </div>
-              </div>
-            </div>
-          `;
-          modalApproveBtn.hidden = true;
-          modalApproveBtn.style.display = 'none';
         }
 
-        // Renderiza itens dentro do Pop-up (capa bem pequena, dados limpos, destaques de alteração)
+        // Renderiza itens dentro do Pop-up (Layout Idêntico ao Admin)
         modalDiscsList.innerHTML = '';
         (order.items || []).forEach(function (it) {
           var change = changesMap[String(it.id)] || (it.title ? changesMap[it.title.toLowerCase().trim()] : null);
@@ -597,72 +635,63 @@ const siteSettings = {
           var rowDiv = document.createElement('div');
 
           if (isCancelled) {
-            rowDiv.className = 'modal-disc-row disc-row-cancelled';
+            rowDiv.className = 'admin-item-row row-cancelled';
             var originalReq = (change && change.oldQty) ? change.oldQty : (it.requestedQuantity || 1);
             rowDiv.innerHTML = `
-              <div class="disc-row-left">
-                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="disc-thumb" loading="lazy" />
-                <div class="disc-info">
-                  <div class="disc-title-line">
-                    <strong class="title-cancelled"><s>${escapeHtml(it.title || 'Disco de Vinil')}</s></strong>
-                    <span class="tag-cancelled">🚫 Cancelado — Esgotado</span>
-                  </div>
-                  <span class="disc-sub">${escapeHtml(it.artist || 'Artista')} · ${albumFormat}</span>
+              <div class="item-left-block">
+                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="admin-item-thumb" loading="lazy" />
+                <div class="item-meta-block">
+                  <p class="item-title-text line-through-text"><s>${escapeHtml(it.title || 'Disco de Vinil')}</s></p>
+                  <p class="item-sub-text">${escapeHtml(it.artist || 'Artista')} · ${albumFormat} · ${formatBRL(unitPrice)} un.</p>
+                  <span class="tag-status-pill tag-red">🚫 Cancelado — Esgotado no estoque</span>
                 </div>
               </div>
-              <div class="disc-row-right">
-                <div class="disc-qty-col">
-                  <span class="qty-badge-cancelled">0 un.</span>
-                  <span class="qty-sub-cancelled">Solicitado: ${originalReq} un.</span>
+              <div class="item-right-block">
+                <div class="item-qty-box">
+                  <span class="qty-badge-admin qty-zero">0 un.</span>
+                  <span class="qty-sub-alert">Solicitado: ${originalReq} un.</span>
                 </div>
-                <div class="disc-price-col">
+                <div class="item-price-box">
                   <del class="old-price-strike">${formatBRL(unitPrice * originalReq)}</del>
-                  <strong class="price-cancelled">R$ 0,00</strong>
+                  <strong class="item-price-val text-red">R$ 0,00</strong>
                 </div>
               </div>
             `;
           } else if (isModified) {
-            rowDiv.className = 'modal-disc-row disc-row-modified';
+            rowDiv.className = 'admin-item-row row-modified';
             rowDiv.innerHTML = `
-              <div class="disc-row-left">
-                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="disc-thumb" loading="lazy" />
-                <div class="disc-info">
-                  <div class="disc-title-line">
-                    <strong>${escapeHtml(it.title || 'Disco de Vinil')}</strong>
-                    <span class="tag-modified">⚠️ Qtd alterada por estoque</span>
-                  </div>
-                  <span class="disc-sub">${escapeHtml(it.artist || 'Artista')} · ${albumFormat}</span>
+              <div class="item-left-block">
+                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="admin-item-thumb" loading="lazy" />
+                <div class="item-meta-block">
+                  <p class="item-title-text">${escapeHtml(it.title || 'Disco de Vinil')}</p>
+                  <p class="item-sub-text">${escapeHtml(it.artist || 'Artista')} · ${albumFormat} · ${formatBRL(unitPrice)} un.</p>
+                  <span class="tag-status-pill tag-amber">⚠️ Qtd alterada de ${change.oldQty} para ${it.quantity} un.</span>
                 </div>
               </div>
-              <div class="disc-row-right">
-                <div class="disc-qty-col">
-                  <span class="qty-badge-modified">${currentQty} un.</span>
-                  <span class="qty-sub-modified">De ${change.oldQty} un. para ${currentQty} un.</span>
+              <div class="item-right-block">
+                <div class="item-qty-box">
+                  <span class="qty-badge-admin qty-adjusted">${it.quantity} un.</span>
+                  <span class="qty-sub-alert">Solicitado: ${change.oldQty} un.</span>
                 </div>
-                <div class="disc-price-col">
-                  <span class="disc-unit-price">${formatBRL(unitPrice)} un.</span>
-                  <strong class="price-modified">${formatBRL(itemTotal)}</strong>
+                <div class="item-price-box">
+                  <span class="item-price-unit">${formatBRL(unitPrice)} un.</span>
+                  <strong class="item-price-val text-amber">${formatBRL(itemTotal)}</strong>
                 </div>
               </div>
             `;
           } else {
-            rowDiv.className = 'modal-disc-row disc-row-normal';
+            rowDiv.className = 'admin-item-row row-normal';
             rowDiv.innerHTML = `
-              <div class="disc-row-left">
-                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="disc-thumb" loading="lazy" />
-                <div class="disc-info">
-                  <strong class="disc-title">${escapeHtml(it.title || 'Disco de Vinil')}</strong>
-                  <span class="disc-sub">${escapeHtml(it.artist || 'Artista')} · ${albumFormat}</span>
+              <div class="item-left-block">
+                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="admin-item-thumb" loading="lazy" />
+                <div class="item-meta-block">
+                  <p class="item-title-text">${escapeHtml(it.title || 'Disco de Vinil')}</p>
+                  <p class="item-sub-text">${escapeHtml(it.artist || 'Artista')} · ${albumFormat} · ${formatBRL(unitPrice)} un.</p>
                 </div>
               </div>
-              <div class="disc-row-right">
-                <div class="disc-qty-col">
-                  <span class="qty-badge-normal">${currentQty} un.</span>
-                </div>
-                <div class="disc-price-col">
-                  <span class="disc-unit-price">${formatBRL(unitPrice)} un.</span>
-                  <strong class="price-normal">${formatBRL(itemTotal)}</strong>
-                </div>
+              <div class="item-right-block">
+                <span class="qty-badge-admin">${it.quantity} un.</span>
+                <strong class="item-price-val text-brand">${formatBRL(itemTotal)}</strong>
               </div>
             `;
           }
@@ -839,7 +868,7 @@ const siteSettings = {
       padding: 32px 16px 80px;
       display: flex;
       justify-content: center;
-      background: var(--bg);
+      background: #F7F9FB;
     }
 
     .portal-container {
@@ -852,8 +881,8 @@ const siteSettings = {
 
     /* Header */
     .portal-header {
-      background: var(--panel);
-      border: 1px solid var(--line);
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 16px;
       padding: 22px 28px;
       display: flex;
@@ -861,7 +890,7 @@ const siteSettings = {
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 16px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
     .badge-b2b {
@@ -880,13 +909,13 @@ const siteSettings = {
     .portal-welcome h1 {
       font-size: 22px;
       font-weight: 850;
-      color: var(--ink);
+      color: #0F172A;
       margin: 0 0 4px;
     }
 
     .client-sub {
       font-size: 13px;
-      color: var(--muted);
+      color: #64748B;
       margin: 0;
     }
 
@@ -916,8 +945,8 @@ const siteSettings = {
 
     .btn-logout-portal {
       background: transparent;
-      border: 1px solid var(--line);
-      color: var(--muted);
+      border: 1px solid #E2E8F0;
+      color: #64748B;
       font-size: 13px;
       font-weight: 700;
       padding: 9px 16px;
@@ -939,7 +968,7 @@ const siteSettings = {
     .alert-box[hidden],
     .orders-loading[hidden],
     .orders-empty[hidden],
-    .orders-table-card[hidden],
+    .orders-card-admin[hidden],
     .modal-backdrop[hidden] {
       display: none !important;
     }
@@ -1018,11 +1047,6 @@ const siteSettings = {
       box-shadow: 0 4px 12px rgba(8, 102, 200, 0.1);
     }
 
-    html[data-theme="dark"] .pending-cart-card {
-      background: rgba(8, 102, 200, 0.15);
-      border-color: #38bdf8;
-    }
-
     .pending-cart-left {
       display: flex;
       align-items: center;
@@ -1043,14 +1067,10 @@ const siteSettings = {
       margin-bottom: 2px;
     }
 
-    html[data-theme="dark"] .pending-cart-card strong {
-      color: #38bdf8;
-    }
-
     .pending-cart-card p {
       margin: 0;
       font-size: 13px;
-      color: var(--ink);
+      color: #0F172A;
       opacity: 0.85;
     }
 
@@ -1076,86 +1096,11 @@ const siteSettings = {
       transform: translateY(-1px);
     }
 
-    /* Orders Section Header */
-    .portal-content {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    .orders-section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 14px;
-    }
-
-    .orders-title-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .orders-section-header h2 {
-      font-size: 20px;
-      font-weight: 850;
-      color: var(--ink);
-      margin: 0;
-    }
-
-    .orders-count-badge {
-      display: inline-block;
-      background: var(--panel2);
-      border: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 11.5px;
-      font-weight: 750;
-      padding: 3px 10px;
-      border-radius: 999px;
-    }
-
-    .orders-section-header p {
-      font-size: 13px;
-      color: var(--muted);
-      margin: 4px 0 0;
-    }
-
-    .btn-refresh {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      color: var(--ink);
-      font-size: 12.5px;
-      font-weight: 700;
-      padding: 7px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-refresh:hover {
-      border-color: #0866c8;
-      color: #0866c8;
-    }
-
-    .refresh-icon {
-      font-size: 14px;
-      display: inline-block;
-      transition: transform 0.4s ease;
-    }
-
-    .btn-refresh.rotating .refresh-icon {
-      transform: rotate(360deg);
-    }
-
     /* Loading & Empty */
     .orders-loading,
     .orders-empty {
-      background: var(--panel);
-      border: 1px solid var(--line);
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 16px;
       padding: 48px 24px;
       text-align: center;
@@ -1168,13 +1113,13 @@ const siteSettings = {
 
     .orders-empty h3 {
       font-size: 18px;
-      color: var(--ink);
+      color: #0F172A;
       margin: 0 0 6px;
     }
 
     .orders-empty p {
       font-size: 13.5px;
-      color: var(--muted);
+      color: #64748B;
       max-width: 480px;
       margin: 0 auto 20px;
       line-height: 1.5;
@@ -1200,7 +1145,7 @@ const siteSettings = {
     .spinner {
       width: 32px;
       height: 32px;
-      border: 3px solid var(--line);
+      border: 3px solid #E2E8F0;
       border-top-color: #0866c8;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -1224,14 +1169,79 @@ const siteSettings = {
     }
 
     /* ========================================================
-       TABELA DE PEDIDOS PROFISSIONAL (1 LINHA POR PEDIDO)
+       CARD DA TABELA DE PEDIDOS IDÊNTICO AO ADMIN
        ======================================================== */
-    .orders-table-card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 14px;
+    .orders-card-admin {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
       overflow: hidden;
-      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .orders-card-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #E2E8F0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .orders-card-title {
+      font-size: 16px;
+      font-weight: 750;
+      color: #0F172A;
+      margin: 0 0 2px 0;
+    }
+
+    .orders-card-sub {
+      font-size: 12px;
+      color: #64748B;
+      margin: 0;
+    }
+
+    .orders-card-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .orders-count-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748B;
+    }
+
+    .btn-refresh-admin {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      color: #0F172A;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-refresh-admin:hover {
+      background: #F7F9FB;
+      border-color: #0866c8;
+      color: #0866c8;
+    }
+
+    .refresh-icon {
+      display: inline-block;
+      transition: transform 0.4s ease;
+    }
+
+    .btn-refresh-admin.rotating .refresh-icon {
+      transform: rotate(360deg);
     }
 
     .orders-table-scroll {
@@ -1239,185 +1249,268 @@ const siteSettings = {
       overflow-x: auto;
     }
 
-    .orders-table {
+    .admin-orders-table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 13.5px;
+      font-size: 14px;
     }
 
-    .orders-table thead tr {
-      background: var(--panel2);
-      border-bottom: 1px solid var(--line);
+    .admin-orders-table thead tr {
+      background: #F7F9FB;
+      border-bottom: 1px solid #E2E8F0;
     }
 
-    .orders-table th {
-      padding: 14px 18px;
+    .admin-orders-table th {
+      padding: 12px 16px;
       font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.6px;
-      color: var(--muted);
+      color: #64748B;
       white-space: nowrap;
     }
 
-    .orders-table tbody tr.order-row {
-      border-bottom: 1px solid var(--line);
-      cursor: pointer;
+    .admin-orders-table tbody tr.admin-row-item {
+      border-bottom: 1px solid #E2E8F0;
       transition: background 0.15s ease;
+      cursor: pointer;
     }
 
-    .orders-table tbody tr.order-row:last-child {
+    .admin-orders-table tbody tr.admin-row-item:last-child {
       border-bottom: none;
     }
 
-    .orders-table tbody tr.order-row:hover {
-      background: rgba(8, 102, 200, 0.04);
+    .admin-orders-table tbody tr.admin-row-item:hover {
+      background: #F7F9FB;
     }
 
-    .orders-table td {
-      padding: 16px 18px;
+    .admin-orders-table td {
+      padding: 12px 16px;
       vertical-align: middle;
-      color: var(--ink);
     }
 
-    /* Células da Tabela */
-    .td-code .order-code-badge {
+    /* Colunas da Linha */
+    .td-order-code .order-code-link {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 13.5px;
+      font-size: 12px;
       font-weight: 800;
-      color: #0866c8;
-      background: rgba(8, 102, 200, 0.08);
-      padding: 4px 8px;
+      color: #006782;
+      text-decoration: none;
+      display: block;
+    }
+
+    .td-order-code .order-code-link:hover {
+      text-decoration: underline;
+    }
+
+    .td-order-code .order-date-sub {
+      font-size: 11px;
+      color: #64748B;
+      display: block;
+      margin-top: 2px;
+      white-space: nowrap;
+    }
+
+    /* Coluna Itens com Capas Sobrepostas */
+    .items-cell-flex {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .covers-overlap-stack {
+      display: flex;
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
+
+    .item-stack-thumb {
+      width: 32px;
+      height: 32px;
       border-radius: 6px;
-      display: inline-block;
+      object-fit: cover;
+      border: 1px solid #FFFFFF;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-right: -8px;
+      background: #F7F9FB;
+    }
+
+    .items-meta-text {
+      min-width: 0;
+      max-width: 170px;
+    }
+
+    .items-title-first {
+      font-size: 12px;
+      font-weight: 600;
+      color: #0F172A;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin: 0;
     }
 
-    .td-date .order-date-text {
-      font-size: 12.5px;
-      color: var(--muted);
-      white-space: nowrap;
+    .items-total-qty {
+      font-size: 11px;
+      color: #64748B;
+      display: block;
     }
 
-    .td-qty .qty-pill {
-      font-size: 12.5px;
-      color: var(--ink);
-      white-space: nowrap;
-    }
-
-    .td-qty .qty-pill strong {
-      color: #0866c8;
-      font-weight: 800;
-    }
-
-    .td-total .total-val {
-      font-size: 14.5px;
+    .td-total-col .total-price-admin {
+      font-size: 13.5px;
       font-weight: 850;
-      color: var(--ink);
+      color: #006782;
       white-space: nowrap;
     }
 
-    /* Badges de Status */
-    .badge-status-pill {
+    /* BADGES COLORIDOS DE STATUS (IDÊNTICO AO ADMIN) */
+    .admin-status-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 12px;
+      padding: 4px 10px;
       border-radius: 999px;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 750;
       width: fit-content;
       white-space: nowrap;
     }
 
-    .badge-status-dot {
-      width: 7px;
-      height: 7px;
+    .admin-status-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: currentColor;
     }
 
-    .badge-status-enviado {
-      background: #EFF6FF;
-      color: #1D4ED8;
-      border: 1px solid #BFDBFE;
+    /* Roxo: Despachado */
+    .badge-purple {
+      background: #FAF5FF;
+      color: #7E22CE;
+      border: 1px solid #E9D5FF;
+    }
+    .dot-purple {
+      background: #A855F7;
     }
 
-    .badge-status-aprovado {
+    /* Azul Céu: Enviado / Em Análise */
+    .badge-sky {
+      background: #F0F9FF;
+      color: #0369A1;
+      border: 1px solid #BAE6FD;
+    }
+    .dot-sky {
+      background: #0284C7;
+    }
+
+    /* Verde Esmeralda: Aprovado */
+    .badge-emerald {
       background: #ECFDF5;
       color: #047857;
       border: 1px solid #A7F3D0;
     }
+    .dot-emerald {
+      background: #10B981;
+    }
 
-    .badge-status-alteracoes {
+    /* Âmbar: Aprovado com Alterações */
+    .badge-amber {
       background: #FFFBEB;
       color: #B45309;
       border: 1px solid #FDE68A;
-      animation: pulseAttention 2s infinite ease-in-out;
+    }
+    .dot-amber {
+      background: #F59E0B;
     }
 
-    @keyframes pulseAttention {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-      50% { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15); }
+    /* Verde Água / Teal: Alterações Aprovadas */
+    .badge-teal {
+      background: #F0FDFA;
+      color: #0F766E;
+      border: 1px solid #99F6E4;
+    }
+    .dot-teal {
+      background: #14B8A6;
     }
 
-    .badge-status-aceito {
-      background: #F0FDF4;
-      color: #15803D;
-      border: 1px solid #BBF7D0;
-    }
-
-    .badge-status-despachado {
-      background: #F5F3FF;
-      color: #6D28D9;
-      border: 1px solid #DDD6FE;
-    }
-
-    .badge-status-cancelado {
+    /* Vermelho: Cancelado */
+    .badge-red {
       background: #FEF2F2;
       color: #B91C1C;
       border: 1px solid #FECACA;
     }
+    .dot-red {
+      background: #EF4444;
+    }
 
-    /* Botão Ver Detalhes */
-    .btn-open-order {
-      display: inline-flex;
+    /* Botões na Coluna de Ações */
+    .row-actions-group {
+      display: flex;
       align-items: center;
+      justify-content: flex-end;
       gap: 6px;
-      background: #0866c8;
-      color: #ffffff !important;
-      border: none;
-      font-size: 12px;
-      font-weight: 750;
-      padding: 7px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
       white-space: nowrap;
     }
 
-    .btn-open-order:hover {
-      background: #0652a1 !important;
-      transform: translateY(-1px);
+    .btn-row-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #25D366 !important;
+      color: #ffffff !important;
+      font-size: 11.5px;
+      font-weight: 750;
+      padding: 6px 11px;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(37, 211, 102, 0.2);
     }
 
-    .arrow-icon {
-      font-size: 13px;
+    .btn-row-whatsapp:hover {
+      background: #1ebe5d !important;
+      color: #ffffff !important;
+    }
+
+    .btn-row-details-blue {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #0866c8 !important;
+      color: #ffffff !important;
+      border: none;
+      font-size: 11.5px;
+      font-weight: 750;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(8, 102, 200, 0.2);
+    }
+
+    .btn-row-details-blue:hover {
+      background: #0652a1 !important;
+      color: #ffffff !important;
+      transform: translateY(-1px);
     }
 
     .text-right {
       text-align: right;
     }
 
+    .w-3-5 {
+      width: 14px;
+      height: 14px;
+    }
+
     /* ========================================================
-       MODAL / POP-UP DE DETALHES DO PEDIDO
+       MODAL / POP-UP DE GESTÃO DO PEDIDO (IDENTICO AO ADMIN)
        ======================================================== */
     .modal-backdrop {
       position: fixed;
       inset: 0;
       z-index: 9999;
-      background: rgba(15, 23, 42, 0.65);
+      background: rgba(15, 23, 42, 0.6);
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
       display: flex;
@@ -1432,12 +1525,12 @@ const siteSettings = {
       to { opacity: 1; }
     }
 
-    .modal-container {
-      background: var(--panel);
-      border: 1px solid var(--line);
+    .modal-admin-window {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 16px;
       width: 100%;
-      max-width: 680px;
+      max-width: 670px;
       max-height: 90vh;
       display: flex;
       flex-direction: column;
@@ -1451,199 +1544,213 @@ const siteSettings = {
       to { transform: scale(1); opacity: 1; }
     }
 
-    /* Modal Header */
-    .modal-header {
-      background: var(--panel2);
-      border-bottom: 1px solid var(--line);
-      padding: 18px 24px;
+    .modal-admin-header {
+      background: #F7F9FB;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 16px 24px;
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
-      gap: 16px;
       flex-shrink: 0;
     }
 
     .modal-eyebrow {
       font-size: 11px;
-      font-weight: 800;
+      font-weight: 750;
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      color: #0866c8;
+      color: #64748B;
       display: block;
-      margin-bottom: 2px;
     }
 
-    .modal-title {
-      font-size: 19px;
+    .modal-order-code {
+      font-size: 16px;
       font-weight: 850;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      color: var(--ink);
-      margin: 0;
+      color: #0F172A;
+      margin: 2px 0 0 0;
     }
 
-    .modal-date {
-      font-size: 12px;
-      color: var(--muted);
-      display: block;
-      margin-top: 2px;
-    }
-
-    .modal-close {
+    .modal-close-icon {
       background: transparent;
-      border: 1px solid var(--line);
-      color: var(--muted);
+      border: none;
+      color: #64748B;
       width: 32px;
       height: 32px;
       border-radius: 8px;
-      font-size: 15px;
+      font-size: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
+      transition: all 0.15s ease;
     }
 
-    .modal-close:hover {
-      background: rgba(247, 86, 86, 0.1);
-      border-color: #F75656;
-      color: #F75656;
+    .modal-close-icon:hover {
+      background: #E2E8F0;
+      color: #0F172A;
     }
 
     /* Modal Body (Scrollable) */
-    .modal-body {
+    .modal-admin-body {
       padding: 20px 24px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 18px;
-      background: var(--bg);
+      gap: 16px;
+      background: #FFFFFF;
     }
 
-    /* Notice Card dentro do Modal */
-    .modal-notice-card {
+    /* Barra de Status Atual */
+    .modal-status-bar {
+      background: #F7F9FB;
+      border: 1px solid #E2E8F0;
       border-radius: 12px;
       padding: 14px 18px;
-      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
-    .notice-top {
+    .status-bar-caption {
+      font-size: 11px;
+      color: #64748B;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .status-bar-date-col {
+      text-align: right;
+    }
+
+    .status-bar-date-val {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #0F172A;
+    }
+
+    /* Avisos de Alteração */
+    .admin-notice-box {
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 12.5px;
+    }
+
+    .notice-flex-row {
       display: flex;
       gap: 12px;
       align-items: flex-start;
     }
 
-    .notice-icon {
+    .notice-symbol {
       font-size: 18px;
       flex-shrink: 0;
-      line-height: 1.2;
     }
 
-    .notice-desc strong {
+    .admin-notice-box strong {
       display: block;
       font-size: 13.5px;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
 
-    .notice-desc p {
+    .admin-notice-box p {
       margin: 0;
-      font-size: 12.5px;
-      line-height: 1.5;
+      line-height: 1.45;
     }
 
-    .admin-quote {
+    .admin-quote-note {
       margin-top: 6px !important;
       padding: 6px 10px;
-      background: rgba(0, 0, 0, 0.05);
       border-radius: 6px;
+      background: rgba(0, 0, 0, 0.05);
       font-style: italic;
     }
 
-    .notice-warning {
+    .notice-box-amber {
       background: #FFFBEB;
       border: 1px solid #FCD34D;
       color: #78350F;
     }
 
-    .notice-success {
-      background: #ECFDF5;
-      border: 1px solid #A7F3D0;
-      color: #065F46;
+    .notice-box-teal {
+      background: #F0FDFA;
+      border: 1px solid #99F6E4;
+      color: #0F766E;
     }
 
-    .notice-dispatched {
-      background: #F5F3FF;
-      border: 1px solid #DDD6FE;
-      color: #4C1D95;
+    .notice-box-purple {
+      background: #FAF5FF;
+      border: 1px solid #E9D5FF;
+      color: #6B21A8;
     }
 
-    .notice-info {
-      background: #EFF6FF;
-      border: 1px solid #BFDBFE;
-      color: #1E3A8A;
-    }
-
-    /* Seção de Discos no Modal */
-    .modal-discs-section {
+    /* Card de Itens do Pedido */
+    .modal-items-container {
       display: flex;
       flex-direction: column;
-      gap: 10px;
     }
 
-    .modal-discs-header {
+    .modal-items-top-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 8px;
     }
 
-    .modal-discs-header h4 {
-      font-size: 14px;
+    .modal-items-heading {
+      font-size: 11px;
       font-weight: 800;
-      color: var(--ink);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748B;
       margin: 0;
     }
 
-    .modal-count-badge {
-      font-size: 11.5px;
-      color: var(--muted);
-      font-weight: 700;
+    .modal-items-total-tag {
+      font-size: 12px;
+      font-weight: 750;
+      color: #006782;
     }
 
-    .modal-discs-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    .modal-items-divide-list {
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #FFFFFF;
     }
 
-    /* Linha do Disco (Capa bem pequena, dados limpos) */
-    .modal-disc-row {
+    .admin-item-row {
+      padding: 12px 16px;
+      border-bottom: 1px solid #E2E8F0;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 14px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      transition: background 0.15s ease;
     }
 
-    .disc-row-normal {
-      background: var(--panel);
-      border: 1px solid var(--line);
+    .admin-item-row:last-child {
+      border-bottom: none;
     }
 
-    /* Item Cancelado em Vermelho */
-    .disc-row-cancelled {
+    .row-normal {
+      background: #FFFFFF;
+    }
+
+    /* Linha Cancelada (vermelho suave com borda esquerda) */
+    .row-cancelled {
       background: #FEF2F2 !important;
-      border: 1.5px solid #F87171 !important;
+      border-left: 4px solid #EF4444 !important;
     }
 
-    /* Item Modificado em Amarelo */
-    .disc-row-modified {
+    /* Linha Modificada (amarelo suave com borda esquerda) */
+    .row-modified {
       background: #FFFBEB !important;
-      border: 1.5px solid #FBBF24 !important;
+      border-left: 4px solid #F59E0B !important;
     }
 
-    .disc-row-left {
+    .item-left-block {
       display: flex;
       align-items: center;
       gap: 12px;
@@ -1651,75 +1758,69 @@ const siteSettings = {
       min-width: 0;
     }
 
-    /* Capa bem pequena como solicitado */
-    .disc-thumb {
-      width: 42px;
-      height: 42px;
-      border-radius: 6px;
+    .admin-item-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
       object-fit: cover;
+      border: 1px solid #E2E8F0;
       flex-shrink: 0;
-      border: 1px solid var(--line);
-      background: var(--panel2);
+      background: #F7F9FB;
     }
 
-    .disc-info {
+    .item-meta-block {
       flex: 1;
       min-width: 0;
     }
 
-    .disc-title-line {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 2px;
-    }
-
-    .disc-title {
+    .item-title-text {
       font-size: 13.5px;
-      font-weight: 800;
-      color: var(--ink);
+      font-weight: 750;
+      color: #0F172A;
+      margin: 0 0 2px 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 100%;
     }
 
-    .title-cancelled s {
-      font-size: 13.5px;
-      color: #991B1B;
+    .line-through-text {
+      text-decoration: line-through;
+      color: #B91C1C;
       opacity: 0.8;
     }
 
-    .disc-sub {
+    .item-sub-text {
       font-size: 11.5px;
-      color: var(--muted);
-      display: block;
+      color: #64748B;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .tag-cancelled {
-      font-size: 10.5px;
+    .tag-status-pill {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 10px;
       font-weight: 800;
-      background: #FEE2E2;
-      color: #991B1B;
-      border: 1px solid #FCA5A5;
-      padding: 1px 6px;
+      padding: 2px 7px;
       border-radius: 4px;
       white-space: nowrap;
     }
 
-    .tag-modified {
-      font-size: 10.5px;
-      font-weight: 800;
+    .tag-red {
+      background: #FEE2E2;
+      color: #B91C1C;
+      border: 1px solid #FCA5A5;
+    }
+
+    .tag-amber {
       background: #FEF3C7;
       color: #92400E;
       border: 1px solid #FCD34D;
-      padding: 1px 6px;
-      border-radius: 4px;
-      white-space: nowrap;
     }
 
-    .disc-row-right {
+    .item-right-block {
       display: flex;
       align-items: center;
       gap: 18px;
@@ -1727,118 +1828,101 @@ const siteSettings = {
       text-align: right;
     }
 
-    .disc-qty-col {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
+    .qty-badge-admin {
+      background: #F7F9FB;
+      border: 1px solid #E2E8F0;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 750;
+      color: #0F172A;
     }
 
-    .qty-badge-normal {
-      background: var(--panel2);
-      border: 1px solid var(--line);
-      padding: 3px 8px;
-      border-radius: 5px;
-      font-size: 11.5px;
-      font-weight: 800;
-      color: var(--ink);
-    }
-
-    .qty-badge-modified {
+    .qty-adjusted {
       background: #FEF3C7;
-      border: 1px solid #F59E0B;
-      padding: 3px 8px;
-      border-radius: 5px;
-      font-size: 11.5px;
-      font-weight: 850;
+      border-color: #FCD34D;
       color: #92400E;
     }
 
-    .qty-sub-modified {
-      font-size: 10px;
-      font-weight: 700;
-      color: #B45309;
-      margin-top: 1px;
-    }
-
-    .qty-badge-cancelled {
+    .qty-zero {
       background: #FEE2E2;
-      border: 1px solid #EF4444;
-      padding: 3px 8px;
-      border-radius: 5px;
-      font-size: 11.5px;
-      font-weight: 850;
-      color: #991B1B;
+      border-color: #FCA5A5;
+      color: #B91C1C;
     }
 
-    .qty-sub-cancelled {
-      font-size: 10px;
-      font-weight: 700;
-      color: #DC2626;
-      margin-top: 1px;
-      text-decoration: line-through;
-    }
-
-    .disc-price-col {
+    .item-qty-box {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      min-width: 80px;
     }
 
-    .disc-unit-price {
+    .qty-sub-alert {
+      font-size: 10px;
+      font-weight: 700;
+      color: #B45309;
+      margin-top: 2px;
+    }
+
+    .item-price-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      min-width: 75px;
+    }
+
+    .item-price-unit {
       font-size: 10.5px;
-      color: var(--muted);
+      color: #64748B;
     }
 
-    .price-normal {
+    .item-price-val {
       font-size: 13.5px;
       font-weight: 850;
-      color: #0866c8;
     }
 
-    .price-modified {
-      font-size: 13.5px;
-      font-weight: 850;
+    .text-brand {
+      color: #006782;
+    }
+
+    .text-amber {
       color: #B45309;
     }
 
-    .price-cancelled {
-      font-size: 13.5px;
-      font-weight: 850;
-      color: #991B1B;
+    .text-red {
+      color: #B91C1C;
     }
 
     .old-price-strike {
       font-size: 10.5px;
-      color: #991B1B;
+      color: #B91C1C;
       opacity: 0.7;
     }
 
     /* Observações */
-    .modal-notes-box {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 12.5px;
+    .modal-admin-notes {
+      background: #F7F9FB;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
     }
 
-    .modal-notes-label {
+    .notes-caption {
       font-weight: 750;
-      color: var(--muted);
+      color: #0F172A;
       display: block;
       margin-bottom: 2px;
     }
 
-    .modal-notes-text {
+    .notes-val {
       margin: 0;
-      color: var(--ink);
+      color: #64748B;
     }
 
     /* Modal Footer */
-    .modal-footer {
-      background: var(--panel);
-      border-top: 1px solid var(--line);
+    .modal-admin-footer {
+      background: #F7F9FB;
+      border-top: 1px solid #E2E8F0;
       padding: 16px 24px;
       display: flex;
       align-items: center;
@@ -1848,89 +1932,88 @@ const siteSettings = {
       flex-shrink: 0;
     }
 
-    .modal-footer-caption {
-      font-size: 12px;
-      color: var(--muted);
+    .modal-footer-total-box .caption {
+      font-size: 11px;
+      color: #64748B;
       display: block;
     }
 
-    .modal-footer-total {
-      font-size: 19px;
+    .modal-footer-total-box .total-val {
+      font-size: 18px;
       font-weight: 900;
-      color: #0866c8;
+      color: #006782;
     }
 
-    .modal-footer-actions {
+    .modal-footer-btn-group {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
-    .btn-modal-whatsapp {
+    .btn-admin-whatsapp {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       background: #25D366 !important;
       color: #ffffff !important;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 750;
-      padding: 9px 16px;
-      border-radius: 7px;
+      padding: 8px 16px;
+      border-radius: 8px;
       text-decoration: none;
       transition: all 0.2s ease;
-      box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);
+      box-shadow: 0 1px 3px rgba(37, 211, 102, 0.25);
     }
 
-    .btn-modal-whatsapp:hover {
+    .btn-admin-whatsapp:hover {
       background: #1ebe5d !important;
       color: #ffffff !important;
-      transform: translateY(-1px);
     }
 
-    .btn-modal-approve {
+    .btn-admin-approve {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       background: #0866c8 !important;
       color: #ffffff !important;
       border: none;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 800;
-      padding: 9px 18px;
-      border-radius: 7px;
+      padding: 8px 18px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
-      box-shadow: 0 2px 6px rgba(8, 102, 200, 0.3);
+      box-shadow: 0 2px 6px rgba(8, 102, 200, 0.25);
     }
 
-    .btn-modal-approve:hover {
+    .btn-admin-approve:hover {
       background: #0652a1 !important;
       color: #ffffff !important;
       transform: translateY(-1px);
     }
 
-    .btn-modal-approve:disabled {
+    .btn-admin-approve:disabled {
       opacity: 0.75;
       cursor: not-allowed;
       transform: none;
     }
 
-    .btn-modal-close {
-      background: transparent;
-      border: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 13px;
+    .btn-admin-close {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      color: #64748B;
+      font-size: 12.5px;
       font-weight: 700;
       padding: 8px 14px;
-      border-radius: 7px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
-    .btn-modal-close:hover {
-      background: var(--panel2);
-      color: var(--ink);
+    .btn-admin-close:hover {
+      background: #E2E8F0;
+      color: #0F172A;
     }
 
     .w-4 {
@@ -1951,34 +2034,34 @@ const siteSettings = {
         width: 100%;
         justify-content: space-between;
       }
-      .modal-container {
+      .modal-admin-window {
         max-height: 95vh;
       }
-      .modal-header,
-      .modal-body,
-      .modal-footer {
-        padding: 16px 18px;
+      .modal-admin-header,
+      .modal-admin-body,
+      .modal-admin-footer {
+        padding: 14px 16px;
       }
-      .modal-footer {
+      .modal-admin-footer {
         flex-direction: column;
         align-items: stretch;
       }
-      .modal-footer-actions {
+      .modal-footer-btn-group {
         width: 100%;
         flex-direction: column;
       }
-      .modal-footer-actions > * {
+      .modal-footer-btn-group > * {
         width: 100%;
         justify-content: center;
       }
-      .modal-disc-row {
+      .admin-item-row {
         flex-direction: column;
         align-items: flex-start;
       }
-      .disc-row-right {
+      .item-right-block {
         width: 100%;
         justify-content: space-between;
-        border-top: 1px dashed var(--line);
+        border-top: 1px dashed #E2E8F0;
         padding-top: 8px;
       }
     }

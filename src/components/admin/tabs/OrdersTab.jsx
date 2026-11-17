@@ -729,7 +729,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                       className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
                       title="Aprova o pedido sem alterações"
                     >
-                      ✓ Aprovar Pedido
+                      ✓ Aprovar
                     </button>
                   )}
                   {selectedOrder.status !== 'despachado' && selectedOrder.status !== 'concluido' && selectedOrder.status !== 'cancelado' && (
@@ -747,7 +747,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                       }}
                       className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
                     >
-                      <span>🚚 Marcar como Despachado</span>
+                      <span>🚚 Despachar</span>
                     </button>
                   )}
                   {selectedOrder.status !== 'cancelado' && (
