@@ -205,6 +205,8 @@ export async function onRequestGet({ request, env }) {
         notes: row.notes,
         changes,
         approvedAt: row.approved_at,
+        clientApprovedAt: row.client_approved_at,
+        dispatchedAt: row.dispatched_at,
         adminNotes: row.admin_notes,
         createdAt: row.created_at,
         updatedAt: row.updated_at
@@ -248,11 +250,18 @@ export async function onRequestPatch({ request, env }) {
     let itemCount = Number(existing.item_count) || 0;
     let changesJson = existing.changes_json;
     let approvedAt = existing.approved_at;
+    let dispatchedAt = existing.dispatched_at;
 
     // Se o admin aprovou o pedido
-    if (nextStatus === 'aprovado' || nextStatus === 'confirmado') {
+    if (nextStatus === 'aprovado' || nextStatus === 'confirmado' || nextStatus === 'aprovado_com_alteracoes') {
       if (!approvedAt) {
         approvedAt = new Date().toISOString();
+      }
+    }
+
+    if (nextStatus === 'despachado' || nextStatus === 'concluido') {
+      if (!dispatchedAt) {
+        dispatchedAt = new Date().toISOString();
       }
     }
 
@@ -298,6 +307,7 @@ export async function onRequestPatch({ request, env }) {
         item_count = ?,
         changes_json = ?,
         approved_at = ?,
+        dispatched_at = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?`
     )
@@ -310,6 +320,7 @@ export async function onRequestPatch({ request, env }) {
         itemCount,
         changesJson,
         approvedAt,
+        dispatchedAt,
         id
       )
       .run();
@@ -391,6 +402,8 @@ export async function onRequestPatch({ request, env }) {
         adminNotes: updated.admin_notes,
         changes: parsedChanges,
         approvedAt: updated.approved_at,
+        clientApprovedAt: updated.client_approved_at,
+        dispatchedAt: updated.dispatched_at,
         createdAt: updated.created_at,
         updatedAt: updated.updated_at
       }

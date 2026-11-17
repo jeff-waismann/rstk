@@ -33,7 +33,7 @@ const siteSettings = {
       </a>
       <div class="top-right">
         <a href="/" class="header-back-catalog">
-          ← Catálogo de Vinis
+          ← Voltar ao Catálogo
         </a>
         <div class="theme" role="group" aria-label="Tema de aparência">
           <button id="light" type="button" aria-pressed="true">☀ Claro</button>
@@ -48,7 +48,7 @@ const siteSettings = {
       {/* Top Header do Portal do Cliente */}
       <div class="portal-header">
         <div class="portal-welcome">
-          <span class="badge-b2b">Área da Loja</span>
+          <span class="badge-b2b">Área da Loja / Revenda</span>
           <h1 id="client-company-name">Carregando seus dados...</h1>
           <p id="client-info-sub" class="client-sub">Consultando seus dados cadastrais...</p>
         </div>
@@ -57,7 +57,7 @@ const siteSettings = {
             <span>+ Novo Pedido no Catálogo</span>
           </a>
           <button type="button" id="btn-logout" class="btn-logout-portal">
-            Sair
+            Sair da Conta
           </button>
         </div>
       </div>
@@ -81,8 +81,8 @@ const siteSettings = {
         <div class="pending-cart-left">
           <span class="pending-cart-icon">🛒</span>
           <div>
-            <strong id="pending-cart-title">Você possui um pedido em andamento no carrinho!</strong>
-            <p>Seus vinis continuam salvos e prontos para envio direto pela sua conta.</p>
+            <strong id="pending-cart-title">Você possui itens no carrinho prontos para envio!</strong>
+            <p>Seus vinis continuam salvos e você pode enviar seu pedido diretamente pela sua conta.</p>
           </div>
         </div>
         <a href="/?openCart=1" class="btn-finalize-pending">
@@ -94,30 +94,34 @@ const siteSettings = {
 
       {/* Seção Principal de Pedidos */}
       <div class="portal-content">
-        <div class="orders-header">
-          <div>
-            <h2>Seus Pedidos RSTK</h2>
-            <p>Acompanhe o status de faturamento, aprovação e separação dos seus pedidos.</p>
+        <div class="orders-section-header">
+          <div class="orders-title-group">
+            <div class="orders-title-row">
+              <h2>Histórico de Pedidos</h2>
+              <span id="orders-count-badge" class="orders-count-badge">0 pedidos</span>
+            </div>
+            <p>Acompanhe o status de faturamento, aprovação e expedição dos pedidos da sua loja. Clique em qualquer pedido para ver os itens detalhados.</p>
           </div>
           <button type="button" id="btn-refresh-orders" class="btn-refresh">
-            ↻ Atualizar
+            <span class="refresh-icon">↻</span>
+            <span>Atualizar</span>
           </button>
         </div>
 
         <div id="orders-loading" class="orders-loading">
           <div class="spinner"></div>
-          <p>Carregando histórico de pedidos...</p>
+          <p>Carregando histórico de pedidos da sua loja...</p>
         </div>
 
         <div id="orders-empty" class="orders-empty" hidden>
           <div class="empty-icon">📦</div>
           <h3>Nenhum pedido encontrado</h3>
-          <p>Sua loja ainda não realizou pedidos vinculados a esta conta. Escolha seus vinis no catálogo e finalize no WhatsApp para que fiquem salvos aqui automaticamente!</p>
+          <p>Sua loja ainda não realizou pedidos vinculados a esta conta. Escolha seus vinis no catálogo e clique em "Enviar Pedido" para acompanhar tudo por aqui em tempo real!</p>
           <a href="/" class="btn-primary-portal">Explorar Catálogo de Vinis →</a>
         </div>
 
         <div id="orders-list" class="orders-list" hidden>
-          {/* Inserido dinamicamente via JS */}
+          {/* Inserido dinamicamente via JS como cards accordion */}
         </div>
       </div>
     </div>
@@ -126,10 +130,13 @@ const siteSettings = {
   <script is:inline>
     (function () {
       var clientData = null;
+      var ordersData = [];
+      var expandedOrderIds = {}; // Armazena quais pedidos estão abertos
       var alertBox = document.getElementById('portal-alert');
       var ordersContainer = document.getElementById('orders-list');
       var loadingEl = document.getElementById('orders-loading');
       var emptyEl = document.getElementById('orders-empty');
+      var countBadgeEl = document.getElementById('orders-count-badge');
       var companyNameEl = document.getElementById('client-company-name');
       var infoSubEl = document.getElementById('client-info-sub');
       var unverifiedBanner = document.getElementById('unverified-banner');
@@ -143,7 +150,11 @@ const siteSettings = {
       function formatDateTimeBR(dateStr) {
         if (!dateStr) return '—';
         try {
-          var d = new Date(dateStr.replace(' ', 'T') + (dateStr.includes('Z') ? '' : 'Z'));
+          var clean = dateStr.replace(' ', 'T');
+          if (!clean.includes('Z') && !clean.includes('+') && !clean.includes('-')) {
+            clean += 'Z';
+          }
+          var d = new Date(clean);
           return d.toLocaleString('pt-BR', {
             timeZone: 'America/Sao_Paulo',
             day: '2-digit',
@@ -157,30 +168,63 @@ const siteSettings = {
         }
       }
 
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
       var STATUS_MAP = {
-        whatsapp_aberto: {
-          label: 'Aberto / Em Análise',
-          badgeClass: 'badge-status-open',
-          desc: 'Seu pedido foi registrado e está sendo verificado pela equipe RSTK.'
+        enviado: {
+          label: 'Enviado / Em Análise',
+          badgeClass: 'badge-status-enviado',
+          icon: '📋',
+          desc: 'Seu pedido foi registrado e está sendo conferido pela equipe RSTK.'
         },
-        confirmado: {
-          label: 'Aprovado / Em Separação',
-          badgeClass: 'badge-status-confirmed',
-          desc: 'Pedido aprovado! Itens em separação no estoque para envio.'
+        whatsapp_aberto: {
+          label: 'Enviado / Em Análise',
+          badgeClass: 'badge-status-enviado',
+          icon: '📋',
+          desc: 'Seu pedido foi registrado e está sendo conferido pela equipe RSTK.'
         },
         aprovado: {
-          label: 'Aprovado',
-          badgeClass: 'badge-status-confirmed',
-          desc: 'Pedido aprovado pela equipe RSTK.'
+          label: 'Aprovado pela RSTK',
+          badgeClass: 'badge-status-aprovado',
+          icon: '✓',
+          desc: 'Pedido aprovado! Itens confirmados e em processo de separação.'
         },
-        concluido: {
-          label: 'Concluído / Enviado',
-          badgeClass: 'badge-status-completed',
-          desc: 'Pedido faturado e entregue/enviado com sucesso.'
+        confirmado: {
+          label: 'Aprovado pela RSTK',
+          badgeClass: 'badge-status-aprovado',
+          icon: '✓',
+          desc: 'Pedido aprovado! Itens confirmados e em processo de separação.'
+        },
+        aprovado_com_alteracoes: {
+          label: 'Aprovado com Alterações',
+          badgeClass: 'badge-status-alteracoes',
+          icon: '⚠️',
+          desc: 'Houve alteração no estoque de alguns itens. Confira e aprove as alterações abaixo.'
+        },
+        alteracoes_aceitas: {
+          label: 'Alterações Aprovadas',
+          badgeClass: 'badge-status-aceito',
+          icon: '✓',
+          desc: 'Você aprovou as alterações! A equipe RSTK foi notificada para despachar.'
+        },
+        despachado: {
+          label: 'Despachado / Enviado',
+          badgeClass: 'badge-status-despachado',
+          icon: '🚚',
+          desc: 'Pedido despachado! Seus vinis estão a caminho da sua loja.'
         },
         cancelado: {
           label: 'Cancelado',
-          badgeClass: 'badge-status-cancelled',
+          badgeClass: 'badge-status-cancelado',
+          icon: '✕',
           desc: 'Pedido cancelado.'
         }
       };
@@ -206,7 +250,7 @@ const siteSettings = {
         var displayName = clientData.nomeFantasia || clientData.razaoSocial;
         companyNameEl.textContent = displayName;
         var isVerified = Boolean(clientData.emailVerified === true || clientData.emailVerified === 1 || clientData.emailVerified === '1');
-        infoSubEl.textContent = 'CNPJ: ' + clientData.cnpj + ' · Responsável: ' + clientData.responsavelNome + ' (' + clientData.email + ')';
+        infoSubEl.textContent = 'CNPJ: ' + (clientData.cnpj || '—') + ' · Responsável: ' + (clientData.responsavelNome || '—') + ' (' + clientData.email + ')';
 
         if (!isVerified) {
           unverifiedBanner.hidden = false;
@@ -233,11 +277,20 @@ const siteSettings = {
           loadingEl.style.display = 'none';
 
           if (res.ok && data.success && Array.isArray(data.orders)) {
-            if (data.orders.length === 0) {
+            ordersData = data.orders;
+            if (ordersData.length === 0) {
+              if (countBadgeEl) countBadgeEl.textContent = '0 pedidos';
               emptyEl.hidden = false;
               emptyEl.style.display = 'block';
             } else {
-              renderOrders(data.orders);
+              if (countBadgeEl) countBadgeEl.textContent = ordersData.length + (ordersData.length === 1 ? ' pedido' : ' pedidos');
+              
+              // Se nenhuma ordem estiver expandida ainda, expande o primeiro pedido automaticamente
+              if (Object.keys(expandedOrderIds).length === 0 && ordersData[0]) {
+                expandedOrderIds[ordersData[0].id] = true;
+              }
+
+              renderOrders(ordersData);
               ordersContainer.hidden = false;
               ordersContainer.style.display = 'flex';
             }
@@ -257,93 +310,376 @@ const siteSettings = {
         ordersContainer.innerHTML = '';
 
         orders.forEach(function (order) {
-          var statusInfo = STATUS_MAP[order.status] || STATUS_MAP.whatsapp_aberto;
+          var statusInfo = STATUS_MAP[order.status] || STATUS_MAP.enviado;
+          var isExpanded = Boolean(expandedOrderIds[order.id]);
+
+          // Mapeia alterações
+          var changesMap = {};
+          if (Array.isArray(order.changes)) {
+            order.changes.forEach(function (c) {
+              if (c.id) changesMap[String(c.id)] = c;
+              if (c.title) changesMap[c.title.toLowerCase().trim()] = c;
+            });
+          }
+
+          var hasChanges = Boolean(
+            (order.changes && order.changes.length > 0) ||
+            order.status === 'aprovado_com_alteracoes' ||
+            order.status === 'alteracoes_aceitas'
+          );
+
+          var isPendingApproval = Boolean(
+            order.status === 'aprovado_com_alteracoes' ||
+            (hasChanges && !order.clientApprovedAt && order.status !== 'alteracoes_aceitas' && order.status !== 'despachado')
+          );
+
+          var isChangesApproved = Boolean(
+            order.status === 'alteracoes_aceitas' ||
+            order.clientApprovedAt
+          );
+
+          var isApprovedClean = Boolean(
+            (order.status === 'aprovado' || order.status === 'confirmado') &&
+            !hasChanges
+          );
+
+          var isDispatched = Boolean(
+            order.status === 'despachado' ||
+            order.dispatchedAt
+          );
+
+          // Card principal do Accordion
           var card = document.createElement('article');
-          card.className = 'order-card';
+          card.className = 'order-accordion-card ' + (isExpanded ? 'is-expanded' : '');
+          card.setAttribute('data-order-id', order.id);
 
-          var hasChanges = Boolean(order.changes || (order.adminNotes && order.adminNotes.trim()));
-          var isApproved = Boolean(order.approvedAt || order.status === 'aprovado' || order.status === 'confirmado');
+          // Gera HTML dos itens
+          var itemsHtml = (order.items || []).map(function (it, idx) {
+            var change = changesMap[String(it.id)] || (it.title ? changesMap[it.title.toLowerCase().trim()] : null);
+            
+            // É cancelado?
+            var isCancelled = Boolean(
+              (change && Number(change.newQty) === 0) ||
+              Number(it.quantity) === 0 ||
+              it.status === 'cancelado'
+            );
 
-          var itemsHtml = (order.items || []).map(function (it) {
+            // É quantidade reduzida/alterada?
+            var isModified = !isCancelled && Boolean(
+              change && (Number(change.newQty) < Number(change.oldQty) || Number(change.newQty) !== Number(change.oldQty))
+            );
+
+            var rowClass = 'item-row-normal';
+            var tagBadgeHtml = '';
+            var qtyDisplay = '';
+            var priceDisplay = '';
+
+            var unitPrice = it.priceCents || 18999;
+            var currentQty = isCancelled ? 0 : Number(it.quantity || 1);
+            var itemTotal = unitPrice * currentQty;
+
+            if (isCancelled) {
+              rowClass = 'item-row-cancelled';
+              var originalReq = (change && change.oldQty) ? change.oldQty : (it.requestedQuantity || 1);
+              tagBadgeHtml = '<span class="item-tag tag-cancelled">🚫 Item Cancelado — Esgotado no estoque</span>';
+              qtyDisplay = `
+                <div class="item-qty-box">
+                  <span class="qty-badge-cancelled">0 un.</span>
+                  <span class="qty-sub-cancelled">Solicitado: ${originalReq} un.</span>
+                </div>
+              `;
+              priceDisplay = `
+                <div class="item-price-box">
+                  <del class="old-price-strike">${formatBRL(unitPrice * originalReq)}</del>
+                  <strong class="price-val-cancelled">R$ 0,00</strong>
+                </div>
+              `;
+            } else if (isModified) {
+              rowClass = 'item-row-modified';
+              tagBadgeHtml = `<span class="item-tag tag-modified">⚠️ Qtd alterada por estoque (solicitado: ${change.oldQty} un.)</span>`;
+              qtyDisplay = `
+                <div class="item-qty-box">
+                  <span class="qty-badge-modified">${currentQty} un.</span>
+                  <span class="qty-sub-modified">De ${change.oldQty} un. para ${currentQty} un.</span>
+                </div>
+              `;
+              priceDisplay = `
+                <div class="item-price-box">
+                  <span class="item-unit-price">${formatBRL(unitPrice)} un.</span>
+                  <strong class="price-val-modified">${formatBRL(itemTotal)}</strong>
+                </div>
+              `;
+            } else {
+              rowClass = 'item-row-normal';
+              qtyDisplay = `
+                <div class="item-qty-box">
+                  <span class="qty-badge-normal">${currentQty} un.</span>
+                </div>
+              `;
+              priceDisplay = `
+                <div class="item-price-box">
+                  <span class="item-unit-price">${formatBRL(unitPrice)} un.</span>
+                  <strong class="price-val-normal">${formatBRL(itemTotal)}</strong>
+                </div>
+              `;
+            }
+
+            var albumFormat = Number(it.units) === 1 ? 'Álbum Simples' : (Number(it.units) === 2 ? 'Álbum Duplo' : `${it.units || 1} LPs`);
+
             return `
-              <div class="order-item-row">
-                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="order-item-img" />
-                <div class="order-item-info">
-                  <strong>${it.title || 'Disco de Vinil'}</strong>
-                  <span>${it.artist || 'Artista'} · ${Number(it.units) === 1 ? 'Álbum Simples' : (Number(it.units) === 2 ? 'Álbum Duplo' : `${it.units || 1} LPs`)}</span>
+              <div class="order-disc-row ${rowClass}">
+                <div class="disc-left">
+                  <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="disc-cover" loading="lazy" />
+                  <div class="disc-meta">
+                    <div class="disc-title-row">
+                      <strong class="disc-title ${isCancelled ? 'strike-title' : ''}">${escapeHtml(it.title || 'Disco de Vinil')}</strong>
+                      ${tagBadgeHtml}
+                    </div>
+                    <span class="disc-sub">${escapeHtml(it.artist || 'Artista')} · ${albumFormat}</span>
+                  </div>
                 </div>
-                <div class="order-item-qty">
-                  <span class="qty-badge">${it.quantity} un.</span>
-                </div>
-                <div class="order-item-price">
-                  <span>${formatBRL(it.priceCents)} un.</span>
-                  <strong>${formatBRL((it.priceCents || 18999) * (it.quantity || 1))}</strong>
+                <div class="disc-right">
+                  ${qtyDisplay}
+                  ${priceDisplay}
                 </div>
               </div>
             `;
           }).join('');
 
-          var whatsappSupportUrl = 'https://wa.me/553488293565?text=' + encodeURIComponent(
-            'Olá, RSTK! Gostaria de falar sobre o pedido #' + order.orderNumber + ' da minha loja (' + (clientData.nomeFantasia || clientData.razaoSocial) + ').'
-          );
+          // Mensagem de suporte via WhatsApp
+          var whatsappMsg = 'Olá, equipe RSTK! Gostaria de falar sobre o pedido #' + order.orderNumber + ' da minha loja (' + (clientData.nomeFantasia || clientData.razaoSocial) + ').';
+          var whatsappSupportUrl = 'https://wa.me/553488293565?text=' + encodeURIComponent(whatsappMsg);
+
+          // Constrói banners informativos
+          var noticeHtml = '';
+          if (isPendingApproval) {
+            noticeHtml = `
+              <div class="order-notice-box notice-warning">
+                <div class="notice-top">
+                  <div class="notice-icon-circle">⚠️</div>
+                  <div class="notice-text">
+                    <strong>Atenção: Houve alteração no seu pedido devido ao estoque disponível</strong>
+                    <p>Durante a separação, alguns discos tiveram a quantidade reajustada ou foram cancelados por esgotamento. Veja o destaque dos itens abaixo (em amarelo ou vermelho). O valor total atualizado do pedido é <strong>${formatBRL(order.totalCents)}</strong>.</p>
+                    ${order.adminNotes ? `<p class="admin-notice-quote"><strong>Mensagem da RSTK:</strong> "${escapeHtml(order.adminNotes)}"</p>` : ''}
+                  </div>
+                </div>
+                <div class="notice-bottom-action">
+                  <button type="button" class="btn-approve-changes" data-order-id="${order.id}">
+                    <span class="btn-icon">✓</span>
+                    <span>Aprovar Alterações do Pedido</span>
+                  </button>
+                </div>
+              </div>
+            `;
+          } else if (isChangesApproved) {
+            noticeHtml = `
+              <div class="order-notice-box notice-success">
+                <div class="notice-top">
+                  <div class="notice-icon-circle">✓</div>
+                  <div class="notice-text">
+                    <strong>Alterações aprovadas pela sua loja!</strong>
+                    <p>Você aprovou a composição revisada deste pedido${order.clientApprovedAt ? ' em ' + formatDateTimeBR(order.clientApprovedAt) : ''}. A equipe RSTK foi notificada e já pode despachar sua encomenda.</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else if (isDispatched) {
+            noticeHtml = `
+              <div class="order-notice-box notice-dispatched">
+                <div class="notice-top">
+                  <div class="notice-icon-circle">🚚</div>
+                  <div class="notice-text">
+                    <strong>Pedido Despachado com Sucesso!</strong>
+                    <p>Seus vinis já foram despachados pela equipe RSTK${order.dispatchedAt ? ' em ' + formatDateTimeBR(order.dispatchedAt) : ''}. Em breve você receberá as informações de rastreio e entrega.</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else if (isApprovedClean) {
+            noticeHtml = `
+              <div class="order-notice-box notice-success">
+                <div class="notice-top">
+                  <div class="notice-icon-circle">✓</div>
+                  <div class="notice-text">
+                    <strong>Pedido 100% Aprovado pela RSTK!</strong>
+                    <p>Todos os itens e quantidades foram confirmados em estoque. Seu pedido está em processo de separação e expedição.</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else {
+            noticeHtml = `
+              <div class="order-notice-box notice-info">
+                <div class="notice-top">
+                  <div class="notice-icon-circle">📋</div>
+                  <div class="notice-text">
+                    <strong>Pedido Enviado — Em Análise pela RSTK</strong>
+                    <p>Seu pedido foi registrado no sistema. Nossa equipe está conferindo os títulos e estoque para faturamento. Qualquer alteração ou atualização de status será exibida aqui.</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
 
           card.innerHTML = `
-            <div class="order-card-header">
-              <div class="order-header-left">
-                <div class="order-num-date">
-                  <span class="order-id">#${order.orderNumber}</span>
-                  <span class="order-date">${formatDateTimeBR(order.createdAt)}</span>
+            <!-- Linha Resumo do Accordion (Clicável) -->
+            <div class="order-summary-row" role="button" tabindex="0" aria-expanded="${isExpanded}">
+              <div class="summary-col col-order-id">
+                <div class="order-hash-id">
+                  <span class="hash-symbol">#</span>
+                  <span class="hash-number">${order.orderNumber}</span>
                 </div>
-                <span class="badge-status ${statusInfo.badgeClass}">
-                  ${statusInfo.label}
+                <span class="order-created-date">${formatDateTimeBR(order.createdAt)}</span>
+              </div>
+
+              <div class="summary-col col-order-qty">
+                <span class="col-caption">Discos no Pedido</span>
+                <span class="col-value-qty"><strong>${order.itemCount}</strong> disco(s)</span>
+              </div>
+
+              <div class="summary-col col-order-total">
+                <span class="col-caption">Valor Total</span>
+                <span class="col-value-total">${formatBRL(order.totalCents)}</span>
+              </div>
+
+              <div class="summary-col col-order-status">
+                <span class="badge-status-pill ${statusInfo.badgeClass}">
+                  <span class="badge-status-dot"></span>
+                  <span class="badge-status-text">${statusInfo.label}</span>
                 </span>
               </div>
-              <div class="order-header-right">
-                <span class="total-label">Total do Pedido:</span>
-                <span class="total-value">${formatBRL(order.totalCents)}</span>
+
+              <div class="summary-col col-order-toggle">
+                <span class="toggle-link-text">${isExpanded ? 'Ocultar detalhes' : 'Ver detalhes'}</span>
+                <span class="toggle-chevron ${isExpanded ? 'rotated' : ''}">▼</span>
               </div>
             </div>
 
-            ${isApproved ? `
-              <div class="alert-approved">
-                <span class="alert-approved-icon">✓</span>
-                <div>
-                  <strong>Pedido Aprovado pela RSTK!</strong>
-                  <p>Aprovado em ${formatDateTimeBR(order.approvedAt || order.updatedAt)}. Seus vinis estão em processo de separação e expedição.</p>
+            <!-- Gaveta de Detalhes do Pedido -->
+            <div class="order-details-drawer" ${isExpanded ? '' : 'hidden'}>
+              ${noticeHtml}
+
+              <div class="discs-section">
+                <div class="discs-section-header">
+                  <h3>Itens do Pedido (${order.itemCount} unidades)</h3>
+                  <span class="discs-hint">Revise cada título e suas respectivas quantidades</span>
+                </div>
+
+                <div class="discs-list">
+                  ${itemsHtml}
                 </div>
               </div>
-            ` : ''}
 
-            ${hasChanges ? `
-              <div class="alert-order-changes">
-                <span class="alert-changes-icon">⚠</span>
-                <div>
-                  <strong>Atenção: Este pedido teve ajustes realizados pela equipe RSTK</strong>
-                  <p>Houve alterações na composição do pedido (ex: item esgotado ou ajuste de unidades disponíveis). O valor total atualizado é <strong>${formatBRL(order.totalCents)}</strong>.</p>
-                  ${order.adminNotes ? `<p class="admin-note-text"><em>Observação do lojista: "${order.adminNotes}"</em></p>` : ''}
+              ${order.notes ? `
+                <div class="order-notes-bar">
+                  <span class="notes-label">Observações da Loja:</span>
+                  <p class="notes-content">${escapeHtml(order.notes)}</p>
+                </div>
+              ` : ''}
+
+              <!-- Rodapé da Gaveta -->
+              <div class="order-drawer-footer">
+                <div class="footer-totals">
+                  <div class="footer-total-line">
+                    <span class="label">Total Final do Pedido:</span>
+                    <strong class="value">${formatBRL(order.totalCents)}</strong>
+                  </div>
+                </div>
+
+                <div class="footer-actions">
+                  <a href="${whatsappSupportUrl}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-order">
+                    <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.586-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.941-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.288.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.302c-.087.087-.179.18-.077.355.101.174.45 1.742 1.488 2.063.267.082.477.068.654-.044.224-.143.636-.738.809-.991.173-.253.347-.211.583-.125.237.086 1.503.708 1.763.838.26.13.433.195.498.304.065.109.065.636-.079 1.041z"/>
+                    </svg>
+                    <span>Falar no WhatsApp sobre este Pedido</span>
+                  </a>
+
+                  ${isPendingApproval ? `
+                    <button type="button" class="btn-approve-changes" data-order-id="${order.id}">
+                      <span class="btn-icon">✓</span>
+                      <span>Aprovar Alterações do Pedido</span>
+                    </button>
+                  ` : ''}
                 </div>
               </div>
-            ` : ''}
-
-            <div class="order-items-wrapper">
-              <span class="items-count-label">${order.itemCount} vinil(is) no pedido:</span>
-              <div class="order-items-list">
-                ${itemsHtml}
-              </div>
-            </div>
-
-            <div class="order-card-footer">
-              <a href="${whatsappSupportUrl}" target="_blank" rel="noopener noreferrer" class="btn-order-support">
-                <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span>Falar com Atendimento sobre o Pedido #${order.orderNumber}</span>
-              </a>
             </div>
           `;
 
+          // Event Listener para alternar Accordion ao clicar no resumo
+          var summaryRow = card.querySelector('.order-summary-row');
+          summaryRow.addEventListener('click', function (e) {
+            // Se clicou em um link ou botão dentro do cabeçalho, não alterna
+            if (e.target.closest('button, a')) return;
+            toggleAccordion(order.id);
+          });
+
+          // Acessibilidade por teclado (Enter ou Espaço)
+          summaryRow.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggleAccordion(order.id);
+            }
+          });
+
+          // Event Listener para o botão de aprovar alterações
+          var approveBtns = card.querySelectorAll('.btn-approve-changes');
+          approveBtns.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+              e.stopPropagation();
+              handleApproveChanges(order.id, btn);
+            });
+          });
+
           ordersContainer.appendChild(card);
         });
+      }
+
+      function toggleAccordion(orderId) {
+        if (expandedOrderIds[orderId]) {
+          delete expandedOrderIds[orderId];
+        } else {
+          expandedOrderIds[orderId] = true;
+        }
+        renderOrders(ordersData);
+      }
+
+      async function handleApproveChanges(orderId, btnEl) {
+        if (!confirm('Deseja aprovar e confirmar as alterações deste pedido? A equipe RSTK será notificada imediatamente para despachar seus discos.')) {
+          return;
+        }
+
+        if (btnEl) {
+          btnEl.disabled = true;
+          btnEl.innerHTML = '<span class="spinner-small"></span> Aprovando...';
+        }
+
+        try {
+          var res = await fetch('/api/client/approve-changes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: orderId })
+          });
+          var data = await res.json();
+
+          if (res.ok && data.success) {
+            alert(data.message || 'Alterações aprovadas com sucesso! A RSTK foi notificada para providenciar o despacho.');
+            // Mantém este pedido expandido
+            expandedOrderIds[orderId] = true;
+            loadOrders();
+          } else {
+            alert(data.error || 'Erro ao aprovar alterações.');
+            if (btnEl) {
+              btnEl.disabled = false;
+              btnEl.innerHTML = '<span class="btn-icon">✓</span><span>Aprovar Alterações do Pedido</span>';
+            }
+          }
+        } catch (err) {
+          alert('Erro de conexão ao aprovar alterações. Tente novamente.');
+          if (btnEl) {
+            btnEl.disabled = false;
+            btnEl.innerHTML = '<span class="btn-icon">✓</span><span>Aprovar Alterações do Pedido</span>';
+          }
+        }
       }
 
       function checkPendingCart() {
@@ -404,6 +740,10 @@ const siteSettings = {
       });
 
       btnRefresh.addEventListener('click', function () {
+        btnRefresh.classList.add('rotating');
+        setTimeout(function () {
+          btnRefresh.classList.remove('rotating');
+        }, 600);
         loadOrders();
         checkPendingCart();
       });
@@ -433,7 +773,7 @@ const siteSettings = {
 
     .portal-page {
       min-height: calc(100vh - 120px);
-      padding: 36px 16px 80px;
+      padding: 32px 16px 80px;
       display: flex;
       justify-content: center;
       background: var(--bg);
@@ -444,7 +784,7 @@ const siteSettings = {
       max-width: 1260px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 22px;
     }
 
     /* Header */
@@ -452,7 +792,7 @@ const siteSettings = {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 24px 28px;
+      padding: 22px 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -464,7 +804,7 @@ const siteSettings = {
     .badge-b2b {
       display: inline-block;
       background: rgba(0, 198, 247, 0.15);
-      color: var(--blue-dark);
+      color: #006782;
       font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
@@ -490,7 +830,7 @@ const siteSettings = {
     .portal-header-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .btn-new-order {
@@ -536,7 +876,8 @@ const siteSettings = {
     .alert-box[hidden],
     .orders-loading[hidden],
     .orders-empty[hidden],
-    .orders-list[hidden] {
+    .orders-list[hidden],
+    .order-details-drawer[hidden] {
       display: none !important;
     }
 
@@ -605,7 +946,7 @@ const siteSettings = {
       background: #EFF6FF;
       border: 1px solid #0866c8;
       border-radius: 14px;
-      padding: 18px 24px;
+      padding: 16px 22px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -626,14 +967,14 @@ const siteSettings = {
     }
 
     .pending-cart-icon {
-      font-size: 28px;
+      font-size: 26px;
       line-height: 1;
       flex-shrink: 0;
     }
 
     .pending-cart-card strong {
       display: block;
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 800;
       color: #0866c8;
       margin-bottom: 2px;
@@ -656,9 +997,9 @@ const siteSettings = {
       justify-content: center;
       background: #0866c8;
       color: #ffffff !important;
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 750;
-      padding: 11px 22px;
+      padding: 10px 20px;
       border-radius: 8px;
       text-decoration: none;
       transition: all 0.2s ease;
@@ -672,47 +1013,79 @@ const siteSettings = {
       transform: translateY(-1px);
     }
 
-    /* Orders Section */
+    /* Orders Section Header */
     .portal-content {
       display: flex;
       flex-direction: column;
       gap: 18px;
     }
 
-    .orders-header {
+    .orders-section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
     }
 
-    .orders-header h2 {
-      font-size: 18px;
-      font-weight: 800;
+    .orders-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .orders-section-header h2 {
+      font-size: 20px;
+      font-weight: 850;
       color: var(--ink);
-      margin: 0 0 2px;
-    }
-
-    .orders-header p {
-      font-size: 13px;
-      color: var(--muted);
       margin: 0;
     }
 
+    .orders-count-badge {
+      display: inline-block;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11.5px;
+      font-weight: 750;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .orders-section-header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 4px 0 0;
+    }
+
     .btn-refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       background: var(--panel);
       border: 1px solid var(--line);
       color: var(--ink);
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 700;
-      padding: 6px 14px;
-      border-radius: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .btn-refresh:hover {
-      border-color: var(--blue);
-      color: var(--blue);
+      border-color: #0866c8;
+      color: #0866c8;
+    }
+
+    .refresh-icon {
+      font-size: 14px;
+      display: inline-block;
+      transition: transform 0.4s ease;
+    }
+
+    .btn-refresh.rotating .refresh-icon {
+      transform: rotate(360deg);
     }
 
     /* Loading & Empty */
@@ -726,7 +1099,7 @@ const siteSettings = {
     }
 
     .empty-icon {
-      font-size: 40px;
+      font-size: 44px;
       margin-bottom: 12px;
     }
 
@@ -746,299 +1119,712 @@ const siteSettings = {
 
     .btn-primary-portal {
       display: inline-block;
-      background: var(--blue);
-      color: #ffffff;
-      padding: 12px 24px;
+      background: #0866c8;
+      color: #ffffff !important;
+      padding: 11px 22px;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 750;
       text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary-portal:hover {
+      background: #0652a1 !important;
+      color: #ffffff !important;
     }
 
     .spinner {
       width: 32px;
       height: 32px;
       border: 3px solid var(--line);
-      border-top-color: var(--blue);
+      border-top-color: #0866c8;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 0 auto 12px;
+    }
+
+    .spinner-small {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
 
-    /* Orders Cards */
+    /* ========================================================
+       ACCORDION ORDERS LIST
+       ======================================================== */
     .orders-list {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
-    .order-card {
+    .order-accordion-card {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 16px;
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .order-card-header {
+    .order-accordion-card:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 4px 14px rgba(8, 102, 200, 0.06);
+    }
+
+    .order-accordion-card.is-expanded {
+      border-color: #0866c8;
+      box-shadow: 0 6px 18px rgba(8, 102, 200, 0.09);
+    }
+
+    /* Linha Resumo do Pedido */
+    .order-summary-row {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 1.4fr 1.8fr 1.2fr;
+      align-items: center;
+      padding: 16px 22px;
+      background: var(--panel);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+      gap: 12px;
+    }
+
+    .order-summary-row:hover {
+      background: var(--panel2);
+    }
+
+    .order-accordion-card.is-expanded .order-summary-row {
       background: var(--panel2);
       border-bottom: 1px solid var(--line);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
     }
 
-    .order-header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .order-num-date {
+    .summary-col {
       display: flex;
       flex-direction: column;
+      justify-content: center;
     }
 
-    .order-id {
-      font-size: 15px;
+    /* Coluna 1: ID & Data */
+    .col-order-id {
+      gap: 2px;
+    }
+
+    .order-hash-id {
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+    }
+
+    .hash-symbol {
+      color: #0866c8;
       font-weight: 800;
-      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .hash-number {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 14.5px;
+      font-weight: 800;
       color: var(--ink);
     }
 
-    .order-date {
-      font-size: 11.5px;
+    .order-created-date {
+      font-size: 12px;
       color: var(--muted);
     }
 
-    .badge-status {
+    /* Colunas Centrais: Qtd e Total */
+    .col-caption {
       font-size: 11px;
-      font-weight: 750;
-      padding: 4px 10px;
-      border-radius: 999px;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-    }
-
-    .badge-status-open {
-      background: #E0F2FE;
-      color: #0369A1;
-      border: 1px solid #BAE6FD;
-    }
-
-    .badge-status-confirmed {
-      background: #DCFCE7;
-      color: #15803D;
-      border: 1px solid #86EFAC;
-    }
-
-    .badge-status-completed {
-      background: #F1F5F9;
-      color: #334155;
-      border: 1px solid #CBD5E1;
-    }
-
-    .badge-status-cancelled {
-      background: #FEE2E2;
-      color: #B91C1C;
-      border: 1px solid #FCA5A5;
-    }
-
-    .order-header-right {
-      text-align: right;
-    }
-
-    .total-label {
-      font-size: 11px;
       color: var(--muted);
-      display: block;
-    }
-
-    .total-value {
-      font-size: 17px;
-      font-weight: 850;
-      color: var(--blue);
-    }
-
-    /* Approved Alert */
-    .alert-approved {
-      background: #F0FDF4;
-      border-left: 4px solid #22C55E;
-      padding: 14px 20px;
-      display: flex;
-      gap: 12px;
-      font-size: 13px;
-      color: #14532D;
-    }
-
-    .alert-approved-icon {
-      font-size: 18px;
-      font-weight: 800;
-      color: #16A34A;
-    }
-
-    .alert-approved strong {
-      display: block;
       margin-bottom: 2px;
     }
 
-    .alert-approved p {
-      margin: 0;
-      font-size: 12.5px;
+    .col-value-qty {
+      font-size: 13.5px;
+      color: var(--ink);
     }
 
-    /* Changes Alert */
-    .alert-order-changes {
+    .col-value-qty strong {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #0866c8;
+    }
+
+    .col-value-total {
+      font-size: 15.5px;
+      font-weight: 850;
+      color: #0866c8;
+    }
+
+    /* Coluna Status */
+    .badge-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 750;
+      width: fit-content;
+      white-space: nowrap;
+    }
+
+    .badge-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Cores de Status */
+    .badge-status-enviado {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+    }
+
+    .badge-status-aprovado {
+      background: #ECFDF5;
+      color: #047857;
+      border: 1px solid #A7F3D0;
+    }
+
+    .badge-status-alteracoes {
       background: #FFFBEB;
-      border-left: 4px solid #F59E0B;
-      padding: 14px 20px;
+      color: #B45309;
+      border: 1px solid #FDE68A;
+      animation: pulseAttention 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseAttention {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15); }
+    }
+
+    .badge-status-aceito {
+      background: #F0FDF4;
+      color: #15803D;
+      border: 1px solid #BBF7D0;
+    }
+
+    .badge-status-despachado {
+      background: #F5F3FF;
+      color: #6D28D9;
+      border: 1px solid #DDD6FE;
+    }
+
+    .badge-status-cancelado {
+      background: #FEF2F2;
+      color: #B91C1C;
+      border: 1px solid #FECACA;
+    }
+
+    /* Coluna Toggle */
+    .col-order-toggle {
+      align-items: flex-end;
+      flex-direction: row;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .toggle-link-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0866c8;
+    }
+
+    .toggle-chevron {
+      font-size: 10px;
+      color: #0866c8;
+      transition: transform 0.2s ease;
+      display: inline-block;
+    }
+
+    .toggle-chevron.rotated {
+      transform: rotate(180deg);
+    }
+
+    /* ========================================================
+       GAVETA DE DETALHES DO PEDIDO (DRAWER)
+       ======================================================== */
+    .order-details-drawer {
+      padding: 22px 24px;
+      background: var(--bg);
       display: flex;
-      gap: 12px;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeInDrawer 0.2s ease;
+    }
+
+    @keyframes fadeInDrawer {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Caixas de Alerta e Notificação */
+    .order-notice-box {
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .notice-top {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .notice-icon-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      font-weight: 800;
+    }
+
+    .notice-text strong {
+      display: block;
+      font-size: 14.5px;
+      margin-bottom: 4px;
+    }
+
+    .notice-text p {
+      margin: 0;
       font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .admin-notice-quote {
+      margin-top: 8px !important;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.05);
+      font-style: italic;
+    }
+
+    /* Notice Warning (Alterações Pendentes) */
+    .notice-warning {
+      background: #FFFBEB;
+      border: 1px solid #FCD34D;
       color: #78350F;
     }
 
-    .alert-changes-icon {
-      font-size: 18px;
+    .notice-warning .notice-icon-circle {
+      background: #FEF3C7;
       color: #D97706;
+      border: 1px solid #FBBF24;
     }
 
-    .alert-order-changes strong {
-      display: block;
-      margin-bottom: 2px;
+    .notice-bottom-action {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 6px;
     }
 
-    .alert-order-changes p {
+    .btn-approve-changes {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #0866c8 !important;
+      color: #ffffff !important;
+      border: none;
+      font-size: 13.5px;
+      font-weight: 800;
+      padding: 11px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 3px 8px rgba(8, 102, 200, 0.3);
+    }
+
+    .btn-approve-changes:hover {
+      background: #0652a1 !important;
+      color: #ffffff !important;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(8, 102, 200, 0.4);
+    }
+
+    .btn-approve-changes:disabled {
+      opacity: 0.75;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-icon {
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    /* Notice Success (Aprovado / Aceito) */
+    .notice-success {
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+      color: #065F46;
+    }
+
+    .notice-success .notice-icon-circle {
+      background: #D1FAE5;
+      color: #059669;
+      border: 1px solid #6EE7B7;
+    }
+
+    /* Notice Dispatched */
+    .notice-dispatched {
+      background: #F5F3FF;
+      border: 1px solid #DDD6FE;
+      color: #4C1D95;
+    }
+
+    .notice-dispatched .notice-icon-circle {
+      background: #EDE9FE;
+      color: #7C3AED;
+      border: 1px solid #C4B5FD;
+    }
+
+    /* Notice Info */
+    .notice-info {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      color: #1E3A8A;
+    }
+
+    .notice-info .notice-icon-circle {
+      background: #DBEAFE;
+      color: #2563EB;
+      border: 1px solid #93C5FD;
+    }
+
+    /* Seção de Discos */
+    .discs-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .discs-section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .discs-section-header h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
       margin: 0;
-      font-size: 12.5px;
     }
 
-    .admin-note-text {
-      margin-top: 4px !important;
-      color: #92400E;
-    }
-
-    /* Items */
-    .order-items-wrapper {
-      padding: 16px 20px;
-    }
-
-    .items-count-label {
-      font-size: 11px;
-      font-weight: 750;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .discs-hint {
+      font-size: 12px;
       color: var(--muted);
-      display: block;
-      margin-bottom: 12px;
     }
 
-    .order-items-list {
+    .discs-list {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    .order-item-row {
+    /* Linhas de Itens */
+    .order-disc-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding: 10px 12px;
-      background: var(--bg);
-      border: 1px solid var(--line);
+      gap: 16px;
+      padding: 12px 16px;
       border-radius: 10px;
+      transition: all 0.15s ease;
     }
 
-    .order-item-img {
-      width: 44px;
-      height: 44px;
-      border-radius: 6px;
-      object-fit: cover;
-      flex-shrink: 0;
+    /* Item Normal */
+    .item-row-normal {
+      background: var(--panel);
       border: 1px solid var(--line);
     }
 
-    .order-item-info {
+    /* Item Cancelado / Esgotado (VERMELHO) */
+    .item-row-cancelled {
+      background: #FEF2F2 !important;
+      border: 1.5px solid #F87171 !important;
+    }
+
+    /* Item Modificado / Quantidade reduzida (AMARELO) */
+    .item-row-modified {
+      background: #FFFBEB !important;
+      border: 1.5px solid #FBBF24 !important;
+    }
+
+    .disc-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
       flex: 1;
       min-width: 0;
     }
 
-    .order-item-info strong {
-      display: block;
-      font-size: 13px;
+    .disc-cover {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+    }
+
+    .disc-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .disc-title-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+
+    .disc-title {
+      font-size: 14px;
+      font-weight: 800;
       color: var(--ink);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 100%;
     }
 
-    .order-item-info span {
-      font-size: 11px;
+    .disc-title.strike-title {
+      text-decoration: line-through;
+      color: #991B1B;
+      opacity: 0.75;
+    }
+
+    .disc-sub {
+      font-size: 12px;
       color: var(--muted);
+      display: block;
     }
 
-    .qty-badge {
+    /* Badges de Destaque por Item */
+    .item-tag {
+      font-size: 11px;
+      font-weight: 750;
+      padding: 2px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .tag-cancelled {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FCA5A5;
+    }
+
+    .tag-modified {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FCD34D;
+    }
+
+    /* Right Col dos Discos (Qtd & Preço) */
+    .disc-right {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .item-qty-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .qty-badge-normal {
       background: var(--panel2);
       border: 1px solid var(--line);
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 6px;
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 12px;
+      font-weight: 800;
       color: var(--ink);
     }
 
-    .order-item-price {
-      text-align: right;
-      flex-shrink: 0;
+    .qty-badge-modified {
+      background: #FEF3C7;
+      border: 1px solid #F59E0B;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 850;
+      color: #92400E;
     }
 
-    .order-item-price span {
-      display: block;
+    .qty-sub-modified {
       font-size: 10.5px;
+      font-weight: 700;
+      color: #B45309;
+      margin-top: 2px;
+    }
+
+    .qty-badge-cancelled {
+      background: #FEE2E2;
+      border: 1px solid #EF4444;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 850;
+      color: #991B1B;
+    }
+
+    .qty-sub-cancelled {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #DC2626;
+      margin-top: 2px;
+      text-decoration: line-through;
+    }
+
+    .item-price-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      min-width: 90px;
+    }
+
+    .item-unit-price {
+      font-size: 11px;
       color: var(--muted);
     }
 
-    .order-item-price strong {
-      font-size: 13px;
-      color: var(--blue);
+    .price-val-normal {
+      font-size: 14px;
+      font-weight: 850;
+      color: #0866c8;
     }
 
-    /* Footer */
-    .order-card-footer {
-      background: var(--panel2);
+    .price-val-modified {
+      font-size: 14px;
+      font-weight: 850;
+      color: #B45309;
+    }
+
+    .price-val-cancelled {
+      font-size: 14px;
+      font-weight: 850;
+      color: #991B1B;
+    }
+
+    .old-price-strike {
+      font-size: 11px;
+      color: #991B1B;
+      opacity: 0.7;
+    }
+
+    /* Observações */
+    .order-notes-bar {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12.5px;
+    }
+
+    .notes-label {
+      font-weight: 750;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .notes-content {
+      margin: 0;
+      color: var(--ink);
+    }
+
+    /* Rodapé da Gaveta */
+    .order-drawer-footer {
       border-top: 1px solid var(--line);
-      padding: 12px 20px;
+      padding-top: 16px;
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
-    .btn-order-support {
+    .footer-total-line {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .footer-total-line .label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .footer-total-line .value {
+      font-size: 20px;
+      font-weight: 900;
+      color: #0866c8;
+    }
+
+    .footer-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-whatsapp-order {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: transparent;
-      border: 1px solid #25D366;
-      color: #128C7E;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 7px 14px;
-      border-radius: 6px;
+      gap: 8px;
+      background: #25D366 !important;
+      color: #ffffff !important;
+      font-size: 13px;
+      font-weight: 750;
+      padding: 10px 18px;
+      border-radius: 8px;
       text-decoration: none;
       transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);
     }
 
-    .btn-order-support:hover {
-      background: #25D366;
-      color: #ffffff;
+    .btn-whatsapp-order:hover {
+      background: #1ebe5d !important;
+      color: #ffffff !important;
+      transform: translateY(-1px);
     }
 
     .w-4 {
@@ -1046,21 +1832,68 @@ const siteSettings = {
       height: 16px;
     }
 
+    /* ========================================================
+       RESPONSIVIDADE (MOBILE BREAKPOINTS)
+       ======================================================== */
+    @media (max-width: 860px) {
+      .order-summary-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 14px 16px;
+      }
+      .col-order-id {
+        grid-column: span 2;
+      }
+      .col-order-toggle {
+        grid-column: span 2;
+        justify-content: space-between;
+        border-top: 1px dashed var(--line);
+        padding-top: 8px;
+        margin-top: 4px;
+      }
+    }
+
     @media (max-width: 600px) {
       .portal-header {
         flex-direction: column;
         align-items: flex-start;
+        padding: 18px 20px;
       }
       .portal-header-actions {
         width: 100%;
         justify-content: space-between;
       }
-      .order-card-header {
+      .order-summary-row {
+        grid-template-columns: 1fr;
+      }
+      .col-order-id,
+      .col-order-qty,
+      .col-order-total,
+      .col-order-status,
+      .col-order-toggle {
+        grid-column: span 1;
+      }
+      .order-disc-row {
         flex-direction: column;
         align-items: flex-start;
       }
-      .order-header-right {
-        text-align: left;
+      .disc-right {
+        width: 100%;
+        justify-content: space-between;
+        border-top: 1px dashed var(--line);
+        padding-top: 8px;
+      }
+      .order-drawer-footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .footer-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+      .footer-actions > * {
+        width: 100%;
+        justify-content: center;
       }
     }
   </style>

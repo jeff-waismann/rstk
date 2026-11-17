@@ -21,22 +21,42 @@ function formatDateTimeBR(dateStr) {
 
 const STATUS_MAP = {
   whatsapp_aberto: {
-    label: 'Aberto via WhatsApp',
+    label: 'Enviado / Em Análise',
+    badgeClass: 'bg-cyan-50 text-[#006782] border border-cyan-200',
+    dotClass: 'bg-[#00C6F7]'
+  },
+  enviado: {
+    label: 'Enviado',
     badgeClass: 'bg-cyan-50 text-[#006782] border border-cyan-200',
     dotClass: 'bg-[#00C6F7]'
   },
   confirmado: {
     label: 'Aprovado / Em Separação',
-    badgeClass: 'bg-amber-50 text-amber-800 border border-amber-200',
-    dotClass: 'bg-amber-500'
-  },
-  aprovado: {
-    label: 'Aprovado',
     badgeClass: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
     dotClass: 'bg-emerald-500'
   },
+  aprovado: {
+    label: 'Aprovado (Sem Alterações)',
+    badgeClass: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
+    dotClass: 'bg-emerald-500'
+  },
+  aprovado_com_alteracoes: {
+    label: 'Aprovado c/ Alterações (Aguardando Cliente)',
+    badgeClass: 'bg-amber-50 text-amber-800 border border-amber-300',
+    dotClass: 'bg-amber-500'
+  },
+  alteracoes_aceitas: {
+    label: 'Alterações Aprovadas pelo Cliente',
+    badgeClass: 'bg-teal-50 text-teal-800 border border-teal-300',
+    dotClass: 'bg-teal-500'
+  },
+  despachado: {
+    label: 'Despachado',
+    badgeClass: 'bg-indigo-50 text-indigo-800 border border-indigo-200',
+    dotClass: 'bg-indigo-600'
+  },
   concluido: {
-    label: 'Concluído / Enviado',
+    label: 'Concluído / Despachado',
     badgeClass: 'bg-slate-100 text-[#0F172A] border border-slate-300',
     dotClass: 'bg-slate-600'
   },
@@ -172,13 +192,18 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
       const updatedIt = modalItems[idx];
       if (updatedIt && updatedIt.quantity !== origIt.quantity) {
         changes.push({
+          id: origIt.id,
           title: origIt.title,
+          artist: origIt.artist,
           oldQty: origIt.quantity,
           newQty: updatedIt.quantity,
-          reason: updatedIt.quantity === 0 ? 'Estoque esgotado' : 'Ajuste de quantidade pelo administrador'
+          reason: updatedIt.quantity === 0 ? 'Item esgotado no estoque' : 'Ajuste de quantidade por estoque'
         });
       }
     });
+
+    const isChanged = changes.length > 0;
+    const nextStatus = isChanged ? 'aprovado_com_alteracoes' : (order.status === 'whatsapp_aberto' ? 'aprovado' : order.status);
 
     try {
       const res = await apiService.updateOrder(order.id, {
@@ -186,11 +211,16 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
         totalCents: computedModalTotal,
         notes: editNotes,
         adminNotes: editAdminNotes,
+        status: nextStatus,
         changes: changes.length ? changes : (order.changes || null)
       });
 
       if (res.success && res.order) {
-        onNotify?.(`Alterações salvas com sucesso no pedido #${order.orderNumber}! E-mail e notificação atualizados.`);
+        onNotify?.(
+          isChanged
+            ? `Alterações salvas! Status atualizado para "Aprovado com Alterações". O cliente poderá aprovar pelo painel.`
+            : `Pedido #${order.orderNumber} atualizado com sucesso!`
+        );
         setOrders((prev) =>
           prev.map((o) => (o.id === order.id ? res.order : o))
         );
@@ -330,10 +360,11 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
               className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-[#0F172A] bg-white focus:outline-none focus:border-[#00C6F7]"
             >
               <option value="all">Todos os status</option>
-              <option value="whatsapp_aberto">Aberto via WhatsApp</option>
-              <option value="confirmado">Aprovado / Em Separação</option>
-              <option value="aprovado">Aprovado</option>
-              <option value="concluido">Concluído / Enviado</option>
+              <option value="whatsapp_aberto">Enviado / Em Análise</option>
+              <option value="aprovado">Aprovado (Sem Alterações)</option>
+              <option value="aprovado_com_alteracoes">Aprovado c/ Alterações</option>
+              <option value="alteracoes_aceitas">Alterações Aprovadas pelo Cliente</option>
+              <option value="despachado">Despachado</option>
               <option value="cancelado">Cancelado</option>
             </select>
           </div>
@@ -566,6 +597,33 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                 </div>
               )}
 
+              {/* Banner de Status de Aprovação das Alterações pelo Cliente */}
+              {selectedOrder.changes && selectedOrder.changes.length > 0 && (
+                <div className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-3 ${
+                  selectedOrder.clientApprovedAt || selectedOrder.status === 'alteracoes_aceitas'
+                    ? 'bg-teal-50 border-teal-200 text-teal-800'
+                    : 'bg-amber-50 border-amber-200 text-amber-800'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">
+                      {selectedOrder.clientApprovedAt || selectedOrder.status === 'alteracoes_aceitas' ? 'verified' : 'pending_actions'}
+                    </span>
+                    <div>
+                      <strong>
+                        {selectedOrder.clientApprovedAt || selectedOrder.status === 'alteracoes_aceitas'
+                          ? 'Alterações Aprovadas pelo Cliente!'
+                          : 'Aguardando Aprovação do Cliente'}
+                      </strong>
+                      <p className="mt-0.5 text-[11px] opacity-90">
+                        {selectedOrder.clientApprovedAt || selectedOrder.status === 'alteracoes_aceitas'
+                          ? `Aprovado pelo cliente em ${formatDateTimeBR(selectedOrder.clientApprovedAt || selectedOrder.updatedAt)}. Liberado para despacho!`
+                          : 'O cliente foi notificado das alterações e pode aprovar pelo painel dele.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Status e Ações Rápidas */}
               <div className="bg-[#F7F9FB] border border-[#E2E8F0] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
@@ -577,25 +635,33 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {selectedOrder.status !== 'aprovado' && selectedOrder.status !== 'confirmado' && (
+                  {selectedOrder.status !== 'aprovado' && selectedOrder.status !== 'confirmado' && selectedOrder.status !== 'aprovado_com_alteracoes' && selectedOrder.status !== 'alteracoes_aceitas' && selectedOrder.status !== 'despachado' && (
                     <button
                       type="button"
                       disabled={updatingId === selectedOrder.id}
-                      onClick={() => handleStatusChange(selectedOrder, 'confirmado')}
+                      onClick={() => handleStatusChange(selectedOrder, 'aprovado')}
                       className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
-                      title="Aprova o pedido e notifica o cliente por e-mail e no painel"
+                      title="Aprova o pedido sem alterações"
                     >
                       ✓ Aprovar Pedido
                     </button>
                   )}
-                  {selectedOrder.status !== 'concluido' && (
+                  {selectedOrder.status !== 'despachado' && selectedOrder.status !== 'concluido' && selectedOrder.status !== 'cancelado' && (
                     <button
                       type="button"
                       disabled={updatingId === selectedOrder.id}
-                      onClick={() => handleStatusChange(selectedOrder, 'concluido')}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
+                      onClick={() => {
+                        const hasChanges = Boolean(selectedOrder.changes && selectedOrder.changes.length > 0);
+                        const clientApproved = Boolean(selectedOrder.clientApprovedAt || selectedOrder.status === 'alteracoes_aceitas');
+                        if (hasChanges && !clientApproved) {
+                          const proceed = confirm('Atenção: O cliente ainda não aprovou as alterações deste pedido no painel dele. Deseja marcar como despachado mesmo assim?');
+                          if (!proceed) return;
+                        }
+                        handleStatusChange(selectedOrder, 'despachado');
+                      }}
+                      className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
                     >
-                      Concluir / Entregue
+                      <span>🚚 Marcar como Despachado</span>
                     </button>
                   )}
                   {selectedOrder.status !== 'cancelado' && (

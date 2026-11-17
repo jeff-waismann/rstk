@@ -14,6 +14,7 @@ export async function onRequestGet({ request, env }) {
       `SELECT 
         id, order_number, items_json, total_cents, item_count,
         status, origin, notes, changes_json, approved_at, admin_notes,
+        client_approved_at, dispatched_at,
         created_at, updated_at
        FROM rstk_orders
        WHERE customer_id = ? OR customer_cnpj = ? OR customer_email = ?
@@ -49,6 +50,8 @@ export async function onRequestGet({ request, env }) {
         notes: row.notes,
         changes,
         approvedAt: row.approved_at,
+        clientApprovedAt: row.client_approved_at,
+        dispatchedAt: row.dispatched_at,
         adminNotes: row.admin_notes,
         createdAt: row.created_at,
         updatedAt: row.updated_at
