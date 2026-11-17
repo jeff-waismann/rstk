@@ -12,8 +12,8 @@ const defaultWhatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${enco
 ---
 
 <div class="selectionbar" id="selectionbar" hidden>
-  <span><strong id="bar-count">0</strong> álbum(ns) na sua seleção</span>
-  <button class="primary" id="view-selection" type="button">Revisar seleção →</button>
+  <span><strong id="bar-count">0</strong> vinil(is) no seu pedido</span>
+  <button class="primary" id="view-selection" type="button">Ver Pedido / Carrinho →</button>
 </div>
 
 <a
@@ -39,8 +39,8 @@ const defaultWhatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${enco
 
 <dialog id="selection" class="selection-dialog" aria-labelledby="selection-title">
   <button class="close" id="close-selection" type="button" aria-label="Fechar seleção">×</button>
-  <h2 id="selection-title">Sua seleção</h2>
-  <p class="copy-note">Revise os títulos e copie a lista para consultar a RSTK.</p>
+  <h2 id="selection-title">Seu Pedido</h2>
+  <p class="copy-note">Revise os títulos e quantidades para consultar e encomendar via WhatsApp.</p>
   <ul class="selected-list" id="selected-list"></ul>
   <div class="actions">
     <a
@@ -50,11 +50,11 @@ const defaultWhatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${enco
       target="_blank"
       rel="noopener noreferrer"
     >
-      Consultar no WhatsApp ↗
+      Finalizar Pedido no WhatsApp ↗
     </a>
     <button class="primary" id="copy" type="button">Copiar lista</button>
     <button class="secondary" id="download" type="button">Baixar lista .txt</button>
-    <button class="text-button" id="empty-selection" type="button">Esvaziar seleção</button>
+    <button class="text-button" id="empty-selection" type="button">Esvaziar pedido</button>
   </div>
   <textarea
     id="copy-fallback"

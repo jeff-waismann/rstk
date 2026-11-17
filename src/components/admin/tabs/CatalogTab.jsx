@@ -252,7 +252,7 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
                     </td>
                     <td className="py-3 px-4 text-xs font-medium text-[#0F172A]">{album.genre}</td>
                     <td className="py-3 px-4 text-xs text-[#64748B]">
-                      {album.units} {Number(album.units) === 1 ? 'LP' : 'LPs'}
+                      {Number(album.units) === 1 ? 'Álbum Simples' : (Number(album.units) === 2 ? 'Álbum Duplo' : `${album.units} LPs`)}
                     </td>
                     <td className="py-3 px-4 text-xs text-[#64748B] font-mono">{album.date}</td>
                     <td className="py-3 px-4 text-xs font-bold text-[#006782]">
@@ -388,16 +388,16 @@ export default function CatalogTab({ products = [], defaultPriceCents = 18999, o
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-[#0F172A] mb-1">
-                    Quantidade de LPs
+                    Formato do Álbum
                   </label>
                   <select
                     value={form.units}
                     onChange={(e) => setForm({ ...form, units: Number(e.target.value) })}
                     className="w-full text-sm border border-[#E2E8F0] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00C6F7]"
                   >
-                    <option value={1}>1 LP</option>
-                    <option value={2}>2 LPs</option>
-                    <option value={3}>3 LPs</option>
+                    <option value={1}>Álbum Simples</option>
+                    <option value={2}>Álbum Duplo</option>
+                    <option value={3}>3 LPs (Box / Triplo)</option>
                   </select>
                 </div>
 

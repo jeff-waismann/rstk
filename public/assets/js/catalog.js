@@ -40,6 +40,13 @@
     }).format(numeric);
   };
 
+  const formatAlbumUnits = (units) => {
+    const n = Number(units);
+    if (n === 1) return 'Álbum Simples';
+    if (n === 2) return 'Álbum Duplo';
+    return `${n} LPs`;
+  };
+
   const dateBR = (isoDate) => {
     if (!isoDate) return '—';
     const d = new Date(`${isoDate}T12:00:00`);
@@ -77,11 +84,40 @@
 
   let settings = bootstrap.settings || {};
   let catalog = Array.isArray(bootstrap.products) ? bootstrap.products : [];
-  let selected = new Set(
-    (storage.get('rstk-selection', []) || []).filter((id) =>
-      catalog.some((album) => Number(album.id) === Number(id))
-    )
-  );
+
+  // selected is a Map: albumId -> quantity (1..99)
+  function loadSavedSelection() {
+    const raw = storage.get('rstk-selection', []);
+    const map = new Map();
+    if (Array.isArray(raw)) {
+      for (const item of raw) {
+        if (typeof item === 'number' || typeof item === 'string') {
+          const id = Number(item);
+          if (catalog.some((album) => Number(album.id) === id)) {
+            map.set(id, 1);
+          }
+        } else if (item && typeof item === 'object' && item.id) {
+          const id = Number(item.id);
+          const qty = Math.min(99, Math.max(1, Number(item.qty) || 1));
+          if (catalog.some((album) => Number(album.id) === id)) {
+            map.set(id, qty);
+          }
+        }
+      }
+    }
+    return map;
+  }
+
+  let selected = loadSavedSelection();
+
+  function getTotalItemsCount() {
+    let sum = 0;
+    for (const qty of selected.values()) {
+      sum += qty;
+    }
+    return sum;
+  }
+
   let activeGenre = '';
   let savedOnly = false;
   let openAlbumId = null;
@@ -295,7 +331,7 @@
     const resultEl = $('result-count');
     if (resultEl) {
       resultEl.textContent = `${arr.length} de ${catalog.length} títulos${
-        savedOnly ? ' · Minha seleção' : ''
+        savedOnly ? ' · Meu pedido' : ''
       }`;
     }
 
@@ -305,23 +341,54 @@
         ? arr
             .map((p) => {
               const id = Number(p.id);
-              const isSelected = selected.has(id);
-              const unitsLabel = `${p.units} ${Number(p.units) === 1 ? 'LP' : 'LPs'}`;
+              const isInCart = selected.has(id);
+              const currentQty = isInCart ? (selected.get(id) || 1) : 1;
+              const unitLabel = formatAlbumUnits(p.units);
               const isSoldOut = !p.active || (typeof p.stock === 'number' && p.stock <= 0);
               return `<article class="card ${isSoldOut ? 'sold-out' : ''}" data-id="${id}">
                 <div class="art">
                   <button class="art-open" type="button" data-detail="${id}" aria-label="Ver detalhes de ${escapeHTML(p.title)}">
                     <img src="${escapeHTML(sanitizeHref(p.cover))}" loading="lazy" decoding="async" width="600" height="600" alt="Capa de ${escapeHTML(p.title)}, ${escapeHTML(p.artist)}">
                   </button>
-                  <span class="lp">${escapeHTML(unitsLabel)}</span>
+                  <span class="lp">${escapeHTML(unitLabel)}</span>
                   ${isSoldOut ? '<span class="ribbon-sold-out" aria-label="Esgotado">ESGOTADO</span>' : ''}
-                  <button class="heart ${isSelected ? 'on' : ''} ${isSoldOut ? 'disabled-sold-out' : ''}" type="button" data-save="${id}" aria-pressed="${isSelected}" aria-label="${isSoldOut ? 'Produto esgotado: ' + escapeHTML(p.title) : (isSelected ? 'Remover' : 'Adicionar') + ' ' + escapeHTML(p.title) + ' à seleção'}">${isSelected ? '♥' : (isSoldOut ? '✕' : '♡')}</button>
                 </div>
                 <div class="card-info">
                   <p class="artist">${escapeHTML(p.artist)}</p>
                   <button class="title" type="button" data-detail="${id}">${escapeHTML(p.title)}</button>
                   <p class="genre">${escapeHTML(p.genre)}</p>
-                  <button class="detail-btn" type="button" data-detail="${id}">Conheça o disco <span>↗</span></button>
+                  <div class="card-bottom">
+                    <button class="detail-btn" type="button" data-detail="${id}">Conheça o disco <span>↗</span></button>
+                    <div class="card-order-controls">
+                      <div class="qty-control" role="group" aria-label="Quantidade">
+                        <button type="button" class="qty-btn" data-qty-dec="${id}" aria-label="Diminuir quantidade">−</button>
+                        <input
+                          type="number"
+                          class="qty-input"
+                          data-qty-input="${id}"
+                          min="1"
+                          max="99"
+                          value="${currentQty}"
+                          aria-label="Quantidade de ${escapeHTML(p.title)}"
+                        />
+                        <button type="button" class="qty-btn" data-qty-inc="${id}" aria-label="Aumentar quantidade">+</button>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn-add-cart ${isSoldOut ? 'disabled-sold-out' : ''} ${isInCart ? 'in-cart' : ''}"
+                        data-add-cart="${id}"
+                        aria-label="${isSoldOut ? 'Produto esgotado: ' + escapeHTML(p.title) : (isInCart ? 'Atualizar quantidade no pedido' : 'Adicionar ' + escapeHTML(p.title) + ' ao pedido')}"
+                        title="${isSoldOut ? 'Produto esgotado' : (isInCart ? 'No pedido (clique para atualizar)' : 'Adicionar ao pedido')}"
+                      >
+                        <svg class="cart-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <circle cx="9" cy="21" r="1.3"></circle>
+                          <circle cx="20" cy="21" r="1.3"></circle>
+                          <path d="M1 1h4l2.6 13a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"></path>
+                        </svg>
+                        <span class="cart-plus-badge">${isInCart ? '✓' : '+'}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </article>`;
             })
@@ -337,7 +404,11 @@
   function selectionText() {
     const items = catalog
       .filter((p) => selected.has(Number(p.id)))
-      .map((p) => `• ${p.artist} — ${p.title} (${p.units} ${Number(p.units) === 1 ? 'LP' : 'LPs'})`)
+      .map((p) => {
+        const qty = selected.get(Number(p.id)) || 1;
+        const unitLabel = formatAlbumUnits(p.units);
+        return `• ${qty}x ${p.artist} — ${p.title} (${unitLabel})`;
+      })
       .join('\n');
     return (
       'Olá, RSTK! Gostaria de consultar valores e disponibilidade dos seguintes vinis:\n\n' +
@@ -365,14 +436,19 @@
 
   function updateSelection() {
     updateWhatsApp();
+    const totalCount = getTotalItemsCount();
     const savedCountEl = $('saved-count');
     const barCountEl = $('bar-count');
     const selectionBarEl = $('selectionbar');
-    if (savedCountEl) savedCountEl.textContent = String(selected.size);
-    if (barCountEl) barCountEl.textContent = String(selected.size);
+    if (savedCountEl) savedCountEl.textContent = String(totalCount);
+    if (barCountEl) barCountEl.textContent = String(totalCount);
     if (selectionBarEl) selectionBarEl.hidden = selected.size === 0;
 
-    storage.set('rstk-selection', [...selected]);
+    const listToStore = [];
+    for (const [id, qty] of selected.entries()) {
+      listToStore.push({ id, qty });
+    }
+    storage.set('rstk-selection', listToStore);
 
     for (const id of ['copy', 'download', 'empty-selection']) {
       const btn = $(id);
@@ -380,22 +456,71 @@
     }
   }
 
-  function toggleSave(id) {
+  function handleQuantityChange(id, delta) {
+    const numericId = Number(id);
+    const input = document.querySelector(`input[data-qty-input="${numericId}"]`);
+    if (!input) return;
+    let currentVal = parseInt(input.value, 10);
+    if (isNaN(currentVal)) currentVal = 1;
+    let nextVal = Math.min(99, Math.max(1, currentVal + delta));
+    input.value = nextVal;
+
+    if (selected.has(numericId)) {
+      selected.set(numericId, nextVal);
+      updateSelection();
+      if ($('selection')?.open) renderSelection();
+      const detailInput = $('detail-qty-input');
+      if (detailInput && openAlbumId === numericId) {
+        detailInput.value = nextVal;
+      }
+    }
+  }
+
+  function addToCart(id, explicitQty = null) {
     const numericId = Number(id);
     const album = catalog.find((p) => Number(p.id) === numericId);
-    const isSoldOut = album && (!album.active || (typeof album.stock === 'number' && album.stock <= 0));
+    if (!album) return;
 
-    if (isSoldOut && !selected.has(numericId)) {
+    const isSoldOut = !album.active || (typeof album.stock === 'number' && album.stock <= 0);
+    if (isSoldOut) {
       toast(`O vinil "${album.title}" está esgotado e não pode ser adicionado à lista.`);
       return;
     }
 
-    if (selected.has(numericId)) selected.delete(numericId);
-    else selected.add(numericId);
+    let qty = explicitQty;
+    if (qty === null) {
+      const input = document.querySelector(`input[data-qty-input="${numericId}"]`);
+      qty = input ? parseInt(input.value, 10) : 1;
+    }
+    if (isNaN(qty) || qty < 1) qty = 1;
+    if (qty > 99) qty = 99;
 
+    const alreadyInCart = selected.has(numericId);
+    selected.set(numericId, qty);
+    updateSelection();
     draw();
+
     if ($('detail')?.open) showDetail(numericId, false);
     if ($('selection')?.open) renderSelection();
+
+    if (alreadyInCart) {
+      toast(`Quantidade de "${album.title}" atualizada para ${qty} un.!`);
+    } else {
+      toast(`"${album.title}" (${qty} un.) adicionado ao seu pedido! 🛒`);
+    }
+  }
+
+  function removeFromCart(id) {
+    const numericId = Number(id);
+    const album = catalog.find((p) => Number(p.id) === numericId);
+    if (selected.has(numericId)) {
+      selected.delete(numericId);
+      updateSelection();
+      draw();
+      if ($('detail')?.open) showDetail(numericId, false);
+      if ($('selection')?.open) renderSelection();
+      if (album) toast(`"${album.title}" removido do pedido.`);
+    }
   }
 
   function showDetail(id, open = true) {
@@ -404,7 +529,8 @@
     if (!album) return;
 
     openAlbumId = numericId;
-    const isSaved = selected.has(numericId);
+    const isInCart = selected.has(numericId);
+    const currentQty = isInCart ? (selected.get(numericId) || 1) : 1;
     const priceDisplay = formatPriceBRL(album.priceCents ?? settings.priceCents ?? 18999);
     const noteText =
       settings.detailNote ||
@@ -425,17 +551,39 @@
           <h2 id="detail-title">${escapeHTML(album.title)}</h2>
           <dl>
             <div><dt>Gênero</dt><dd>${escapeHTML(album.genre)}</dd></div>
-            <div><dt>Formato na lista</dt><dd>${album.units} ${Number(album.units) === 1 ? 'LP' : 'LPs'}</dd></div>
+            <div><dt>Formato na lista</dt><dd>${formatAlbumUnits(album.units)}</dd></div>
             <div><dt>Data da edição na lista</dt><dd>${dateBR(album.date)}</dd></div>
             <div><dt>Preço de lançamento</dt><dd>${escapeHTML(priceDisplay)}</dd></div>
             <div><dt>Disponibilidade</dt><dd style="${isSoldOut ? 'color:#DC2626;font-weight:700;' : ''}">${
               isSoldOut ? '🔴 ESGOTADO' : (typeof album.stock === 'number' ? `${album.stock} un. em estoque` : '30 un.')
             }</dd></div>
           </dl>
-          <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.75rem;">
-            <button class="primary" type="button" data-save="${numericId}" style="${isSoldOut && !isSaved ? 'background:#334155;border-color:#475569;' : ''}">${
-              isSaved ? '♥ Na sua seleção · remover' : (isSoldOut ? '✕ Disco Esgotado' : '♡ Adicionar à seleção')
-            }</button>
+          <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.75rem;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="qty-control" role="group" aria-label="Quantidade" style="height:38px;">
+                <button type="button" class="qty-btn" data-detail-qty-dec="${numericId}" style="width:32px;height:38px;font-size:16px;">−</button>
+                <input
+                  type="number"
+                  class="qty-input"
+                  id="detail-qty-input"
+                  data-detail-qty-input="${numericId}"
+                  min="1"
+                  max="99"
+                  value="${currentQty}"
+                  style="width:42px;height:38px;font-size:14px;"
+                  aria-label="Quantidade de ${escapeHTML(album.title)}"
+                />
+                <button type="button" class="qty-btn" data-detail-qty-inc="${numericId}" style="width:32px;height:38px;font-size:16px;">+</button>
+              </div>
+              <button
+                class="primary"
+                type="button"
+                data-detail-add-cart="${numericId}"
+                style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;gap:8px;${isSoldOut ? 'background:#334155;border-color:#475569;cursor:not-allowed;' : (isInCart ? 'background:#10B981;border-color:#059669;' : '')}"
+              >
+                <span>${isSoldOut ? '✕ Disco Esgotado' : (isInCart ? '✓ No Pedido · Atualizar' : '🛒 + Adicionar ao Pedido')}</span>
+              </button>
+            </div>
             <div id="modal-sold-out-notice" style="color:#DC2626;font-size:12px;font-weight:700;text-align:center;padding:4px 0;" hidden></div>
             ${
               isSoldOut
@@ -468,19 +616,54 @@
     const listEl = $('selected-list');
     if (listEl) {
       const items = catalog.filter((p) => selected.has(Number(p.id)));
+      let totalCents = 0;
+      let totalQty = 0;
+
       listEl.innerHTML = items.length
         ? items
-            .map(
-              (p) => `<li>
+            .map((p) => {
+              const id = Number(p.id);
+              const qty = selected.get(id) || 1;
+              const unitPrice = p.priceCents ?? settings.priceCents ?? 18999;
+              const subtotal = unitPrice * qty;
+              totalCents += subtotal;
+              totalQty += qty;
+              return `<li>
                 <img src="${escapeHTML(sanitizeHref(p.cover))}" alt="">
-                <div>
-                  <strong>${escapeHTML(p.title)}</strong>
-                  <small>${escapeHTML(p.artist)} · ${p.units} ${Number(p.units) === 1 ? 'LP' : 'LPs'}</small>
+                <div style="flex:1;min-width:0;">
+                  <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(p.title)}</strong>
+                  <small>${escapeHTML(p.artist)} · ${formatAlbumUnits(p.units)}</small>
+                  <div style="font-size:11px;color:var(--ink);opacity:0.8;margin-top:2px;">
+                    ${formatPriceBRL(unitPrice)} un.
+                  </div>
                 </div>
-                <button type="button" data-save="${Number(p.id)}" aria-label="Remover ${escapeHTML(p.title)}">×</button>
-              </li>`
-            )
-            .join('')
+                <div class="cart-item-controls" style="display:flex;align-items:center;gap:6px;">
+                  <div class="qty-control" role="group" aria-label="Quantidade" style="height:28px;">
+                    <button type="button" class="qty-btn" data-cart-dec="${id}" style="width:22px;height:28px;font-size:12px;">−</button>
+                    <input
+                      type="number"
+                      class="qty-input"
+                      data-cart-input="${id}"
+                      min="1"
+                      max="99"
+                      value="${qty}"
+                      style="width:28px;height:28px;font-size:11px;"
+                      aria-label="Quantidade de ${escapeHTML(p.title)}"
+                    />
+                    <button type="button" class="qty-btn" data-cart-inc="${id}" style="width:22px;height:28px;font-size:12px;">+</button>
+                  </div>
+                  <span class="cart-item-subtotal" style="font-size:12px;font-weight:700;color:var(--blue);min-width:70px;text-align:right;">
+                    ${formatPriceBRL(subtotal)}
+                  </span>
+                  <button type="button" class="cart-item-remove" data-cart-remove="${id}" aria-label="Remover ${escapeHTML(p.title)}">×</button>
+                </div>
+              </li>`;
+            })
+            .join('') +
+          `<li style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;font-weight:700;border-top:2px solid var(--line);border-bottom:none;">
+            <span>Total (${totalQty} ${totalQty === 1 ? 'vinil' : 'vinis'}):</span>
+            <span style="font-size:16px;color:var(--blue);">${formatPriceBRL(totalCents)}</span>
+          </li>`
         : '<li>Sua seleção está vazia.</li>';
     }
     const fallbackEl = $('copy-fallback');
@@ -528,13 +711,17 @@
     if (singleAlbumId) {
       const p = catalog.find((x) => Number(x.id) === Number(singleAlbumId));
       if (p) {
+        const detailInput = $('detail-qty-input');
+        const cardInput = document.querySelector(`input[data-qty-input="${singleAlbumId}"]`);
+        const chosenQty = detailInput ? parseInt(detailInput.value, 10) : (cardInput ? parseInt(cardInput.value, 10) : 1);
+        const validQty = Math.min(99, Math.max(1, isNaN(chosenQty) ? 1 : chosenQty));
         items = [{
           id: Number(p.id),
           title: p.title,
           artist: p.artist,
           units: Number(p.units) || 1,
           priceCents: p.priceCents ?? settings.priceCents ?? 18999,
-          quantity: 1,
+          quantity: validQty,
           cover: p.cover
         }];
       }
@@ -546,7 +733,7 @@
         artist: p.artist,
         units: Number(p.units) || 1,
         priceCents: p.priceCents ?? settings.priceCents ?? 18999,
-        quantity: 1,
+        quantity: selected.get(Number(p.id)) || 1,
         cover: p.cover
       }));
     } else if (openAlbumId) {
@@ -583,7 +770,7 @@
           totalCents,
           origin: singleAlbumId ? 'modal_single_buy' : (sourceEl?.id === 'whatsapp-modal' ? 'modal_selection' : 'floating_whatsapp'),
           notes: items.length
-            ? `Pedido de ${items.length} vinil(is) solicitado via WhatsApp`
+            ? `Pedido de ${items.reduce((sum, it) => sum + it.quantity, 0)} vinil(is) solicitado via WhatsApp`
             : 'Consulta geral de catálogo via WhatsApp'
         }),
         signal: controller.signal,
@@ -619,7 +806,9 @@
     const phone = String(settings.whatsappNumber || '553488293565').replace(/\D/g, '');
     let message = '';
     if (singleAlbumId && items.length === 1) {
-      message = `Olá, RSTK! Gostaria de encomendar no atacado o vinil lacrado:\n\n• ${items[0].artist} — ${items[0].title} (${items[0].units} ${Number(items[0].units) === 1 ? 'LP' : 'LPs'})\n\nPodem confirmar o envio e as condições de pagamento?`;
+      const it = items[0];
+      const unitLabel = formatAlbumUnits(it.units);
+      message = `Olá, RSTK! Gostaria de encomendar no atacado o vinil lacrado:\n\n• ${it.quantity}x ${it.artist} — ${it.title} (${unitLabel})\n\nPodem confirmar o envio e as condições de pagamento?`;
     } else if (selected.size > 0) {
       message = selectionText();
     } else {
@@ -690,7 +879,7 @@
 
   document.addEventListener('click', (event) => {
     const target = event.target instanceof Element
-      ? event.target.closest('[data-detail],[data-save],[data-genre],[data-close],[data-clear],[data-buy-now]')
+      ? event.target.closest('[data-detail],[data-genre],[data-close],[data-clear],[data-buy-now],[data-qty-dec],[data-qty-inc],[data-add-cart],[data-detail-qty-dec],[data-detail-qty-inc],[data-detail-add-cart],[data-cart-dec],[data-cart-inc],[data-cart-remove]')
       : null;
     if (!target) return;
 
@@ -698,8 +887,50 @@
       dispatchWhatsAppOrder(event, target, Number(target.getAttribute('data-buy-now')));
     } else if (target.hasAttribute('data-detail')) {
       showDetail(Number(target.getAttribute('data-detail')));
-    } else if (target.hasAttribute('data-save')) {
-      toggleSave(Number(target.getAttribute('data-save')));
+    } else if (target.hasAttribute('data-qty-dec')) {
+      handleQuantityChange(Number(target.getAttribute('data-qty-dec')), -1);
+    } else if (target.hasAttribute('data-qty-inc')) {
+      handleQuantityChange(Number(target.getAttribute('data-qty-inc')), 1);
+    } else if (target.hasAttribute('data-add-cart')) {
+      addToCart(Number(target.getAttribute('data-add-cart')));
+    } else if (target.hasAttribute('data-detail-qty-dec')) {
+      const input = $('detail-qty-input');
+      if (input) {
+        let v = parseInt(input.value, 10) || 1;
+        input.value = Math.max(1, v - 1);
+      }
+    } else if (target.hasAttribute('data-detail-qty-inc')) {
+      const input = $('detail-qty-input');
+      if (input) {
+        let v = parseInt(input.value, 10) || 1;
+        input.value = Math.min(99, v + 1);
+      }
+    } else if (target.hasAttribute('data-detail-add-cart')) {
+      const input = $('detail-qty-input');
+      const qty = input ? parseInt(input.value, 10) : 1;
+      addToCart(Number(target.getAttribute('data-detail-add-cart')), qty);
+    } else if (target.hasAttribute('data-cart-dec')) {
+      const id = Number(target.getAttribute('data-cart-dec'));
+      const cur = selected.get(id) || 1;
+      if (cur > 1) {
+        selected.set(id, cur - 1);
+        updateSelection();
+        renderSelection();
+        draw();
+      } else {
+        removeFromCart(id);
+      }
+    } else if (target.hasAttribute('data-cart-inc')) {
+      const id = Number(target.getAttribute('data-cart-inc'));
+      const cur = selected.get(id) || 1;
+      if (cur < 99) {
+        selected.set(id, cur + 1);
+        updateSelection();
+        renderSelection();
+        draw();
+      }
+    } else if (target.hasAttribute('data-cart-remove')) {
+      removeFromCart(Number(target.getAttribute('data-cart-remove')));
     } else if (target.hasAttribute('data-genre')) {
       activeGenre = target.getAttribute('data-genre') || '';
       drawGenres();
@@ -708,6 +939,46 @@
       $('detail')?.close();
     } else if (target.hasAttribute('data-clear')) {
       clearFilters();
+    }
+  });
+
+  document.addEventListener('input', (event) => {
+    const target = event.target;
+    if (target instanceof HTMLInputElement && (target.hasAttribute('data-qty-input') || target.hasAttribute('data-cart-input') || target.id === 'detail-qty-input')) {
+      let val = target.value.replace(/\D/g, '');
+      if (val === '') return;
+      let n = parseInt(val, 10);
+      if (n > 99) n = 99;
+      if (n < 1) n = 1;
+      target.value = String(n);
+
+      const albumId = Number(target.getAttribute('data-qty-input') || target.getAttribute('data-cart-input') || target.getAttribute('data-detail-qty-input'));
+      if (albumId && selected.has(albumId)) {
+        selected.set(albumId, n);
+        updateSelection();
+        if (target.hasAttribute('data-cart-input')) {
+          renderSelection();
+        }
+      }
+    }
+  });
+
+  document.addEventListener('change', (event) => {
+    const target = event.target;
+    if (target instanceof HTMLInputElement && (target.hasAttribute('data-qty-input') || target.hasAttribute('data-cart-input') || target.id === 'detail-qty-input')) {
+      let n = parseInt(target.value, 10);
+      if (isNaN(n) || n < 1) n = 1;
+      if (n > 99) n = 99;
+      target.value = String(n);
+
+      const albumId = Number(target.getAttribute('data-qty-input') || target.getAttribute('data-cart-input') || target.getAttribute('data-detail-qty-input'));
+      if (albumId && selected.has(albumId)) {
+        selected.set(albumId, n);
+        updateSelection();
+        if (target.hasAttribute('data-cart-input')) {
+          renderSelection();
+        }
+      }
     }
   });
 
@@ -752,9 +1023,11 @@
       if (changed) {
         settings = nextSettings;
         catalog = nextProducts;
-        selected = new Set(
-          [...selected].filter((id) => catalog.some((p) => Number(p.id) === Number(id)))
-        );
+        for (const id of [...selected.keys()]) {
+          if (!catalog.some((p) => Number(p.id) === Number(id))) {
+            selected.delete(id);
+          }
+        }
         renderSettingsAndHero();
         renderFilterOptions();
         readUrlState();

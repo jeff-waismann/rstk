@@ -26,7 +26,7 @@ export default function DashboardTab({ products = [], settings = {}, onNavigate 
           </div>
           <p className="text-3xl font-extrabold text-[#0F172A]">{activeCount}</p>
           <p className="text-xs text-[#64748B] mt-1">
-            {totalStock} unidades em estoque ({doubleLps} LPs duplos)
+            {totalStock} unidades em estoque ({doubleLps} álbuns duplos)
           </p>
         </div>
 

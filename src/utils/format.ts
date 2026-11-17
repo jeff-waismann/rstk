@@ -64,3 +64,14 @@ export function formatDateBR(isoDate: string): string {
   if (Number.isNaN(date.getTime())) return isoDate;
   return date.toLocaleDateString('pt-BR');
 }
+
+/**
+ * Formats units count to Portuguese vinyl format description.
+ * 1 -> "Álbum Simples", 2 -> "Álbum Duplo", N -> "N LPs".
+ */
+export function formatAlbumUnits(units: number | string | undefined): string {
+  const n = Number(units) || 1;
+  if (n === 1) return 'Álbum Simples';
+  if (n === 2) return 'Álbum Duplo';
+  return `${n} LPs`;
+}

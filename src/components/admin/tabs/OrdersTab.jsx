@@ -515,7 +515,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                         <div className="min-w-0">
                           <p className="font-bold text-sm text-[#0F172A] truncate">{it.title}</p>
                           <p className="text-xs text-[#64748B] truncate">
-                            {it.artist} {it.units && `· ${it.units} LP`}
+                            {it.artist} {it.units && `· ${Number(it.units) === 1 ? 'Álbum Simples' : (Number(it.units) === 2 ? 'Álbum Duplo' : `${it.units} LPs`)}`}
                           </p>
                         </div>
                       </div>

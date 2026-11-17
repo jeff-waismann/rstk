@@ -673,6 +673,174 @@ select {
   margin-left: 5px;
 }
 
+/* --- Card Order Controls & Stepper --- */
+.card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  flex-wrap: nowrap;
+}
+
+.card-order-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.qty-control {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: var(--panel2);
+  border-radius: 6px;
+  overflow: hidden;
+  height: 30px;
+}
+
+.qty-btn {
+  width: 24px;
+  height: 30px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  user-select: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.qty-btn:hover {
+  background: var(--line);
+  color: var(--blue);
+}
+
+.qty-btn:active {
+  background: rgba(0, 198, 247, 0.25);
+}
+
+.qty-input {
+  width: 32px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  padding: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-input:focus {
+  outline: none;
+  background: var(--panel);
+}
+
+.btn-add-cart {
+  position: relative;
+  width: 34px;
+  height: 30px;
+  border-radius: 6px;
+  background: var(--blue);
+  color: #001018;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 198, 247, 0.25);
+}
+
+.btn-add-cart:hover {
+  background: #4de0ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 198, 247, 0.4);
+}
+
+.btn-add-cart:active {
+  transform: translateY(0);
+}
+
+.btn-add-cart.in-cart {
+  background: #10B981;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.btn-add-cart.in-cart:hover {
+  background: #059669;
+}
+
+.cart-svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
+.cart-plus-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #0F172A;
+  color: #00C6F7;
+  font-size: 9px;
+  font-weight: 900;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 1px solid var(--blue);
+}
+
+.btn-add-cart.in-cart .cart-plus-badge {
+  background: #064E3B;
+  color: #34D399;
+  border-color: #10B981;
+}
+
+.btn-add-cart.disabled-sold-out {
+  background: #334155;
+  color: #94A3B8;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.65;
+}
+
+.btn-add-cart.disabled-sold-out .cart-plus-badge {
+  background: #475569;
+  color: #CBD5E1;
+  border-color: #64748B;
+}
+
+.btn-add-cart.disabled-sold-out:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+  transform: none;
+}
+
 .empty {
   padding: 60px 20px;
   text-align: center;
