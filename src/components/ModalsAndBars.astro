@@ -52,9 +52,10 @@ const defaultWhatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${enco
     >
       Finalizar Pedido no WhatsApp ↗
     </a>
-    <button class="primary" id="copy" type="button">Copiar lista</button>
-    <button class="secondary" id="download" type="button">Baixar lista .txt</button>
-    <button class="text-button" id="empty-selection" type="button">Esvaziar pedido</button>
+    <a class="secondary btn-client-auth-modal" id="btn-customer-login" href="/cliente/login">
+      Cadastre-se / Login
+    </a>
+    <button class="text-button" id="empty-selection" type="button">Limpar Pedido</button>
   </div>
   <textarea
     id="copy-fallback"

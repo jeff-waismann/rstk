@@ -1,0 +1,1020 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import catalogData from '../../data/catalog.json';
+import siteSettingsData from '../../data/siteSettings.json';
+import type { SiteSettings, VinylAlbum } from '../../utils/format';
+
+const allProducts = catalogData as VinylAlbum[];
+const siteSettings = {
+  ...(siteSettingsData as SiteSettings),
+  seoTitle: 'Cadastro de Revenda e Lojista B2B — RSTK Atacado',
+  seoDescription: 'Cadastre sua loja ou distribuidora de vinis na RSTK Atacado. Condições exclusivas de atacado para vinis lacrados e importados com faturamento B2B.'
+};
+---
+
+<BaseLayout
+  settings={siteSettings}
+  products={allProducts}
+  heroCovers={allProducts.slice(0, 3)}
+  canonicalPath="/cliente/cadastro"
+>
+  <main class="register-page">
+    <div class="register-container">
+      <div class="register-header">
+        <a href="/cliente/login" class="back-link">← Já tem conta? Faça Login</a>
+        <div class="badge-b2b">Revenda & Lojistas B2B</div>
+        <h1>Cadastro de Revenda RSTK</h1>
+        <p>Preencha os dados da sua empresa para ter acesso aos pedidos corporativos, faturamento e rastreamento em tempo real.</p>
+      </div>
+
+      <div id="register-alert" class="alert-box" hidden></div>
+
+      <form id="register-form" class="register-card" novalidate>
+        {/* Seção 1: Dados da Empresa */}
+        <div class="form-section">
+          <div class="section-title">
+            <span class="section-number">1</span>
+            <h2>Dados da Empresa</h2>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label for="razaoSocial">Razão Social <span class="req">*</span></label>
+              <input
+                type="text"
+                id="razaoSocial"
+                name="razaoSocial"
+                placeholder="Ex: Discos & Cultura Musical Ltda"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="nomeFantasia">Nome Fantasia / Loja</label>
+              <input
+                type="text"
+                id="nomeFantasia"
+                name="nomeFantasia"
+                placeholder="Ex: Vinyl Records Shop"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="cnpj">CNPJ <span class="req">*</span></label>
+              <input
+                type="text"
+                id="cnpj"
+                name="cnpj"
+                placeholder="00.000.000/0000-00"
+                maxlength="18"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="ie">Inscrição Estadual (IE)</label>
+              <div class="ie-input-wrap">
+                <input
+                  type="text"
+                  id="ie"
+                  name="ie"
+                  placeholder="Inscrição Estadual"
+                  maxlength="20"
+                />
+                <label class="checkbox-inline">
+                  <input type="checkbox" id="ieIsento" name="ieIsento" />
+                  <span>Isento</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Seção 2: Contato do Responsável */}
+        <div class="form-section">
+          <div class="section-title">
+            <span class="section-number">2</span>
+            <h2>Contato do Responsável</h2>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label for="responsavelNome">Nome Completo do Responsável <span class="req">*</span></label>
+              <input
+                type="text"
+                id="responsavelNome"
+                name="responsavelNome"
+                placeholder="Ex: Carlos Eduardo de Oliveira"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="email">E-mail Comercial (Login) <span class="req">*</span></label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="pedidos@sualoja.com.br"
+                required
+              />
+              <span class="input-hint">Será usado para login e confirmação da conta.</span>
+            </div>
+
+            <div class="form-group">
+              <label for="telefone">Telefone / WhatsApp <span class="req">*</span></label>
+              <input
+                type="tel"
+                id="telefone"
+                name="telefone"
+                placeholder="(00) 00000-0000"
+                maxlength="15"
+                required
+              />
+              <span class="input-hint">Para confirmação ágil dos lotes e envios.</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Seção 3: Endereço Principal / Faturamento */}
+        <div class="form-section">
+          <div class="section-title">
+            <span class="section-number">3</span>
+            <h2>Endereço Principal (Faturamento & Entrega)</h2>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="cep">CEP <span class="req">*</span></label>
+              <div class="cep-wrap">
+                <input
+                  type="text"
+                  id="cep"
+                  name="cep"
+                  placeholder="00000-000"
+                  maxlength="9"
+                  required
+                />
+                <span id="cep-loading" class="cep-spinner" hidden>Buscando...</span>
+              </div>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label for="logradouro">Logradouro (Rua, Av.) <span class="req">*</span></label>
+              <input
+                type="text"
+                id="logradouro"
+                name="logradouro"
+                placeholder="Rua das Palmeiras"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="numero">Número <span class="req">*</span></label>
+              <input
+                type="text"
+                id="numero"
+                name="numero"
+                placeholder="123"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="complemento">Complemento / Sala</label>
+              <input
+                type="text"
+                id="complemento"
+                name="complemento"
+                placeholder="Sala 102, Galpão B"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="bairro">Bairro <span class="req">*</span></label>
+              <input
+                type="text"
+                id="bairro"
+                name="bairro"
+                placeholder="Centro"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="cidade">Cidade <span class="req">*</span></label>
+              <input
+                type="text"
+                id="cidade"
+                name="cidade"
+                placeholder="São Paulo"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="uf">Estado (UF) <span class="req">*</span></label>
+              <select id="uf" name="uf" required>
+                <option value="">Selecione...</option>
+                <option value="AC">Acre (AC)</option>
+                <option value="AL">Alagoas (AL)</option>
+                <option value="AP">Amapá (AP)</option>
+                <option value="AM">Amazonas (AM)</option>
+                <option value="BA">Bahia (BA)</option>
+                <option value="CE">Ceará (CE)</option>
+                <option value="DF">Distrito Federal (DF)</option>
+                <option value="ES">Espírito Santo (ES)</option>
+                <option value="GO">Goiás (GO)</option>
+                <option value="MA">Maranhão (MA)</option>
+                <option value="MT">Mato Grosso (MT)</option>
+                <option value="MS">Mato Grosso do Sul (MS)</option>
+                <option value="MG">Minas Gerais (MG)</option>
+                <option value="PA">Pará (PA)</option>
+                <option value="PB">Paraíba (PB)</option>
+                <option value="PR">Paraná (PR)</option>
+                <option value="PE">Pernambuco (PE)</option>
+                <option value="PI">Piauí (PI)</option>
+                <option value="RJ">Rio de Janeiro (RJ)</option>
+                <option value="RN">Rio Grande do Norte (RN)</option>
+                <option value="RS">Rio Grande do Sul (RS)</option>
+                <option value="RO">Rondônia (RO)</option>
+                <option value="RR">Roraima (RR)</option>
+                <option value="SC">Santa Catarina (SC)</option>
+                <option value="SP">São Paulo (SP)</option>
+                <option value="SE">Sergipe (SE)</option>
+                <option value="TO">Tocantins (TO)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Seção 4: Outros Endereços de Entrega (Dinâmico) */}
+        <div class="form-section">
+          <div class="section-title-between">
+            <div class="section-title">
+              <span class="section-number">4</span>
+              <h2>Outros Endereços de Entrega (Opcional)</h2>
+            </div>
+            <button type="button" id="btn-add-address" class="btn-secondary-sm">
+              + Adicionar Outro Endereço
+            </button>
+          </div>
+          <p class="section-desc">Cadastre filiais, centros de distribuição ou outros pontos de entrega da sua rede de lojas.</p>
+
+          <div id="additional-addresses-container" class="additional-addresses-list">
+            {/* Endereços dinâmicos inseridos via JavaScript */}
+          </div>
+        </div>
+
+        {/* Seção 5: Segurança e Senha */}
+        <div class="form-section">
+          <div class="section-title">
+            <span class="section-number">5</span>
+            <h2>Senha de Acesso</h2>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="password">Criar Senha <span class="req">*</span></label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Mínimo 6 caracteres"
+                minlength="6"
+                required
+                autocomplete="new-password"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="passwordConfirm">Confirmar Senha <span class="req">*</span></label>
+              <input
+                type="password"
+                id="passwordConfirm"
+                name="passwordConfirm"
+                placeholder="Repita a senha"
+                minlength="6"
+                required
+                autocomplete="new-password"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Cloudflare Turnstile */}
+        <div class="turnstile-container">
+          <div
+            class="cf-turnstile"
+            data-sitekey="0x4AAAAAADN7xiosBuzdsddL"
+            data-theme="auto"
+          ></div>
+        </div>
+
+        <div class="submit-wrap">
+          <button type="submit" id="btn-submit-register" class="btn-primary-register">
+            <span>Finalizar Cadastro da Minha Revenda →</span>
+          </button>
+          <p class="submit-note">Ao se cadastrar, você concorda em receber confirmações de pedidos e notificações da RSTK.</p>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+  <script is:inline>
+    (function () {
+      var form = document.getElementById('register-form');
+      var alertBox = document.getElementById('register-alert');
+      var btnSubmit = document.getElementById('btn-submit-register');
+      var cnpjInput = document.getElementById('cnpj');
+      var telInput = document.getElementById('telefone');
+      var cepInput = document.getElementById('cep');
+      var ieInput = document.getElementById('ie');
+      var ieIsentoCheck = document.getElementById('ieIsento');
+      var addAddressBtn = document.getElementById('btn-add-address');
+      var addressesContainer = document.getElementById('additional-addresses-container');
+
+      // Checkbox Isento de IE
+      ieIsentoCheck.addEventListener('change', function () {
+        if (this.checked) {
+          ieInput.value = 'ISENTO';
+          ieInput.disabled = true;
+        } else {
+          ieInput.value = '';
+          ieInput.disabled = false;
+        }
+      });
+
+      // Máscara CNPJ: 00.000.000/0000-00
+      cnpjInput.addEventListener('input', function (e) {
+        var v = e.target.value.replace(/\D/g, '').slice(0, 14);
+        if (v.length > 2 && v.length <= 5) {
+          e.target.value = v.replace(/^(\d{2})(\d+)/, '$1.$2');
+        } else if (v.length > 5 && v.length <= 8) {
+          e.target.value = v.replace(/^(\d{2})(\d{3})(\d+)/, '$1.$2.$3');
+        } else if (v.length > 8 && v.length <= 12) {
+          e.target.value = v.replace(/^(\d{2})(\d{3})(\d{3})(\d+)/, '$1.$2.$3/$4');
+        } else if (v.length > 12) {
+          e.target.value = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, '$1.$2.$3/$4-$5');
+        } else {
+          e.target.value = v;
+        }
+      });
+
+      // Máscara Telefone: (00) 00000-0000 ou (00) 0000-0000
+      function maskPhone(input) {
+        var v = input.value.replace(/\D/g, '').slice(0, 11);
+        if (v.length > 10) {
+          input.value = v.replace(/^(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        } else if (v.length > 6) {
+          input.value = v.replace(/^(\d{2})(\d{4})(\d+)/, '($1) $2-$3');
+        } else if (v.length > 2) {
+          input.value = v.replace(/^(\d{2})(\d+)/, '($1) $2');
+        } else {
+          input.value = v;
+        }
+      }
+      telInput.addEventListener('input', function () { maskPhone(telInput); });
+
+      // Máscara CEP: 00000-000
+      function maskCep(input) {
+        var v = input.value.replace(/\D/g, '').slice(0, 8);
+        if (v.length > 5) {
+          input.value = v.replace(/^(\d{5})(\d{1,3})/, '$1-$2');
+        } else {
+          input.value = v;
+        }
+      }
+      cepInput.addEventListener('input', function () { maskCep(cepInput); });
+
+      // Auto-preenchimento ViaCEP para o endereço principal
+      cepInput.addEventListener('blur', function () {
+        var clean = cepInput.value.replace(/\D/g, '');
+        if (clean.length === 8) {
+          var spinner = document.getElementById('cep-loading');
+          if (spinner) spinner.hidden = false;
+          fetch('https://viacep.com.br/ws/' + clean + '/json/')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (spinner) spinner.hidden = true;
+              if (data && !data.erro) {
+                if (data.logradouro) document.getElementById('logradouro').value = data.logradouro;
+                if (data.bairro) document.getElementById('bairro').value = data.bairro;
+                if (data.localidade) document.getElementById('cidade').value = data.localidade;
+                if (data.uf) document.getElementById('uf').value = data.uf;
+                document.getElementById('numero').focus();
+              }
+            })
+            .catch(function () {
+              if (spinner) spinner.hidden = true;
+            });
+        }
+      });
+
+      // Endereços adicionais dinâmicos
+      var addressCount = 0;
+      addAddressBtn.addEventListener('click', function () {
+        addressCount++;
+        var cardId = 'addr-' + addressCount;
+        var card = document.createElement('div');
+        card.className = 'additional-addr-card';
+        card.id = cardId;
+        card.innerHTML = `
+          <div class="addr-card-top">
+            <strong>Endereço de Entrega Adicional #${addressCount}</strong>
+            <button type="button" class="btn-remove-addr" data-remove="${cardId}">Remover ×</button>
+          </div>
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label>Nome / Identificação do Local</label>
+              <input type="text" class="addr-label" placeholder="Ex: Filial Shopping, Galpão de Distribuição" />
+            </div>
+            <div class="form-group">
+              <label>CEP</label>
+              <input type="text" class="addr-cep" placeholder="00000-000" maxlength="9" />
+            </div>
+            <div class="form-group col-span-2">
+              <label>Logradouro</label>
+              <input type="text" class="addr-logradouro" placeholder="Rua / Avenida" />
+            </div>
+            <div class="form-group">
+              <label>Número</label>
+              <input type="text" class="addr-numero" placeholder="123" />
+            </div>
+            <div class="form-group">
+              <label>Complemento</label>
+              <input type="text" class="addr-complemento" placeholder="Sala, Galpão" />
+            </div>
+            <div class="form-group">
+              <label>Bairro</label>
+              <input type="text" class="addr-bairro" placeholder="Bairro" />
+            </div>
+            <div class="form-group">
+              <label>Cidade</label>
+              <input type="text" class="addr-cidade" placeholder="Cidade" />
+            </div>
+            <div class="form-group">
+              <label>UF</label>
+              <input type="text" class="addr-uf" placeholder="SP" maxlength="2" style="text-transform:uppercase;" />
+            </div>
+          </div>
+        `;
+        addressesContainer.appendChild(card);
+
+        // Bind CEP mask & ViaCEP for dynamic address card
+        var dynCep = card.querySelector('.addr-cep');
+        dynCep.addEventListener('input', function () { maskCep(dynCep); });
+        dynCep.addEventListener('blur', function () {
+          var clean = dynCep.value.replace(/\D/g, '');
+          if (clean.length === 8) {
+            fetch('https://viacep.com.br/ws/' + clean + '/json/')
+              .then(function (r) { return r.json(); })
+              .then(function (data) {
+                if (data && !data.erro) {
+                  if (data.logradouro) card.querySelector('.addr-logradouro').value = data.logradouro;
+                  if (data.bairro) card.querySelector('.addr-bairro').value = data.bairro;
+                  if (data.localidade) card.querySelector('.addr-cidade').value = data.localidade;
+                  if (data.uf) card.querySelector('.addr-uf').value = data.uf;
+                  card.querySelector('.addr-numero').focus();
+                }
+              })
+              .catch(function () {});
+          }
+        });
+      });
+
+      // Remove endereço adicional
+      addressesContainer.addEventListener('click', function (e) {
+        if (e.target && e.target.hasAttribute('data-remove')) {
+          var targetId = e.target.getAttribute('data-remove');
+          var el = document.getElementById(targetId);
+          if (el) el.remove();
+        }
+      });
+
+      function showAlert(msg, isError) {
+        if (!alertBox) return;
+        alertBox.textContent = msg;
+        alertBox.className = isError ? 'alert-box alert-error' : 'alert-box alert-success';
+        alertBox.hidden = false;
+        alertBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        alertBox.hidden = true;
+
+        var razaoSocial = (document.getElementById('razaoSocial').value || '').trim();
+        var nomeFantasia = (document.getElementById('nomeFantasia').value || '').trim();
+        var cnpj = (document.getElementById('cnpj').value || '').trim();
+        var ie = (document.getElementById('ie').value || '').trim();
+        var ieIsento = document.getElementById('ieIsento').checked;
+
+        var responsavelNome = (document.getElementById('responsavelNome').value || '').trim();
+        var email = (document.getElementById('email').value || '').trim().toLowerCase();
+        var telefone = (document.getElementById('telefone').value || '').trim();
+
+        var cep = (document.getElementById('cep').value || '').trim();
+        var logradouro = (document.getElementById('logradouro').value || '').trim();
+        var numero = (document.getElementById('numero').value || '').trim();
+        var complemento = (document.getElementById('complemento').value || '').trim();
+        var bairro = (document.getElementById('bairro').value || '').trim();
+        var cidade = (document.getElementById('cidade').value || '').trim();
+        var uf = (document.getElementById('uf').value || '').trim();
+
+        var password = (document.getElementById('password').value || '').trim();
+        var passwordConfirm = (document.getElementById('passwordConfirm').value || '').trim();
+
+        var turnstileInput = form.querySelector('[name="cf-turnstile-response"]');
+        var turnstileToken = turnstileInput ? turnstileInput.value : '';
+
+        // Validações
+        if (!razaoSocial) {
+          showAlert('Por favor, informe a Razão Social da empresa.', true);
+          return;
+        }
+        if (cnpj.replace(/\D/g, '').length !== 14) {
+          showAlert('Por favor, informe um CNPJ válido com 14 dígitos.', true);
+          return;
+        }
+        if (!ieIsento && !ie) {
+          showAlert('Informe a Inscrição Estadual ou selecione "Isento".', true);
+          return;
+        }
+        if (!responsavelNome) {
+          showAlert('Por favor, informe o nome do responsável.', true);
+          return;
+        }
+        if (!email || !email.includes('@') || !email.includes('.')) {
+          showAlert('Por favor, informe um e-mail válido.', true);
+          return;
+        }
+        if (telefone.replace(/\D/g, '').length < 10) {
+          showAlert('Por favor, informe um telefone/WhatsApp válido com DDD.', true);
+          return;
+        }
+        if (cep.replace(/\D/g, '').length !== 8 || !logradouro || !numero || !cidade || !uf) {
+          showAlert('Por favor, preencha o endereço completo (CEP, rua, número, cidade e UF).', true);
+          return;
+        }
+        if (password.length < 6) {
+          showAlert('A senha deve ter no mínimo 6 caracteres.', true);
+          return;
+        }
+        if (password !== passwordConfirm) {
+          showAlert('As senhas digitadas não coincidem.', true);
+          return;
+        }
+        if (!turnstileToken) {
+          showAlert('Por favor, complete a verificação de segurança Turnstile.', true);
+          return;
+        }
+
+        // Coleta endereços adicionais
+        var additionalAddresses = [];
+        var addrCards = addressesContainer.querySelectorAll('.additional-addr-card');
+        addrCards.forEach(function (card) {
+          var label = (card.querySelector('.addr-label').value || '').trim();
+          var cardCep = (card.querySelector('.addr-cep').value || '').trim();
+          var cardLogradouro = (card.querySelector('.addr-logradouro').value || '').trim();
+          var cardNumero = (card.querySelector('.addr-numero').value || '').trim();
+          var cardComplemento = (card.querySelector('.addr-complemento').value || '').trim();
+          var cardBairro = (card.querySelector('.addr-bairro').value || '').trim();
+          var cardCidade = (card.querySelector('.addr-cidade').value || '').trim();
+          var cardUf = (card.querySelector('.addr-uf').value || '').trim();
+
+          if (cardLogradouro || cardCidade) {
+            additionalAddresses.push({
+              label: label || 'Filial / Entrega Alternativa',
+              cep: cardCep,
+              logradouro: cardLogradouro,
+              numero: cardNumero,
+              complemento: cardComplemento,
+              bairro: cardBairro,
+              cidade: cardCidade,
+              uf: cardUf
+            });
+          }
+        });
+
+        btnSubmit.disabled = true;
+        btnSubmit.classList.add('loading');
+        btnSubmit.innerHTML = '<span>Processando cadastro...</span>';
+
+        try {
+          var res = await fetch('/api/client/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razaoSocial: razaoSocial,
+              nomeFantasia: nomeFantasia,
+              cnpj: cnpj,
+              ie: ie,
+              ieIsento: ieIsento,
+              responsavelNome: responsavelNome,
+              email: email,
+              telefone: telefone,
+              cep: cep,
+              logradouro: logradouro,
+              numero: numero,
+              complemento: complemento,
+              bairro: bairro,
+              cidade: cidade,
+              uf: uf,
+              additionalAddresses: additionalAddresses,
+              password: password,
+              turnstileToken: turnstileToken
+            })
+          });
+
+          var data = await res.json();
+
+          if (res.ok && data.success) {
+            showAlert('Cadastro concluído com sucesso! Enviamos um e-mail de confirmação para ' + email + '. Redirecionando para seu painel...', false);
+            setTimeout(function () {
+              window.location.replace('/cliente/pedidos');
+            }, 1200);
+          } else {
+            showAlert(data.error || 'Erro ao realizar cadastro.', true);
+            btnSubmit.disabled = false;
+            btnSubmit.classList.remove('loading');
+            btnSubmit.innerHTML = '<span>Finalizar Cadastro da Minha Revenda →</span>';
+            if (window.turnstile) {
+              window.turnstile.reset();
+            }
+          }
+        } catch (err) {
+          showAlert('Erro de conexão ao servidor. Tente novamente.', true);
+          btnSubmit.disabled = false;
+          btnSubmit.classList.remove('loading');
+          btnSubmit.innerHTML = '<span>Finalizar Cadastro da Minha Revenda →</span>';
+          if (window.turnstile) {
+            window.turnstile.reset();
+          }
+        }
+      });
+    })();
+  </script>
+
+  <style>
+    .register-page {
+      min-height: calc(100vh - 120px);
+      padding: 40px 16px 80px;
+      display: flex;
+      justify-content: center;
+      background: var(--bg);
+    }
+
+    .register-container {
+      width: 100%;
+      max-width: 780px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .register-header {
+      text-align: center;
+    }
+
+    .back-link {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--blue);
+      text-decoration: none;
+      margin-bottom: 16px;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .badge-b2b {
+      display: inline-block;
+      background: rgba(0, 198, 247, 0.15);
+      color: var(--blue-dark);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+
+    .register-header h1 {
+      font-size: 28px;
+      font-weight: 850;
+      color: var(--ink);
+      margin: 0 0 8px;
+      line-height: 1.2;
+    }
+
+    .register-header p {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0 auto;
+      max-width: 580px;
+      line-height: 1.5;
+    }
+
+    .register-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* Seções do Formulário */
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .form-section:last-of-type {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title-between {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .section-number {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .section-title h2 {
+      font-size: 16px;
+      font-weight: 750;
+      color: var(--ink);
+      margin: 0;
+    }
+
+    .section-desc {
+      font-size: 13px;
+      color: var(--muted);
+      margin: -6px 0 0;
+    }
+
+    /* Grid de Campos */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .col-span-2 {
+      grid-column: span 2;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .req {
+      color: #F75656;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 13.5px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #00C6F7;
+      box-shadow: 0 0 0 3px rgba(0, 198, 247, 0.2);
+    }
+
+    .input-hint {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .ie-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ie-input-wrap input {
+      flex: 1;
+    }
+
+    .checkbox-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .cep-wrap {
+      position: relative;
+    }
+
+    .cep-spinner {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--blue);
+      font-weight: 600;
+    }
+
+    /* Endereços Adicionais */
+    .btn-secondary-sm {
+      background: transparent;
+      border: 1px dashed var(--blue);
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary-sm:hover {
+      background: rgba(0, 198, 247, 0.1);
+    }
+
+    .additional-addresses-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .additional-addr-card {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .addr-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }
+
+    .addr-card-top strong {
+      font-size: 13px;
+      color: var(--ink);
+    }
+
+    .btn-remove-addr {
+      background: transparent;
+      border: none;
+      color: #F75656;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-remove-addr:hover {
+      text-decoration: underline;
+    }
+
+    /* Turnstile e Submit */
+    .turnstile-container {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0;
+      min-height: 65px;
+    }
+
+    .submit-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .btn-primary-register {
+      width: 100%;
+      max-width: 420px;
+      background: var(--blue);
+      color: #ffffff;
+      border: none;
+      padding: 16px 24px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(0, 103, 130, 0.3);
+    }
+
+    .btn-primary-register:hover {
+      background: var(--blue-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary-register:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .submit-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* Alerts */
+    .alert-box {
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    .alert-error {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #F87171;
+    }
+
+    .alert-success {
+      background: #DCFCE7;
+      color: #166534;
+      border: 1px solid #86EFAC;
+    }
+
+    @media (max-width: 640px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .col-span-2 {
+        grid-column: span 1;
+      }
+      .register-card {
+        padding: 24px 16px;
+      }
+      .btn-primary-register {
+        max-width: 100%;
+      }
+    }
+  </style>
+</BaseLayout>

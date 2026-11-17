@@ -450,10 +450,8 @@
     }
     storage.set('rstk-selection', listToStore);
 
-    for (const id of ['copy', 'download', 'empty-selection']) {
-      const btn = $(id);
-      if (btn) btn.disabled = selected.size === 0;
-    }
+    const emptyBtn = $('empty-selection');
+    if (emptyBtn) emptyBtn.disabled = selected.size === 0;
   }
 
   function handleQuantityChange(id, delta) {
@@ -825,31 +823,35 @@
     }
   }
 
-  // --- Event Listeners ---
-  $('copy')?.addEventListener('click', async () => {
+  // --- Client Auth Status Hydration ---
+  async function initClientAuthState() {
     try {
-      await navigator.clipboard.writeText(selectionText());
-      toast('Lista copiada!');
-    } catch {
-      const fallback = $('copy-fallback');
-      if (fallback) {
-        fallback.value = selectionText();
-        fallback.hidden = false;
-        fallback.select();
-      }
-      toast('Selecione e copie a lista abaixo.');
-    }
-  });
+      const res = await fetch('/api/client/me', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.loggedIn && data?.client) {
+        const client = data.client;
+        const displayName = client.nomeFantasia || client.razaoSocial || 'Área do Cliente';
+        const shortName = displayName.length > 18 ? displayName.slice(0, 16) + '…' : displayName;
 
-  $('download')?.addEventListener('click', () => {
-    const blob = new Blob([selectionText()], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'Minha_Selecao_RSTK.txt';
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  });
+        const headerBtn = $('header-login-btn');
+        const headerText = $('header-login-text');
+        if (headerBtn) {
+          headerBtn.href = '/cliente/pedidos';
+          headerBtn.title = `Conectado como ${displayName}`;
+          if (headerText) headerText.textContent = shortName;
+        }
+
+        const modalBtn = $('btn-customer-login');
+        if (modalBtn) {
+          modalBtn.textContent = 'Meus Pedidos';
+          modalBtn.href = '/cliente/pedidos';
+        }
+      }
+    } catch {
+      // Ignora falhas de rede no check de sessão
+    }
+  }
 
   $('view-selection')?.addEventListener('click', () => {
     renderSelection();
@@ -1053,4 +1055,5 @@
     showDetail(openAlbumId, true);
   }
   hydrateFromD1();
+  initClientAuthState();
 })();

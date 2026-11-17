@@ -141,11 +141,11 @@ export const apiService = {
     });
   },
 
-  async updateOrder(id, { status, notes, restoreStock = false } = {}) {
+  async updateOrder(id, { status, notes, adminNotes, items, totalCents, changes, restoreStock = false } = {}) {
     return requestJson('/api/orders', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status, notes, restoreStock })
+      body: JSON.stringify({ id, status, notes, adminNotes, items, totalCents, changes, restoreStock })
     });
   },
 

@@ -1,0 +1,517 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import catalogData from '../../data/catalog.json';
+import siteSettingsData from '../../data/siteSettings.json';
+import type { SiteSettings, VinylAlbum } from '../../utils/format';
+
+const allProducts = catalogData as VinylAlbum[];
+const siteSettings = {
+  ...(siteSettingsData as SiteSettings),
+  seoTitle: 'Login do Lojista e Revenda — RSTK Atacado',
+  seoDescription: 'Acesse o portal exclusivo de revenda da RSTK Atacado para acompanhar seus pedidos de vinis importados e lançamentos em tempo real.'
+};
+---
+
+<BaseLayout
+  settings={siteSettings}
+  products={allProducts}
+  heroCovers={allProducts.slice(0, 3)}
+  canonicalPath="/cliente/login"
+>
+  <main class="auth-page">
+    <div class="auth-container">
+      {/* 1. Cadastre-se em cima BEM VISÍVEL */}
+      <div class="top-register-banner">
+        <div>
+          <span class="badge-new">Novo por aqui?</span>
+          <p class="top-register-title">Sua empresa ainda não tem cadastro como revenda?</p>
+          <p class="top-register-sub">Cadastre seu CNPJ para ter acesso aos preços especiais de atacado e controle total.</p>
+        </div>
+        <a href="/cliente/cadastro" class="btn-goto-register">
+          Cadastre sua Revenda B2B →
+        </a>
+      </div>
+
+      <div class="auth-card">
+        <div class="auth-card-header">
+          <div class="auth-icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <h1>Área do Cliente & Revenda</h1>
+          <p>Digite seu CNPJ ou E-mail cadastrado e sua senha de acesso.</p>
+        </div>
+
+        {/* Informative Callout explaining registration benefits vs buying on WhatsApp */}
+        <div class="callout-benefits">
+          <div class="callout-icon">💡</div>
+          <div class="callout-text">
+            <strong>Por que acessar ou cadastrar sua conta?</strong>
+            <ul>
+              <li>Acompanhe em tempo real a aprovação e separação dos seus pedidos.</li>
+              <li>Receba avisos instantâneos por e-mail e no painel caso haja ajuste de estoque ou valor.</li>
+              <li>Histórico de compras e faturamento da sua loja salvo em um só lugar.</li>
+              <li><em>Você também pode continuar encomendando via WhatsApp sem login, mas com a conta você nunca perde o controle!</em></li>
+            </ul>
+          </div>
+        </div>
+
+        <div id="auth-alert" class="alert-box" hidden></div>
+
+        <form id="login-form" class="auth-form" novalidate>
+          <div class="form-group">
+            <label for="identifier">CNPJ ou E-mail do Responsável</label>
+            <input
+              type="text"
+              id="identifier"
+              name="identifier"
+              placeholder="00.000.000/0001-00 ou seu@email.com"
+              required
+              autocomplete="username"
+            />
+          </div>
+
+          <div class="form-group">
+            <div class="label-row">
+              <label for="password">Senha</label>
+            </div>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Sua senha de acesso"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+
+          <!-- Cloudflare Turnstile -->
+          <div class="turnstile-container">
+            <div
+              class="cf-turnstile"
+              data-sitekey="0x4AAAAAADN7xiosBuzdsddL"
+              data-theme="auto"
+            ></div>
+          </div>
+
+          <button type="submit" id="btn-submit" class="btn-primary-auth">
+            <span>Entrar na Área do Cliente</span>
+          </button>
+        </form>
+
+        {/* Esqueci minha senha embaixo */}
+        <div class="auth-card-footer">
+          <a href="/cliente/recuperar-senha" class="footer-link">
+            Esqueci minha senha
+          </a>
+          <span class="sep">·</span>
+          <a href="/" class="footer-link">
+            ← Voltar ao Catálogo
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+  <script is:inline>
+    (function () {
+      // Se já estiver logado, redireciona diretamente para o painel
+      fetch('/api/client/me', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data && data.loggedIn) {
+            window.location.replace('/cliente/pedidos');
+          }
+        })
+        .catch(function () {});
+
+      var form = document.getElementById('login-form');
+      var alertBox = document.getElementById('auth-alert');
+      var btnSubmit = document.getElementById('btn-submit');
+      var idInput = document.getElementById('identifier');
+
+      // Máscara flexível de CNPJ caso o usuário digite apenas números
+      idInput.addEventListener('input', function (e) {
+        var v = e.target.value;
+        if (!v.includes('@') && /^\d+$/.test(v.replace(/\D/g, ''))) {
+          var d = v.replace(/\D/g, '').slice(0, 14);
+          if (d.length > 2 && d.length <= 5) {
+            e.target.value = d.replace(/^(\d{2})(\d+)/, '$1.$2');
+          } else if (d.length > 5 && d.length <= 8) {
+            e.target.value = d.replace(/^(\d{2})(\d{3})(\d+)/, '$1.$2.$3');
+          } else if (d.length > 8 && d.length <= 12) {
+            e.target.value = d.replace(/^(\d{2})(\d{3})(\d{3})(\d+)/, '$1.$2.$3/$4');
+          } else if (d.length > 12) {
+            e.target.value = d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, '$1.$2.$3/$4-$5');
+          }
+        }
+      });
+
+      function showAlert(msg, isError) {
+        if (!alertBox) return;
+        alertBox.textContent = msg;
+        alertBox.className = isError ? 'alert-box alert-error' : 'alert-box alert-success';
+        alertBox.hidden = false;
+        alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        alertBox.hidden = true;
+
+        var identifier = (document.getElementById('identifier').value || '').trim();
+        var password = (document.getElementById('password').value || '').trim();
+
+        var turnstileInput = form.querySelector('[name="cf-turnstile-response"]');
+        var turnstileToken = turnstileInput ? turnstileInput.value : '';
+
+        if (!identifier || !password) {
+          showAlert('Por favor, informe seu CNPJ ou E-mail e senha.', true);
+          return;
+        }
+
+        if (!turnstileToken) {
+          showAlert('Por favor, complete a verificação de segurança Turnstile.', true);
+          return;
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmit.classList.add('loading');
+        btnSubmit.innerHTML = '<span>Verificando credenciais...</span>';
+
+        try {
+          var res = await fetch('/api/client/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              identifier: identifier,
+              password: password,
+              turnstileToken: turnstileToken
+            })
+          });
+
+          var data = await res.json();
+
+          if (res.ok && data.success) {
+            showAlert('Login realizado com sucesso! Redirecionando...', false);
+            setTimeout(function () {
+              window.location.replace('/cliente/pedidos');
+            }, 600);
+          } else {
+            showAlert(data.error || 'Credenciais inválidas.', true);
+            btnSubmit.disabled = false;
+            btnSubmit.classList.remove('loading');
+            btnSubmit.innerHTML = '<span>Entrar na Área do Cliente</span>';
+            if (window.turnstile) {
+              window.turnstile.reset();
+            }
+          }
+        } catch (err) {
+          showAlert('Erro de conexão ao servidor. Tente novamente.', true);
+          btnSubmit.disabled = false;
+          btnSubmit.classList.remove('loading');
+          btnSubmit.innerHTML = '<span>Entrar na Área do Cliente</span>';
+          if (window.turnstile) {
+            window.turnstile.reset();
+          }
+        }
+      });
+    })();
+  </script>
+
+  <style>
+    .auth-page {
+      min-height: calc(100vh - 120px);
+      padding: 40px 16px 80px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      background: var(--bg);
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 540px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Cadastre-se em cima visível */
+    .top-register-banner {
+      background: linear-gradient(135deg, #006782 0%, #004d61 100%);
+      color: #ffffff;
+      padding: 20px 24px;
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0, 103, 130, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .badge-new {
+      display: inline-block;
+      background: #00C6F7;
+      color: #0F172A;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .top-register-title {
+      font-size: 16px;
+      font-weight: 750;
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .top-register-sub {
+      font-size: 13px;
+      opacity: 0.9;
+      margin: 4px 0 0;
+      line-height: 1.4;
+    }
+
+    .btn-goto-register {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #00C6F7;
+      color: #0F172A;
+      font-size: 13px;
+      font-weight: 750;
+      padding: 10px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0, 198, 247, 0.3);
+    }
+
+    .btn-goto-register:hover {
+      background: #33d4ff;
+      transform: translateY(-1px);
+    }
+
+    /* Card principal de Login */
+    .auth-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 32px 28px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .auth-card-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .auth-icon-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(0, 198, 247, 0.12);
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+    }
+
+    .auth-card-header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--ink);
+      margin: 0 0 6px;
+    }
+
+    .auth-card-header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* Benefits callout */
+    .callout-benefits {
+      background: rgba(0, 103, 130, 0.06);
+      border: 1px solid rgba(0, 103, 130, 0.15);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .callout-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    .callout-text strong {
+      color: var(--blue-dark);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .callout-text ul {
+      margin: 4px 0 0;
+      padding-left: 18px;
+      color: var(--ink);
+    }
+
+    .callout-text li {
+      margin-bottom: 3px;
+    }
+
+    .callout-text em {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    /* Alerts */
+    .alert-box {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .alert-error {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #F87171;
+    }
+
+    .alert-success {
+      background: #DCFCE7;
+      color: #166534;
+      border: 1px solid #86EFAC;
+    }
+
+    /* Form */
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 14px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #00C6F7;
+      box-shadow: 0 0 0 3px rgba(0, 198, 247, 0.2);
+    }
+
+    .turnstile-container {
+      display: flex;
+      justify-content: center;
+      margin: 8px 0;
+      min-height: 65px;
+    }
+
+    .btn-primary-auth {
+      background: var(--blue);
+      color: #ffffff;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 103, 130, 0.25);
+    }
+
+    .btn-primary-auth:hover {
+      background: var(--blue-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary-auth:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Esqueci minha senha embaixo */
+    .auth-card-footer {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .footer-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .footer-link:hover {
+      color: var(--blue);
+      text-decoration: underline;
+    }
+
+    .sep {
+      color: var(--line);
+    }
+
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 24px 18px;
+      }
+      .top-register-banner {
+        padding: 16px 18px;
+      }
+    }
+  </style>
+</BaseLayout>

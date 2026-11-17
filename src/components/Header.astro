@@ -22,6 +22,13 @@ const { settings } = Astro.props;
     </a>
     <div class="top-right">
       <span class="micro" id="header-tagline">{settings.headerTagline}</span>
+      <a class="header-login-btn" id="header-login-btn" href="/cliente/login" title="Acesse sua área exclusiva de pedidos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:2px;" aria-hidden="true">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span id="header-login-text">Login</span>
+      </a>
       <div class="theme" role="group" aria-label="Tema de aparência">
         <button id="light" type="button" aria-pressed="true">☀ Claro</button>
         <button id="dark" type="button" aria-pressed="false">☾ Escuro</button>

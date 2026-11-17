@@ -3,6 +3,12 @@ import {
   requireAuth,
   sanitizeUrlPath
 } from '../../../server/auth.js';
+import { getAuthenticatedClient } from '../../../server/client-auth.js';
+import {
+  sendEmail,
+  buildOrderApprovedEmail,
+  buildOrderChangedEmail
+} from '../../../server/email.js';
 
 function generateOrderNumber() {
   const now = new Date();
@@ -11,6 +17,11 @@ function generateOrderNumber() {
   const day = String(now.getDate()).padStart(2, '0');
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `PED-${year}${month}${day}-${rand}`;
+}
+
+function formatBRL(cents) {
+  const num = (Number(cents) || 0) / 100;
+  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 export async function onRequestPost({ request, env }) {
@@ -56,14 +67,27 @@ export async function onRequestPost({ request, env }) {
     const userAgent = (request.headers.get('user-agent') || '').slice(0, 255);
     const notes = String(body.notes || (items.length ? 'Iniciado via clique WhatsApp no catálogo' : 'Consulta geral')).slice(0, 500);
 
+    // Identifica se há cliente logado via sessão
+    const client = await getAuthenticatedClient(request, env).catch(() => null);
+    const customerId = client?.id || null;
+    const customerCnpj = client?.cnpj || null;
+    const customerName = client ? (client.nomeFantasia || client.razaoSocial) : null;
+    const customerEmail = client?.email || null;
+
     // 1. Grava o pedido no D1
     const insertRes = await env.DB.prepare(
       `INSERT INTO rstk_orders (
-        order_number, items_json, total_cents, item_count, status, origin, user_agent, notes, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, 'whatsapp_aberto', ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+        order_number, customer_id, customer_cnpj, customer_name, customer_email,
+        items_json, total_cents, item_count, status, origin, user_agent, notes,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'whatsapp_aberto', ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
     )
       .bind(
         orderNumber,
+        customerId,
+        customerCnpj,
+        customerName,
+        customerEmail,
         JSON.stringify(items),
         totalCents,
         itemCount,
@@ -75,8 +99,7 @@ export async function onRequestPost({ request, env }) {
 
     const orderId = insertRes.meta?.last_row_id;
 
-    // 2. Dá baixa no estoque para cada item do pedido
-    // "não tire do site se o estoque acabar, por enquanto é só um teste"
+    // 2. Baixa de estoque
     for (const item of items) {
       if (item.id) {
         await env.DB.prepare(
@@ -97,11 +120,15 @@ export async function onRequestPost({ request, env }) {
         orderNumber,
         itemCount,
         totalCents,
+        customerId,
+        customerName,
+        customerCnpj,
         status: 'whatsapp_aberto',
         items
       }
     }, 201);
   } catch (err) {
+    console.error('Order creation error:', err);
     return jsonResponse({ success: false, error: err.message }, 500);
   }
 }
@@ -114,6 +141,7 @@ export async function onRequestGet({ request, env }) {
     const url = new URL(request.url);
     const status = url.searchParams.get('status');
     const search = url.searchParams.get('search');
+    const customerType = url.searchParams.get('customerType'); // 'registered' | 'guest'
     const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit')) || 100));
 
     let query = 'SELECT * FROM rstk_orders';
@@ -125,10 +153,16 @@ export async function onRequestGet({ request, env }) {
       params.push(status);
     }
 
+    if (customerType === 'registered') {
+      conditions.push('customer_id IS NOT NULL');
+    } else if (customerType === 'guest') {
+      conditions.push('customer_id IS NULL');
+    }
+
     if (search) {
-      conditions.push('(order_number LIKE ? OR items_json LIKE ? OR notes LIKE ?)');
+      conditions.push('(order_number LIKE ? OR items_json LIKE ? OR notes LIKE ? OR customer_name LIKE ? OR customer_cnpj LIKE ?)');
       const s = `%${search}%`;
-      params.push(s, s, s);
+      params.push(s, s, s, s, s);
     }
 
     if (conditions.length) {
@@ -148,9 +182,20 @@ export async function onRequestGet({ request, env }) {
         items = [];
       }
 
+      let changes = null;
+      try {
+        changes = row.changes_json ? JSON.parse(row.changes_json) : null;
+      } catch {
+        changes = null;
+      }
+
       return {
         id: Number(row.id),
         orderNumber: row.order_number,
+        customerId: row.customer_id ? Number(row.customer_id) : null,
+        customerCnpj: row.customer_cnpj || null,
+        customerName: row.customer_name || null,
+        customerEmail: row.customer_email || null,
         items,
         totalCents: Number(row.total_cents) || 0,
         itemCount: Number(row.item_count) || items.length,
@@ -158,6 +203,9 @@ export async function onRequestGet({ request, env }) {
         origin: row.origin,
         userAgent: row.user_agent,
         notes: row.notes,
+        changes,
+        approvedAt: row.approved_at,
+        adminNotes: row.admin_notes,
         createdAt: row.created_at,
         updatedAt: row.updated_at
       };
@@ -193,6 +241,34 @@ export async function onRequestPatch({ request, env }) {
 
     const nextStatus = body.status ? String(body.status).trim() : existing.status;
     const nextNotes = body.notes !== undefined ? String(body.notes).trim() : existing.notes;
+    const nextAdminNotes = body.adminNotes !== undefined ? String(body.adminNotes).trim() : existing.admin_notes;
+
+    let itemsJson = existing.items_json;
+    let totalCents = Number(existing.total_cents) || 0;
+    let itemCount = Number(existing.item_count) || 0;
+    let changesJson = existing.changes_json;
+    let approvedAt = existing.approved_at;
+
+    // Se o admin aprovou o pedido
+    if (nextStatus === 'aprovado' || nextStatus === 'confirmado') {
+      if (!approvedAt) {
+        approvedAt = new Date().toISOString();
+      }
+    }
+
+    // Se o admin alterou itens / quantidades
+    let itemsWereChanged = false;
+    if (Array.isArray(body.items)) {
+      itemsJson = JSON.stringify(body.items);
+      itemCount = body.items.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+      const computedTotal = body.items.reduce((s, it) => s + ((Number(it.priceCents) || 18999) * (Number(it.quantity) || 0)), 0);
+      totalCents = Number.isFinite(Number(body.totalCents)) ? Math.round(Number(body.totalCents)) : computedTotal;
+
+      if (body.changes) {
+        changesJson = JSON.stringify(body.changes);
+        itemsWereChanged = true;
+      }
+    }
 
     // Se o pedido for cancelado e restoreStock for true, devolver os itens ao estoque
     if (body.restoreStock && existing.status !== 'cancelado' && nextStatus === 'cancelado') {
@@ -216,11 +292,68 @@ export async function onRequestPatch({ request, env }) {
       `UPDATE rstk_orders SET
         status = ?,
         notes = ?,
+        admin_notes = ?,
+        items_json = ?,
+        total_cents = ?,
+        item_count = ?,
+        changes_json = ?,
+        approved_at = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?`
     )
-      .bind(nextStatus, nextNotes, id)
+      .bind(
+        nextStatus,
+        nextNotes,
+        nextAdminNotes,
+        itemsJson,
+        totalCents,
+        itemCount,
+        changesJson,
+        approvedAt,
+        id
+      )
       .run();
+
+    // Notificações por e-mail para o cliente cadastrado
+    if (existing.customer_email) {
+      const companyName = existing.customer_name || 'Lojista Parceiro';
+      const orderUrl = `https://rstk.com.br/cliente/pedidos`;
+      const totalFormatted = formatBRL(totalCents);
+
+      // 1. Notificação de aprovação
+      if ((nextStatus === 'aprovado' || nextStatus === 'confirmado') && existing.status !== nextStatus) {
+        const emailData = buildOrderApprovedEmail({
+          companyName,
+          orderNumber: existing.order_number,
+          totalFormatted,
+          orderUrl
+        });
+        await sendEmail({
+          to: existing.customer_email,
+          subject: emailData.subject,
+          htmlText: emailData.htmlText,
+          plainText: emailData.plainText,
+          env
+        });
+      }
+      // 2. Notificação de alterações de itens / valores
+      else if (itemsWereChanged) {
+        const emailData = buildOrderChangedEmail({
+          companyName,
+          orderNumber: existing.order_number,
+          totalFormatted,
+          notes: nextAdminNotes || nextNotes,
+          orderUrl
+        });
+        await sendEmail({
+          to: existing.customer_email,
+          subject: emailData.subject,
+          htmlText: emailData.htmlText,
+          plainText: emailData.plainText,
+          env
+        });
+      }
+    }
 
     const updated = await env.DB.prepare('SELECT * FROM rstk_orders WHERE id = ?')
       .bind(id)
@@ -233,22 +366,37 @@ export async function onRequestPatch({ request, env }) {
       items = [];
     }
 
+    let parsedChanges = null;
+    try {
+      parsedChanges = updated.changes_json ? JSON.parse(updated.changes_json) : null;
+    } catch {
+      parsedChanges = null;
+    }
+
     return jsonResponse({
       success: true,
       order: {
         id: Number(updated.id),
         orderNumber: updated.order_number,
+        customerId: updated.customer_id ? Number(updated.customer_id) : null,
+        customerCnpj: updated.customer_cnpj,
+        customerName: updated.customer_name,
+        customerEmail: updated.customer_email,
         items,
         totalCents: Number(updated.total_cents) || 0,
         itemCount: Number(updated.item_count) || items.length,
         status: updated.status,
         origin: updated.origin,
         notes: updated.notes,
+        adminNotes: updated.admin_notes,
+        changes: parsedChanges,
+        approvedAt: updated.approved_at,
         createdAt: updated.created_at,
         updatedAt: updated.updated_at
       }
     });
   } catch (err) {
+    console.error('Order update error:', err);
     return jsonResponse({ success: false, error: err.message }, 500);
   }
 }

@@ -176,6 +176,47 @@ html[data-theme="dark"] .brand img {
   color: var(--ink);
 }
 
+.header-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--blue);
+  color: #ffffff !important;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 30px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  min-height: 36px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.header-login-btn:hover {
+  background: var(--blue-dark);
+  transform: translateY(-1px);
+}
+
+.btn-client-auth-modal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: var(--panel2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  transition: all 0.2s ease;
+}
+
+.btn-client-auth-modal:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
 /* --- Hero Section --- */
 
 .hero {

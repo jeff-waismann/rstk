@@ -26,14 +26,19 @@ const STATUS_MAP = {
     dotClass: 'bg-[#00C6F7]'
   },
   confirmado: {
-    label: 'Confirmado / Em Separação',
+    label: 'Aprovado / Em Separação',
     badgeClass: 'bg-amber-50 text-amber-800 border border-amber-200',
     dotClass: 'bg-amber-500'
   },
-  concluido: {
-    label: 'Concluído / Pago',
+  aprovado: {
+    label: 'Aprovado',
     badgeClass: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
     dotClass: 'bg-emerald-500'
+  },
+  concluido: {
+    label: 'Concluído / Enviado',
+    badgeClass: 'bg-slate-100 text-[#0F172A] border border-slate-300',
+    dotClass: 'bg-slate-600'
   },
   cancelado: {
     label: 'Cancelado',
@@ -47,9 +52,12 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [customerFilter, setCustomerFilter] = useState('all'); // all | registered | guest
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
   const [editNotes, setEditNotes] = useState('');
+  const [editAdminNotes, setEditAdminNotes] = useState('');
+  const [modalItems, setModalItems] = useState([]);
 
   async function loadOrders() {
     setLoading(true);
@@ -71,32 +79,61 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
     loadOrders();
   }, []);
 
+  function openOrderDetails(order) {
+    setSelectedOrder(order);
+    setEditNotes(order.notes || '');
+    setEditAdminNotes(order.adminNotes || '');
+    setModalItems(Array.isArray(order.items) ? JSON.parse(JSON.stringify(order.items)) : []);
+  }
+
   const filteredOrders = useMemo(() => {
     const q = search.trim().toLowerCase();
     return orders.filter((o) => {
       const matchStatus = statusFilter === 'all' || o.status === statusFilter;
+      const matchCustomer =
+        customerFilter === 'all' ||
+        (customerFilter === 'registered' && Boolean(o.customerId || o.customerCnpj)) ||
+        (customerFilter === 'guest' && !o.customerId && !o.customerCnpj);
+
       const matchSearch =
         !q ||
         o.orderNumber.toLowerCase().includes(q) ||
+        (o.customerName && o.customerName.toLowerCase().includes(q)) ||
+        (o.customerCnpj && o.customerCnpj.toLowerCase().includes(q)) ||
         (o.notes && o.notes.toLowerCase().includes(q)) ||
         o.items.some(
           (it) =>
             it.title.toLowerCase().includes(q) ||
             it.artist.toLowerCase().includes(q)
         );
-      return matchStatus && matchSearch;
+      return matchStatus && matchCustomer && matchSearch;
     });
-  }, [orders, search, statusFilter]);
+  }, [orders, search, statusFilter, customerFilter]);
 
   const stats = useMemo(() => {
     const totalOrders = orders.length;
+    const registeredOrders = orders.filter((o) => o.customerId || o.customerCnpj).length;
     const openOrders = orders.filter((o) => o.status === 'whatsapp_aberto').length;
-    const completedOrders = orders.filter((o) => o.status === 'concluido').length;
+    const approvedOrders = orders.filter((o) => o.status === 'confirmado' || o.status === 'aprovado').length;
     const totalVolumeCents = orders
       .filter((o) => o.status !== 'cancelado')
       .reduce((sum, o) => sum + (o.totalCents || 0), 0);
-    return { totalOrders, openOrders, completedOrders, totalVolumeCents };
+    return { totalOrders, registeredOrders, openOrders, approvedOrders, totalVolumeCents };
   }, [orders]);
+
+  // Modal Item Quantity Change
+  function handleItemQuantity(index, newQty) {
+    const validQty = Math.max(0, Math.min(99, Number(newQty) || 0));
+    setModalItems((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], quantity: validQty };
+      return copy;
+    });
+  }
+
+  const computedModalTotal = useMemo(() => {
+    return modalItems.reduce((sum, it) => sum + ((it.priceCents || 18999) * (it.quantity || 0)), 0);
+  }, [modalItems]);
 
   async function handleStatusChange(order, newStatus, restoreStock = false) {
     setUpdatingId(order.id);
@@ -106,12 +143,12 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
         restoreStock
       });
       if (res.success) {
-        onNotify?.(`Pedido ${order.orderNumber} atualizado para ${STATUS_MAP[newStatus]?.label || newStatus}.`);
+        onNotify?.(`Pedido #${order.orderNumber} atualizado para ${STATUS_MAP[newStatus]?.label || newStatus}. Notificação enviada ao cliente.`);
         setOrders((prev) =>
-          prev.map((o) => (o.id === order.id ? { ...o, status: newStatus } : o))
+          prev.map((o) => (o.id === order.id ? { ...o, status: newStatus, approvedAt: res.order?.approvedAt || o.approvedAt } : o))
         );
         if (selectedOrder?.id === order.id) {
-          setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
+          setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus, approvedAt: res.order?.approvedAt || prev.approvedAt } : null));
         }
         if (restoreStock) {
           onRefreshCatalog?.();
@@ -126,18 +163,40 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
     }
   }
 
-  async function handleSaveNotes(order) {
+  async function handleSaveOrderChanges(order) {
     setUpdatingId(order.id);
+
+    // Identifica quais itens mudaram de quantidade ou estoque
+    const changes = [];
+    (order.items || []).forEach((origIt, idx) => {
+      const updatedIt = modalItems[idx];
+      if (updatedIt && updatedIt.quantity !== origIt.quantity) {
+        changes.push({
+          title: origIt.title,
+          oldQty: origIt.quantity,
+          newQty: updatedIt.quantity,
+          reason: updatedIt.quantity === 0 ? 'Estoque esgotado' : 'Ajuste de quantidade pelo administrador'
+        });
+      }
+    });
+
     try {
-      const res = await apiService.updateOrder(order.id, { notes: editNotes });
-      if (res.success) {
-        onNotify?.('Observações salvas com sucesso.');
+      const res = await apiService.updateOrder(order.id, {
+        items: modalItems,
+        totalCents: computedModalTotal,
+        notes: editNotes,
+        adminNotes: editAdminNotes,
+        changes: changes.length ? changes : (order.changes || null)
+      });
+
+      if (res.success && res.order) {
+        onNotify?.(`Alterações salvas com sucesso no pedido #${order.orderNumber}! E-mail e notificação atualizados.`);
         setOrders((prev) =>
-          prev.map((o) => (o.id === order.id ? { ...o, notes: editNotes } : o))
+          prev.map((o) => (o.id === order.id ? res.order : o))
         );
-        setSelectedOrder((prev) => (prev ? { ...prev, notes: editNotes } : null));
+        setSelectedOrder(res.order);
       } else {
-        onNotify?.(res.error || 'Erro ao salvar notas.', 'error');
+        onNotify?.(res.error || 'Erro ao salvar alterações.', 'error');
       }
     } catch (err) {
       onNotify?.(err.message, 'error');
@@ -147,13 +206,13 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
   }
 
   async function handleDeleteOrder(order) {
-    if (!confirm(`Deseja realmente excluir permanentemente o pedido ${order.orderNumber}?`)) {
+    if (!confirm(`Deseja realmente excluir permanentemente o pedido #${order.orderNumber}?`)) {
       return;
     }
     try {
       const res = await apiService.deleteOrder(order.id);
       if (res.success) {
-        onNotify?.(`Pedido ${order.orderNumber} removido.`);
+        onNotify?.(`Pedido #${order.orderNumber} excluído.`);
         setOrders((prev) => prev.filter((o) => o.id !== order.id));
         if (selectedOrder?.id === order.id) setSelectedOrder(null);
       } else {
@@ -166,60 +225,73 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
 
   return (
     <div className="space-y-6">
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+      {/* Cards de Métricas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
               Total de Pedidos
             </span>
-            <span className="w-9 h-9 rounded-lg bg-cyan-50 text-[#006782] flex items-center justify-center">
-              <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
+            <span className="w-8 h-8 rounded-lg bg-cyan-50 text-[#006782] flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
             </span>
           </div>
-          <p className="text-3xl font-extrabold text-[#0F172A]">{stats.totalOrders}</p>
-          <p className="text-xs text-[#64748B] mt-1">Disparados pelo catálogo</p>
+          <p className="text-2xl font-extrabold text-[#0F172A]">{stats.totalOrders}</p>
+          <p className="text-[11px] text-[#64748B] mt-1">Total no sistema</p>
         </div>
 
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-              Abertos no WhatsApp
+        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+              Revenda Cadastrada
             </span>
-            <span className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[20px]">chat</span>
+            <span className="w-8 h-8 rounded-lg bg-blue-50 text-[#006782] flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">corporate_fare</span>
             </span>
           </div>
-          <p className="text-3xl font-extrabold text-[#006782]">{stats.openOrders}</p>
-          <p className="text-xs text-[#64748B] mt-1">Aguardando confirmação do lojista</p>
+          <p className="text-2xl font-extrabold text-[#006782]">{stats.registeredOrders}</p>
+          <p className="text-[11px] text-[#64748B] mt-1">Vinculados a CNPJ</p>
         </div>
 
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-              Concluídos / Pagos
+        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+              Abertos / Análise
             </span>
-            <span className="w-9 h-9 rounded-lg bg-slate-100 text-[#0F172A] flex items-center justify-center">
-              <span className="material-symbols-outlined text-[20px]">check_circle</span>
+            <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">chat</span>
             </span>
           </div>
-          <p className="text-3xl font-extrabold text-[#0F172A]">{stats.completedOrders}</p>
-          <p className="text-xs text-[#64748B] mt-1">Pedidos finalizados</p>
+          <p className="text-2xl font-extrabold text-amber-600">{stats.openOrders}</p>
+          <p className="text-[11px] text-[#64748B] mt-1">Aguardando aprovação</p>
         </div>
 
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+              Aprovados
+            </span>
+            <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+            </span>
+          </div>
+          <p className="text-2xl font-extrabold text-emerald-700">{stats.approvedOrders}</p>
+          <p className="text-[11px] text-[#64748B] mt-1">Em separação / envio</p>
+        </div>
+
+        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
               Volume Estimado
             </span>
-            <span className="w-9 h-9 rounded-lg bg-cyan-50 text-[#006782] flex items-center justify-center">
-              <span className="material-symbols-outlined text-[20px]">payments</span>
+            <span className="w-8 h-8 rounded-lg bg-cyan-50 text-[#006782] flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">payments</span>
             </span>
           </div>
-          <p className="text-2xl font-extrabold text-[#006782]">
+          <p className="text-xl font-extrabold text-[#006782] truncate">
             {formatBRL(stats.totalVolumeCents)}
           </p>
-          <p className="text-xs text-[#64748B] mt-1">Soma dos pedidos ativos</p>
+          <p className="text-[11px] text-[#64748B] mt-1">Pedidos ativos</p>
         </div>
       </div>
 
@@ -232,14 +304,26 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
             </span>
             <input
               type="text"
-              placeholder="Buscar por código (#PED-...), disco ou artista..."
+              placeholder="Buscar por código (#PED-...), empresa, CNPJ ou vinil..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-[#E2E8F0] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#00C6F7] focus:ring-1 focus:ring-[#00C6F7]"
             />
           </div>
 
-          <div className="w-full sm:w-56">
+          <div className="w-full sm:w-52">
+            <select
+              value={customerFilter}
+              onChange={(e) => setCustomerFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-[#0F172A] bg-white focus:outline-none focus:border-[#00C6F7]"
+            >
+              <option value="all">Todos os clientes</option>
+              <option value="registered">🏢 Revenda B2B (Com Cadastro)</option>
+              <option value="guest">👤 WhatsApp Avulso (Sem Cadastro)</option>
+            </select>
+          </div>
+
+          <div className="w-full sm:w-52">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -247,8 +331,9 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
             >
               <option value="all">Todos os status</option>
               <option value="whatsapp_aberto">Aberto via WhatsApp</option>
-              <option value="confirmado">Confirmado / Em Separação</option>
-              <option value="concluido">Concluído / Pago</option>
+              <option value="confirmado">Aprovado / Em Separação</option>
+              <option value="aprovado">Aprovado</option>
+              <option value="concluido">Concluído / Enviado</option>
               <option value="cancelado">Cancelado</option>
             </select>
           </div>
@@ -272,9 +357,9 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
       <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-xs overflow-hidden">
         <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-[#0F172A]">Histórico de Pedidos Registrados</h3>
+            <h3 className="text-base font-bold text-[#0F172A]">Histórico de Pedidos & Revendas</h3>
             <p className="text-xs text-[#64748B]">
-              Gravados automaticamente antes do redirecionamento para o WhatsApp, com baixa em estoque.
+              Pedidos associados a contas de revenda (B2B) ou avulsos pelo WhatsApp.
             </p>
           </div>
           <span className="text-xs font-semibold text-[#64748B]">
@@ -287,8 +372,8 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
             <thead className="bg-[#F7F9FB] text-xs font-bold uppercase tracking-wider text-[#64748B] border-b border-[#E2E8F0]">
               <tr>
                 <th className="py-3 px-4">Pedido / Data</th>
-                <th className="py-3 px-4">Discos Solicitados</th>
-                <th className="py-3 px-4">Qtd. Itens</th>
+                <th className="py-3 px-4">Cliente / Revenda</th>
+                <th className="py-3 px-4">Itens</th>
                 <th className="py-3 px-4">Valor Total</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4 text-right">Ações</th>
@@ -311,7 +396,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                       <span className="material-symbols-outlined text-4xl text-slate-300">receipt_long</span>
                       <p className="font-semibold text-[#0F172A]">Nenhum pedido encontrado</p>
                       <p className="text-xs text-[#64748B]">
-                        Assim que um cliente clicar no botão do WhatsApp no catálogo, o pedido aparecerá aqui com baixa automática de estoque.
+                        Pedidos realizados no catálogo ou na área do cliente aparecerão aqui.
                       </p>
                     </div>
                   </td>
@@ -319,15 +404,14 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
               ) : (
                 filteredOrders.map((order) => {
                   const statusInfo = STATUS_MAP[order.status] || STATUS_MAP.whatsapp_aberto;
+                  const isRegistered = Boolean(order.customerId || order.customerCnpj);
+
                   return (
                     <tr key={order.id} className="hover:bg-[#F7F9FB]/70 transition-colors">
                       <td className="py-3 px-4">
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setEditNotes(order.notes || '');
-                          }}
+                          onClick={() => openOrderDetails(order)}
                           className="font-mono font-bold text-xs text-[#006782] hover:underline block text-left"
                         >
                           #{order.orderNumber}
@@ -338,9 +422,30 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                       </td>
 
                       <td className="py-3 px-4">
+                        {isRegistered ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-blue-600 text-[18px]">domain</span>
+                            <div>
+                              <strong className="text-xs text-[#0F172A] block font-semibold truncate max-w-[180px]">
+                                {order.customerName || 'Revenda Cadastrada'}
+                              </strong>
+                              <span className="text-[10.5px] text-[#64748B] font-mono">
+                                {order.customerCnpj || 'CNPJ verificado'}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-[#64748B]">
+                            <span className="material-symbols-outlined text-slate-400 text-[18px]">person</span>
+                            <span className="text-xs italic">WhatsApp Avulso (Sem cadastro)</span>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <div className="flex -space-x-2 overflow-hidden flex-shrink-0">
-                            {order.items.slice(0, 3).map((it, idx) => (
+                            {(order.items || []).slice(0, 3).map((it, idx) => (
                               <img
                                 key={idx}
                                 src={it.cover || '/assets/covers/album-01.webp'}
@@ -350,20 +455,16 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                               />
                             ))}
                           </div>
-                          <div className="min-w-0 max-w-xs">
+                          <div className="min-w-0 max-w-[140px]">
                             <p className="text-xs font-semibold text-[#0F172A] truncate">
-                              {order.items[0]?.title || 'Consulta de Catálogo'}
-                              {order.items.length > 1 && ` (+${order.items.length - 1} outros)`}
+                              {order.items[0]?.title || 'Catálogo'}
+                              {order.items.length > 1 && ` (+${order.items.length - 1})`}
                             </p>
-                            <p className="text-[11px] text-[#64748B] truncate">
-                              {order.items[0]?.artist || 'RSTK Atacado'}
-                            </p>
+                            <span className="text-[11px] text-[#64748B] block">
+                              {order.itemCount} un.
+                            </span>
                           </div>
                         </div>
-                      </td>
-
-                      <td className="py-3 px-4 text-xs font-semibold text-[#0F172A]">
-                        {order.itemCount} un.
                       </td>
 
                       <td className="py-3 px-4 text-xs font-extrabold text-[#006782]">
@@ -380,15 +481,12 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                       <td className="py-3 px-4 text-right whitespace-nowrap">
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setEditNotes(order.notes || '');
-                          }}
+                          onClick={() => openOrderDetails(order)}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-[#006782] hover:bg-cyan-50 rounded-lg mr-1 transition-colors"
-                          title="Ver detalhes completos"
+                          title="Ver detalhes completos e ajustar quantidades"
                         >
-                          <span className="material-symbols-outlined text-[16px]">visibility</span>
-                          <span>Detalhes</span>
+                          <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                          <span>Gerenciar</span>
                         </button>
 
                         <button
@@ -409,14 +507,14 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
         </div>
       </div>
 
-      {/* Modal de Detalhes do Pedido */}
+      {/* Modal de Gestão e Ajuste de Pedido */}
       {selectedOrder && (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0] bg-[#F7F9FB]">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-                  Detalhes do Pedido
+                  Gestão do Pedido
                 </span>
                 <h3 className="text-base font-extrabold text-[#0F172A] font-mono">
                   #{selectedOrder.orderNumber}
@@ -432,37 +530,72 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
             </div>
 
             <div className="p-6 space-y-6">
+              {/* Informações do Cliente B2B */}
+              {selectedOrder.customerCnpj ? (
+                <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[18px] text-blue-600">verified</span>
+                      Cliente Revenda B2B Vinculado
+                    </span>
+                    <span className="text-[11px] font-bold bg-blue-200 text-blue-900 px-2 py-0.5 rounded">
+                      Conta Cadastrada
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-blue-950">
+                    <div>
+                      <span className="text-blue-700 block">Razão / Loja:</span>
+                      <strong>{selectedOrder.customerName || '—'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-blue-700 block">CNPJ:</span>
+                      <strong className="font-mono">{selectedOrder.customerCnpj}</strong>
+                    </div>
+                    {selectedOrder.customerEmail && (
+                      <div>
+                        <span className="text-blue-700 block">E-mail:</span>
+                        <span>{selectedOrder.customerEmail}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-slate-400 text-[18px]">info</span>
+                  <span>Este pedido foi disparado via WhatsApp avulso (usuário sem cadastro ou não autenticado).</span>
+                </div>
+              )}
+
               {/* Status e Ações Rápidas */}
               <div className="bg-[#F7F9FB] border border-[#E2E8F0] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <span className="text-xs text-[#64748B] block mb-1">Status Atual:</span>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                    STATUS_MAP[selectedOrder.status]?.badgeClass || STATUS_MAP.whatsapp_aberto.badgeClass
-                  }`}>
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${STATUS_MAP[selectedOrder.status]?.badgeClass || STATUS_MAP.whatsapp_aberto.badgeClass}`}>
                     <span className={`w-2 h-2 rounded-full ${STATUS_MAP[selectedOrder.status]?.dotClass || 'bg-[#00C6F7]'}`} />
                     {STATUS_MAP[selectedOrder.status]?.label || selectedOrder.status}
                   </span>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  {selectedOrder.status !== 'aprovado' && selectedOrder.status !== 'confirmado' && (
+                    <button
+                      type="button"
+                      disabled={updatingId === selectedOrder.id}
+                      onClick={() => handleStatusChange(selectedOrder, 'confirmado')}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
+                      title="Aprova o pedido e notifica o cliente por e-mail e no painel"
+                    >
+                      ✓ Aprovar Pedido
+                    </button>
+                  )}
                   {selectedOrder.status !== 'concluido' && (
                     <button
                       type="button"
                       disabled={updatingId === selectedOrder.id}
                       onClick={() => handleStatusChange(selectedOrder, 'concluido')}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
                     >
-                      Marcar Concluído
-                    </button>
-                  )}
-                  {selectedOrder.status !== 'confirmado' && selectedOrder.status !== 'concluido' && (
-                    <button
-                      type="button"
-                      disabled={updatingId === selectedOrder.id}
-                      onClick={() => handleStatusChange(selectedOrder, 'confirmado')}
-                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
-                    >
-                      Confirmar
+                      Concluir / Entregue
                     </button>
                   )}
                   {selectedOrder.status !== 'cancelado' && (
@@ -470,7 +603,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                       type="button"
                       disabled={updatingId === selectedOrder.id}
                       onClick={() => {
-                        const restore = confirm('Deseja devolver os itens deste pedido de volta ao estoque?');
+                        const restore = confirm('Deseja devolver os itens deste pedido de volta ao estoque da loja?');
                         handleStatusChange(selectedOrder, 'cancelado', restore);
                       }}
                       className="px-3 py-1.5 bg-white border border-[#F75656] text-[#F75656] hover:bg-red-50 rounded-lg text-xs font-bold transition-colors"
@@ -481,29 +614,18 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                 </div>
               </div>
 
-              {/* Informações Gerais */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
-                <div>
-                  <span className="text-[#64748B] block">Data e Hora:</span>
-                  <strong className="text-[#0F172A]">{formatDateTimeBR(selectedOrder.createdAt)}</strong>
-                </div>
-                <div>
-                  <span className="text-[#64748B] block">Origem:</span>
-                  <strong className="text-[#0F172A]">{selectedOrder.origin || 'Catálogo Web'}</strong>
-                </div>
-                <div>
-                  <span className="text-[#64748B] block">Valor Total:</span>
-                  <strong className="text-[#006782] text-sm">{formatBRL(selectedOrder.totalCents)}</strong>
-                </div>
-              </div>
-
-              {/* Lista de Itens do Pedido */}
+              {/* Ajuste de Itens e Quantidades */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3">
-                  Itens Comprados / Selecionados ({selectedOrder.items.length})
-                </h4>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                    Itens do Pedido ({modalItems.length}) — Ajuste de Quantidade & Estoque
+                  </h4>
+                  <span className="text-xs text-[#006782] font-bold">
+                    Novo Total: {formatBRL(computedModalTotal)}
+                  </span>
+                </div>
                 <div className="border border-[#E2E8F0] rounded-xl overflow-hidden divide-y divide-[#E2E8F0]">
-                  {selectedOrder.items.map((it, idx) => (
+                  {modalItems.map((it, idx) => (
                     <div key={idx} className="p-3 flex items-center justify-between gap-3 bg-white">
                       <div className="flex items-center gap-3 min-w-0">
                         <img
@@ -515,43 +637,85 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                         <div className="min-w-0">
                           <p className="font-bold text-sm text-[#0F172A] truncate">{it.title}</p>
                           <p className="text-xs text-[#64748B] truncate">
-                            {it.artist} {it.units && `· ${Number(it.units) === 1 ? 'Álbum Simples' : (Number(it.units) === 2 ? 'Álbum Duplo' : `${it.units} LPs`)}`}
+                            {it.artist} · {formatBRL(it.priceCents)} un.
                           </p>
                         </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <span className="text-xs text-[#64748B] block">
-                          {it.quantity}x {formatBRL(it.priceCents)}
-                        </span>
-                        <strong className="text-xs font-bold text-[#006782]">
-                          {formatBRL(it.priceCents * it.quantity)}
-                        </strong>
+
+                      {/* Controle de Quantidade */}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="flex items-center border border-[#E2E8F0] rounded-lg overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => handleItemQuantity(idx, it.quantity - 1)}
+                            className="px-2.5 py-1 text-sm bg-slate-50 hover:bg-slate-200 text-[#0F172A]"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            max="99"
+                            value={it.quantity}
+                            onChange={(e) => handleItemQuantity(idx, e.target.value)}
+                            className="w-12 text-center text-xs font-bold py-1 border-none focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleItemQuantity(idx, it.quantity + 1)}
+                            className="px-2.5 py-1 text-sm bg-slate-50 hover:bg-slate-200 text-[#0F172A]"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <div className="text-right w-20">
+                          <strong className={`text-xs font-bold ${it.quantity === 0 ? 'text-[#F75656] line-through' : 'text-[#006782]'}`}>
+                            {it.quantity === 0 ? 'Esgotado' : formatBRL(it.priceCents * it.quantity)}
+                          </strong>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Observações e Notas do Lojista */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#64748B] block">
-                  Anotações / Observações Internas
-                </label>
-                <textarea
-                  rows="3"
-                  value={editNotes}
-                  onChange={(e) => setEditNotes(e.target.value)}
-                  placeholder="Ex: Cliente contatou pelo WhatsApp, envio por Sedex pago..."
-                  className="w-full p-3 border border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00C6F7] focus:ring-1 focus:ring-[#00C6F7]"
-                />
-                <div className="flex justify-end">
+              {/* Justificativa e Notas para o Cliente */}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#64748B] block mb-1">
+                    Justificativa de Ajustes (Enviada ao cliente no e-mail e painel)
+                  </label>
+                  <input
+                    type="text"
+                    value={editAdminNotes}
+                    onChange={(e) => setEditAdminNotes(e.target.value)}
+                    placeholder="Ex: Item 2 esgotou no fornecedor; quantidade reduzida com sucesso."
+                    className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00C6F7]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#64748B] block mb-1">
+                    Notas Internas da Equipe
+                  </label>
+                  <textarea
+                    rows="2"
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                    placeholder="Anotações internas sobre frete, pagamento ou expedição..."
+                    className="w-full p-2.5 border border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00C6F7]"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-2">
                   <button
                     type="button"
                     disabled={updatingId === selectedOrder.id}
-                    onClick={() => handleSaveNotes(selectedOrder)}
-                    className="px-3 py-1.5 bg-[#006782] text-white rounded-lg text-xs font-bold hover:bg-[#005066] transition-colors"
+                    onClick={() => handleSaveOrderChanges(selectedOrder)}
+                    className="px-4 py-2 bg-[#006782] hover:bg-[#005066] text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
                   >
-                    Salvar Observações
+                    Salvar Alterações e Notificar Cliente
                   </button>
                 </div>
               </div>
