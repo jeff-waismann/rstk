@@ -12,7 +12,7 @@ import UsersTab from '../components/admin/tabs/UsersTab.jsx';
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { id: 'pedidos', label: 'Pedidos WhatsApp', icon: 'shopping_bag' },
+  { id: 'pedidos', label: 'Pedidos', icon: 'shopping_bag' },
   { id: 'clientes', label: 'Lojas / Clientes B2B', icon: 'storefront' },
   { id: 'catalogo', label: 'Catálogo de Vinis', icon: 'album' },
   { id: 'hero', label: 'Hero & Oferta', icon: 'campaign' },
