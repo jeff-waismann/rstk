@@ -51,8 +51,8 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    // Optional Turnstile verification if configured in environment variables
-    const turnstileSecret = env.TURNSTILE_SECRET_KEY;
+    // Turnstile verification (Anti-bot protection)
+    const turnstileSecret = env?.TURNSTILE_SECRET_KEY || '0x4AAAAAADN7xoCAAz5NV-OPnZz92mxahL4';
     if (turnstileSecret) {
       if (!turnstileToken) {
         return jsonResponse(

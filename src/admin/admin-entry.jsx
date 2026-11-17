@@ -22,7 +22,7 @@ const TABS = [
 function AdminApp() {
   const [authChecking, setAuthChecking] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('0x4AAAAAADN7xiosBuzdsddL');
 
   const [currentTab, setCurrentTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -71,21 +71,31 @@ function AdminApp() {
     })();
   }, []);
 
-  // Render Turnstile widget only when configured in Cloudflare env
+  // Render Turnstile widget on login screen
   useEffect(() => {
     if (!authChecking && !currentUser && turnstileSiteKey) {
-      const timer = setTimeout(() => {
+      let cancelled = false;
+      function tryRender() {
+        if (cancelled) return;
         const el = document.getElementById('adminTurnstileContainer');
         if (el && window.turnstile && typeof window.turnstile.render === 'function') {
           el.innerHTML = '';
-          window.turnstile.render(el, {
-            sitekey: turnstileSiteKey,
-            theme: 'light',
-            callback: (token) => setLoginTurnstileToken(token)
-          });
+          try {
+            window.turnstile.render(el, {
+              sitekey: turnstileSiteKey,
+              theme: 'light',
+              callback: (token) => setLoginTurnstileToken(token)
+            });
+          } catch {}
+        } else if (!cancelled) {
+          setTimeout(tryRender, 200);
         }
-      }, 300);
-      return () => clearTimeout(timer);
+      }
+      const timer = setTimeout(tryRender, 100);
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
     }
   }, [authChecking, currentUser, turnstileSiteKey]);
 
@@ -129,6 +139,9 @@ function AdminApp() {
         setLoginPassword('');
       } else {
         setLoginError(res.error || 'Falha no login.');
+        if (window.turnstile && typeof window.turnstile.reset === 'function') {
+          window.turnstile.reset();
+        }
       }
     } catch {
       setLoginError('Erro de conexão com o servidor.');
