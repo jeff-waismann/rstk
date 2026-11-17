@@ -760,17 +760,18 @@ const siteSettings = {
           var data = await res.json();
 
           if (res.ok && data.success) {
+            closeModal();
             alert(data.message || 'Alterações aprovadas com sucesso! A RSTK foi notificada para providenciar o despacho.');
             await loadOrders();
           } else {
             alert(data.error || 'Erro ao aprovar alterações.');
             modalApproveBtn.disabled = false;
-            modalApproveBtn.innerHTML = '<span>✓ Confirmar Alterações</span>';
+            modalApproveBtn.innerHTML = '<span>✓ Aprovar</span>';
           }
         } catch (err) {
           alert('Erro de conexão ao aprovar alterações. Tente novamente.');
           modalApproveBtn.disabled = false;
-          modalApproveBtn.innerHTML = '<span>✓ Confirmar Alterações</span>';
+          modalApproveBtn.innerHTML = '<span>✓ Aprovar</span>';
         }
       });
 

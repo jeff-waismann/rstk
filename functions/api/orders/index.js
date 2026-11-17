@@ -53,6 +53,7 @@ export async function onRequestPost({ request, env }) {
         units,
         priceCents,
         quantity,
+        requestedQuantity: quantity,
         cover
       };
     });
@@ -194,8 +195,23 @@ export async function onRequestGet({ request, env }) {
         o.*,
         COALESCE(o.customer_phone, c.telefone, c.phone) AS customer_phone,
         COALESCE(c.responsavel_nome, c.responsible_name) AS customer_responsible,
+        COALESCE(o.customer_name, c.nome_fantasia, c.razao_social) AS customer_name,
+        c.razao_social AS customer_razao_social,
+        c.nome_fantasia AS customer_nome_fantasia,
+        c.ie AS customer_ie,
+        c.inscricao_estadual AS customer_inscricao_estadual,
+        c.ie_isento AS customer_ie_isento,
+        c.email AS customer_account_email,
+        c.email_verified AS customer_email_verified,
+        c.cep AS customer_cep,
+        c.logradouro AS customer_logradouro,
+        c.numero AS customer_numero,
+        c.complemento AS customer_complemento,
+        c.bairro AS customer_bairro,
         c.cidade AS customer_city,
-        c.uf AS customer_uf
+        c.uf AS customer_uf,
+        c.addresses_json AS customer_addresses_json,
+        c.created_at AS customer_registered_at
       FROM rstk_orders o
       LEFT JOIN rstk_customers c ON (o.customer_id IS NOT NULL AND o.customer_id = c.id) OR (o.customer_cnpj IS NOT NULL AND o.customer_cnpj = c.cnpj)
     `;
@@ -243,17 +259,41 @@ export async function onRequestGet({ request, env }) {
         changes = null;
       }
 
+      let customerAdditionalAddresses = [];
+      try {
+        customerAdditionalAddresses = row.customer_addresses_json ? JSON.parse(row.customer_addresses_json) : [];
+      } catch {
+        customerAdditionalAddresses = [];
+      }
+
       return {
         id: Number(row.id),
         orderNumber: row.order_number,
         customerId: row.customer_id ? Number(row.customer_id) : null,
         customerCnpj: row.customer_cnpj || null,
         customerName: row.customer_name || null,
-        customerEmail: row.customer_email || null,
+        customerEmail: row.customer_email || row.customer_account_email || null,
         customerPhone: row.customer_phone || null,
         customerResponsible: row.customer_responsible || null,
         customerCity: row.customer_city || null,
         customerUf: row.customer_uf || null,
+        customerRazaoSocial: row.customer_razao_social || null,
+        customerNomeFantasia: row.customer_nome_fantasia || null,
+        customerIe: row.customer_ie || row.customer_inscricao_estadual || (row.customer_ie_isento ? 'ISENTO' : null),
+        customerIeIsento: Boolean(row.customer_ie_isento),
+        customerAccountEmail: row.customer_account_email || null,
+        customerEmailVerified: Boolean(row.customer_email_verified),
+        customerRegisteredAt: row.customer_registered_at || null,
+        customerAddress: {
+          cep: row.customer_cep || null,
+          logradouro: row.customer_logradouro || null,
+          numero: row.customer_numero || null,
+          complemento: row.customer_complemento || null,
+          bairro: row.customer_bairro || null,
+          cidade: row.customer_city || null,
+          uf: row.customer_uf || null
+        },
+        customerAdditionalAddresses,
         items,
         totalCents: Number(row.total_cents) || 0,
         itemCount: Number(row.item_count) || items.length,
@@ -326,9 +366,23 @@ export async function onRequestPatch({ request, env }) {
     // Se o admin alterou itens / quantidades
     let itemsWereChanged = false;
     if (Array.isArray(body.items)) {
-      itemsJson = JSON.stringify(body.items);
-      itemCount = body.items.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
-      const computedTotal = body.items.reduce((s, it) => s + ((Number(it.priceCents) || 18999) * (Number(it.quantity) || 0)), 0);
+      let existingItems = [];
+      try {
+        existingItems = JSON.parse(existing.items_json || '[]');
+      } catch {}
+
+      const mappedItems = body.items.map((it, idx) => {
+        const existIt = existingItems.find((e) => String(e.id) === String(it.id)) || existingItems[idx];
+        const origQty = it.requestedQuantity || (existIt ? (existIt.requestedQuantity || existIt.quantity) : it.quantity);
+        return {
+          ...it,
+          requestedQuantity: origQty
+        };
+      });
+
+      itemsJson = JSON.stringify(mappedItems);
+      itemCount = mappedItems.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+      const computedTotal = mappedItems.reduce((s, it) => s + ((Number(it.priceCents) || 18999) * (Number(it.quantity) || 0)), 0);
       totalCents = Number.isFinite(Number(body.totalCents)) ? Math.round(Number(body.totalCents)) : computedTotal;
 
       if (body.changes) {

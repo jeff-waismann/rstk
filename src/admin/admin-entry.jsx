@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { apiService } from '../services/api.js';
 import DashboardTab from '../components/admin/tabs/DashboardTab.jsx';
 import OrdersTab from '../components/admin/tabs/OrdersTab.jsx';
+import CustomersTab from '../components/admin/tabs/CustomersTab.jsx';
 import CatalogTab from '../components/admin/tabs/CatalogTab.jsx';
 import HeroTab from '../components/admin/tabs/HeroTab.jsx';
 import SettingsTab from '../components/admin/tabs/SettingsTab.jsx';
@@ -12,6 +13,7 @@ import UsersTab from '../components/admin/tabs/UsersTab.jsx';
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
   { id: 'pedidos', label: 'Pedidos WhatsApp', icon: 'shopping_bag' },
+  { id: 'clientes', label: 'Lojas / Clientes B2B', icon: 'storefront' },
   { id: 'catalogo', label: 'Catálogo de Vinis', icon: 'album' },
   { id: 'hero', label: 'Hero & Oferta', icon: 'campaign' },
   { id: 'settings', label: 'WhatsApp & SEO', icon: 'settings' },
@@ -412,6 +414,13 @@ function AdminApp() {
             <OrdersTab
               onNotify={notify}
               onRefreshCatalog={loadCatalogData}
+            />
+          )}
+
+          {currentTab === 'clientes' && (
+            <CustomersTab
+              onNotify={notify}
+              onNavigate={setCurrentTab}
             />
           )}
 

@@ -78,6 +78,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
   const [editNotes, setEditNotes] = useState('');
   const [editAdminNotes, setEditAdminNotes] = useState('');
   const [modalItems, setModalItems] = useState([]);
+  const [showClientDetails, setShowClientDetails] = useState(false);
 
   async function loadOrders() {
     setLoading(true);
@@ -101,6 +102,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
 
   function openOrderDetails(order) {
     setSelectedOrder(order);
+    setShowClientDetails(false);
     setEditNotes(order.notes || '');
     setEditAdminNotes(order.adminNotes || '');
     setModalItems(Array.isArray(order.items) ? JSON.parse(JSON.stringify(order.items)) : []);
@@ -438,15 +440,16 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                   const isRegistered = Boolean(order.customerId || order.customerCnpj);
 
                   return (
-                    <tr key={order.id} className="hover:bg-[#F7F9FB]/70 transition-colors">
+                    <tr
+                      key={order.id}
+                      onClick={() => openOrderDetails(order)}
+                      className="hover:bg-[#F7F9FB] transition-colors cursor-pointer group"
+                      title="Clique em qualquer lugar da linha para abrir os detalhes do pedido"
+                    >
                       <td className="py-3 px-4">
-                        <button
-                          type="button"
-                          onClick={() => openOrderDetails(order)}
-                          className="font-mono font-bold text-xs text-[#006782] hover:underline block text-left"
-                        >
+                        <span className="font-mono font-bold text-xs text-[#006782] group-hover:underline block text-left">
                           #{order.orderNumber}
-                        </button>
+                        </span>
                         <span className="text-[11px] text-[#64748B]">
                           {formatDateTimeBR(order.createdAt)}
                         </span>
@@ -468,6 +471,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                                   href={`https://wa.me/55${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Aqui é da equipe RSTK. Estamos entrando em contato sobre o pedido #${order.orderNumber}...`)}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
                                   className="inline-flex items-center gap-1 text-[11px] text-[#128C7E] hover:text-[#075E54] font-bold mt-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 hover:border-emerald-300 transition-colors"
                                   title="Conversar com o cliente no WhatsApp"
                                 >
@@ -488,6 +492,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                                 href={`https://wa.me/55${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Aqui é da equipe RSTK. Estamos entrando em contato sobre o pedido #${order.orderNumber}...`)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
                                 className="inline-flex items-center gap-1 text-[11px] text-[#128C7E] hover:text-[#075E54] font-bold mt-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 hover:border-emerald-300 transition-colors"
                                 title="Conversar com o cliente no WhatsApp"
                               >
@@ -541,6 +546,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                             href={`https://wa.me/55${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Aqui é da equipe RSTK. Estamos entrando em contato sobre o pedido #${order.orderNumber}...`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-white bg-[#25D366] hover:bg-[#1ebe5d] rounded-lg mr-1 transition-colors shadow-xs"
                             title={`Chamar no WhatsApp (${order.customerPhone})`}
                           >
@@ -551,9 +557,12 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
 
                         <button
                           type="button"
-                          onClick={() => openOrderDetails(order)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openOrderDetails(order);
+                          }}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-[#006782] hover:bg-cyan-50 rounded-lg mr-1 transition-colors"
-                          title="Ver detalhes completos e ajustar quantidades"
+                          title="Ver detalhes completos e gerenciar pedido"
                         >
                           <span className="material-symbols-outlined text-[16px]">edit_note</span>
                           <span>Gerenciar</span>
@@ -561,7 +570,10 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
 
                         <button
                           type="button"
-                          onClick={() => handleDeleteOrder(order)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteOrder(order);
+                          }}
                           className="inline-flex items-center p-1.5 text-[#F75656] hover:bg-red-50 rounded-lg transition-colors"
                           title="Excluir pedido"
                         >
@@ -600,7 +612,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Informações do Cliente B2B */}
+              {/* Informações do Cliente B2B com Dropdown de Detalhes e Endereços */}
               {selectedOrder.customerCnpj ? (
                 <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -614,27 +626,27 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-blue-950">
                     <div>
-                      <span className="text-blue-700 block">Razão / Loja:</span>
-                      <strong>{selectedOrder.customerName || '—'}</strong>
+                      <span className="text-blue-700 block text-[11px]">Razão / Loja:</span>
+                      <strong className="text-sm">{selectedOrder.customerName || selectedOrder.customerRazaoSocial || '—'}</strong>
                     </div>
                     <div>
-                      <span className="text-blue-700 block">CNPJ:</span>
-                      <strong className="font-mono">{selectedOrder.customerCnpj}</strong>
+                      <span className="text-blue-700 block text-[11px]">CNPJ:</span>
+                      <strong className="font-mono text-xs">{selectedOrder.customerCnpj}</strong>
                     </div>
                     {selectedOrder.customerResponsible && (
                       <div>
-                        <span className="text-blue-700 block">Responsável:</span>
+                        <span className="text-blue-700 block text-[11px]">Responsável:</span>
                         <strong>{selectedOrder.customerResponsible}</strong>
                       </div>
                     )}
                     {selectedOrder.customerEmail && (
                       <div>
-                        <span className="text-blue-700 block">E-mail:</span>
+                        <span className="text-blue-700 block text-[11px]">E-mail:</span>
                         <span>{selectedOrder.customerEmail}</span>
                       </div>
                     )}
                     {selectedOrder.customerPhone && (
-                      <div className="col-span-full pt-2">
+                      <div className="col-span-full pt-1">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
                           <div className="flex items-center gap-2">
                             <span className="material-symbols-outlined text-[20px] text-[#25D366]">chat</span>
@@ -656,12 +668,102 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                       </div>
                     )}
                   </div>
+
+                  {/* Setinha para expandir/recolher todos os dados cadastrais e endereços */}
+                  <div className="mt-3 pt-2.5 border-t border-blue-200/80">
+                    <button
+                      type="button"
+                      onClick={() => setShowClientDetails(!showClientDetails)}
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-blue-100/50 hover:bg-blue-100 text-xs font-bold text-blue-900 transition-colors"
+                      title="Clique para ver ou ocultar ficha cadastral e endereços completos"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[17px] text-blue-700">contact_page</span>
+                        <span>{showClientDetails ? 'Ocultar dados cadastrais e endereços' : 'Ver mais infos do cliente e endereços completos'}</span>
+                      </span>
+                      <span className={`material-symbols-outlined text-[20px] text-blue-700 transition-transform duration-200 ${showClientDetails ? 'rotate-180' : ''}`}>
+                        expand_more
+                      </span>
+                    </button>
+
+                    {showClientDetails && (
+                      <div className="mt-3 p-3.5 bg-white border border-blue-200 rounded-xl space-y-3.5 text-xs text-slate-800 shadow-2xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-2 border-b border-slate-100">
+                          <div>
+                            <span className="text-[#64748B] block text-[11px] font-semibold">Razão Social:</span>
+                            <strong className="text-[#0F172A]">{selectedOrder.customerRazaoSocial || selectedOrder.customerName || '—'}</strong>
+                          </div>
+                          <div>
+                            <span className="text-[#64748B] block text-[11px] font-semibold">Nome Fantasia:</span>
+                            <strong className="text-[#0F172A]">{selectedOrder.customerNomeFantasia || selectedOrder.customerName || '—'}</strong>
+                          </div>
+                          <div>
+                            <span className="text-[#64748B] block text-[11px] font-semibold">Inscrição Estadual (IE):</span>
+                            <span className="font-mono text-[#0F172A]">{selectedOrder.customerIe || (selectedOrder.customerIeIsento ? 'ISENTO' : '—')}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#64748B] block text-[11px] font-semibold">E-mail Cadastrado:</span>
+                            <span className="text-[#0F172A]">{selectedOrder.customerAccountEmail || selectedOrder.customerEmail || '—'}</span>
+                            {selectedOrder.customerEmailVerified ? (
+                              <span className="ml-1.5 text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">✓ Verificado</span>
+                            ) : (
+                              <span className="ml-1.5 text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">Pendente</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Endereço Principal */}
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[#006782] flex items-center gap-1 mb-1">
+                            <span className="material-symbols-outlined text-[15px]">location_on</span>
+                            Endereço Principal de Faturamento / Entrega:
+                          </span>
+                          {selectedOrder.customerAddress && (selectedOrder.customerAddress.logradouro || selectedOrder.customerAddress.cidade) ? (
+                            <p className="m-0 p-2.5 bg-[#F7F9FB] border border-[#E2E8F0] rounded-lg text-slate-800 leading-relaxed font-medium">
+                              {selectedOrder.customerAddress.logradouro}, nº {selectedOrder.customerAddress.numero || 'S/N'}
+                              {selectedOrder.customerAddress.complemento ? ` (${selectedOrder.customerAddress.complemento})` : ''}
+                              {selectedOrder.customerAddress.bairro ? ` · Bairro ${selectedOrder.customerAddress.bairro}` : ''}
+                              {selectedOrder.customerAddress.cidade ? ` · ${selectedOrder.customerAddress.cidade}/${selectedOrder.customerAddress.uf || ''}` : ''}
+                              {selectedOrder.customerAddress.cep ? ` · CEP: ${selectedOrder.customerAddress.cep}` : ''}
+                            </p>
+                          ) : (
+                            <p className="m-0 p-2.5 bg-[#F7F9FB] border border-[#E2E8F0] rounded-lg text-slate-500 italic">
+                              {selectedOrder.deliveryAddress || 'Endereço principal não informado.'}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Endereços Adicionais */}
+                        {Array.isArray(selectedOrder.customerAdditionalAddresses) && selectedOrder.customerAdditionalAddresses.length > 0 && (
+                          <div className="pt-2 border-t border-slate-100">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-[#006782] flex items-center gap-1 mb-1.5">
+                              <span className="material-symbols-outlined text-[15px]">warehouse</span>
+                              Endereços Adicionais de Entrega ({selectedOrder.customerAdditionalAddresses.length}):
+                            </span>
+                            <div className="space-y-1.5">
+                              {selectedOrder.customerAdditionalAddresses.map((addr, aIdx) => (
+                                <div key={aIdx} className="p-2 bg-[#F7F9FB] border border-[#E2E8F0] rounded-lg text-[11.5px] leading-relaxed">
+                                  <strong className="text-slate-900 block font-semibold">{addr.label || `Endereço #${aIdx + 1}`}:</strong>
+                                  <span className="text-slate-700">
+                                    {addr.logradouro}, nº {addr.numero || 'S/N'}
+                                    {addr.complemento ? ` (${addr.complemento})` : ''} · {addr.bairro || ''} · {addr.cidade}/{addr.uf} · CEP: {addr.cep}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-slate-400 text-[18px]">info</span>
-                    <span>Este pedido foi disparado via WhatsApp avulso (usuário sem cadastro ou não autenticado).</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-slate-400 text-[18px]">info</span>
+                      <span>Pedido disparado via WhatsApp avulso (cliente sem cadastro no portal).</span>
+                    </div>
                   </div>
                   {selectedOrder.customerPhone && (
                     <div className="mt-2.5 flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
@@ -777,58 +879,110 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                   </span>
                 </div>
                 <div className="border border-[#E2E8F0] rounded-xl overflow-hidden divide-y divide-[#E2E8F0]">
-                  {modalItems.map((it, idx) => (
-                    <div key={idx} className="p-3 flex items-center justify-between gap-3 bg-white">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <img
-                          src={it.cover || '/assets/covers/album-01.webp'}
-                          alt={it.title}
-                          className="w-12 h-12 rounded-lg object-cover border border-[#E2E8F0] flex-shrink-0"
-                          loading="lazy"
-                        />
-                        <div className="min-w-0">
-                          <p className="font-bold text-sm text-[#0F172A] truncate">{it.title}</p>
-                          <p className="text-xs text-[#64748B] truncate">
-                            {it.artist} · {formatBRL(it.priceCents)} un.
-                          </p>
-                        </div>
-                      </div>
+                  {modalItems.map((it, idx) => {
+                    const origQty = it.requestedQuantity || (selectedOrder.changes?.find((c) => String(c.id) === String(it.id) || c.title === it.title)?.oldQty) || (selectedOrder.items && (selectedOrder.items[idx]?.requestedQuantity || selectedOrder.items[idx]?.quantity)) || it.quantity;
+                    const isCancelled = it.quantity === 0;
+                    const isModified = it.quantity !== origQty && !isCancelled;
+                    const unitPrice = it.priceCents || 18999;
+                    const albumFormat = Number(it.units) === 1 ? 'Álbum Simples' : (Number(it.units) === 2 ? 'Álbum Duplo' : `${it.units || 1} LPs`);
 
-                      {/* Controle de Quantidade */}
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <div className="flex items-center border border-[#E2E8F0] rounded-lg overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => handleItemQuantity(idx, it.quantity - 1)}
-                            className="px-2.5 py-1 text-sm bg-slate-50 hover:bg-slate-200 text-[#0F172A]"
-                          >
-                            −
-                          </button>
-                          <input
-                            type="number"
-                            min="0"
-                            max="99"
-                            value={it.quantity}
-                            onChange={(e) => handleItemQuantity(idx, e.target.value)}
-                            className="w-12 text-center text-xs font-bold py-1 border-none focus:outline-none"
+                    return (
+                      <div
+                        key={idx}
+                        className={`p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+                          isCancelled
+                            ? 'bg-red-50/80 border-l-4 border-[#EF4444]'
+                            : isModified
+                            ? 'bg-amber-50/80 border-l-4 border-[#F59E0B]'
+                            : 'bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <img
+                            src={it.cover || '/assets/covers/album-01.webp'}
+                            alt={it.title}
+                            className="w-12 h-12 rounded-lg object-cover border border-[#E2E8F0] flex-shrink-0"
+                            loading="lazy"
                           />
-                          <button
-                            type="button"
-                            onClick={() => handleItemQuantity(idx, it.quantity + 1)}
-                            className="px-2.5 py-1 text-sm bg-slate-50 hover:bg-slate-200 text-[#0F172A]"
-                          >
-                            +
-                          </button>
+                          <div className="min-w-0 flex-1">
+                            <p className={`font-bold text-sm truncate ${isCancelled ? 'line-through text-[#B91C1C]' : 'text-[#0F172A]'}`}>
+                              {it.title}
+                            </p>
+                            <p className="text-xs text-[#64748B] truncate">
+                              {it.artist} · {albumFormat} · {formatBRL(unitPrice)} un.
+                            </p>
+
+                            {/* Alertas de Alteração ou Cancelamento */}
+                            {isCancelled && (
+                              <span className="inline-block mt-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-red-100 text-red-700 border border-red-200">
+                                🚫 Item Cancelado / Esgotado no estoque
+                              </span>
+                            )}
+                            {isModified && (
+                              <span className="inline-block mt-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                ⚠️ Quantidade alterada de {origQty} para {it.quantity} un.
+                              </span>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="text-right w-20">
-                          <strong className={`text-xs font-bold ${it.quantity === 0 ? 'text-[#F75656] line-through' : 'text-[#006782]'}`}>
-                            {it.quantity === 0 ? 'Esgotado' : formatBRL(it.priceCents * it.quantity)}
-                          </strong>
+                        {/* Comparativo de Quantidade (Pedido Original vs Enviado) */}
+                        <div className="flex items-center justify-between sm:justify-end gap-4 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                          <div className="flex flex-col items-start sm:items-end">
+                            <span className="text-[10.5px] text-[#64748B] font-semibold">
+                              Pedido original: <strong className="text-[#0F172A]">{origQty} un.</strong>
+                            </span>
+                            <div className="flex items-center border border-[#E2E8F0] rounded-lg overflow-hidden bg-white mt-1 shadow-2xs">
+                              <button
+                                type="button"
+                                onClick={() => handleItemQuantity(idx, it.quantity - 1)}
+                                className="px-2.5 py-1 text-sm bg-slate-50 hover:bg-slate-200 text-[#0F172A] font-bold"
+                                title="Diminuir quantidade"
+                              >
+                                −
+                              </button>
+                              <input
+                                type="number"
+                                min="0"
+                                max="99"
+                                value={it.quantity}
+                                onChange={(e) => handleItemQuantity(idx, e.target.value)}
+                                className="w-12 text-center text-xs font-bold py-1 border-none focus:outline-none"
+                                title="Quantidade que será enviada/faturada"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleItemQuantity(idx, it.quantity + 1)}
+                                className="px-2.5 py-1 text-sm bg-slate-50 hover:bg-slate-200 text-[#0F172A] font-bold"
+                                title="Aumentar quantidade"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="text-right min-w-[85px]">
+                            <span className="text-[10px] text-[#64748B] block">Valor Enviado:</span>
+                            {isCancelled ? (
+                              <div>
+                                <del className="text-[10px] text-red-500 block">{formatBRL(unitPrice * origQty)}</del>
+                                <strong className="text-xs font-bold text-[#F75656]">R$ 0,00</strong>
+                              </div>
+                            ) : isModified ? (
+                              <div>
+                                <del className="text-[10px] text-amber-600 block">{formatBRL(unitPrice * origQty)}</del>
+                                <strong className="text-xs font-extrabold text-[#B45309]">{formatBRL(unitPrice * it.quantity)}</strong>
+                              </div>
+                            ) : (
+                              <strong className="text-xs font-extrabold text-[#006782]">
+                                {formatBRL(unitPrice * it.quantity)}
+                              </strong>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

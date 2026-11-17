@@ -124,6 +124,14 @@ export const apiService = {
     });
   },
 
+  // Customers (Lojas B2B)
+  async getCustomers({ search = '', limit = 100 } = {}) {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (limit) params.set('limit', String(limit));
+    return requestJson(`/api/customers?${params.toString()}`, { cache: 'no-store' });
+  },
+
   // Orders & Stock
   async getOrders({ status = '', search = '', limit = 100 } = {}) {
     const params = new URLSearchParams();
