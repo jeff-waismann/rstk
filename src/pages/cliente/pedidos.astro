@@ -67,8 +67,22 @@ const siteSettings = {
         <div class="unverified-icon">✉</div>
         <div class="unverified-content">
           <strong>Confirmação de e-mail pendente</strong>
-          <p>Enviamos um link de confirmação para sua caixa de entrada. Confirme seu e-mail para receber alertas de aprovação de pedidos.</p>
+          <p>Enviamos um link de confirmação para sua caixa de entrada. Você já pode enviar seus pedidos normalmente e confirmar o e-mail quando quiser.</p>
         </div>
+      </div>
+
+      {/* Banner de Pedido em Andamento no Carrinho */}
+      <div id="pending-cart-banner" class="pending-cart-card" hidden>
+        <div class="pending-cart-left">
+          <span class="pending-cart-icon">🛒</span>
+          <div>
+            <strong id="pending-cart-title">Você possui um pedido em andamento no carrinho!</strong>
+            <p>Seus vinis continuam salvos e prontos para envio direto pela sua conta.</p>
+          </div>
+        </div>
+        <a href="/?openCart=1" class="btn-finalize-pending">
+          Revisar e Enviar Pedido →
+        </a>
       </div>
 
       <div id="portal-alert" class="alert-box" hidden></div>
@@ -315,6 +329,25 @@ const siteSettings = {
         });
       }
 
+      function checkPendingCart() {
+        var banner = document.getElementById('pending-cart-banner');
+        var titleEl = document.getElementById('pending-cart-title');
+        if (!banner) return;
+        try {
+          var raw = localStorage.getItem('rstk-selection');
+          var items = raw ? JSON.parse(raw) : [];
+          if (Array.isArray(items) && items.length > 0) {
+            var count = items.length;
+            if (titleEl) {
+              titleEl.textContent = 'Você possui ' + count + ' vinil(is) no carrinho prontos para envio!';
+            }
+            banner.hidden = false;
+            return;
+          }
+        } catch (e) {}
+        banner.hidden = true;
+      }
+
       btnLogout.addEventListener('click', async function () {
         if (!confirm('Deseja realmente sair da sua conta?')) return;
         try {
@@ -325,9 +358,11 @@ const siteSettings = {
 
       btnRefresh.addEventListener('click', function () {
         loadOrders();
+        checkPendingCart();
       });
 
       checkAuth();
+      checkPendingCart();
     })();
   </script>
 
@@ -471,6 +506,77 @@ const siteSettings = {
 
     .unverified-content p {
       margin: 0;
+    }
+
+    /* Pending Cart Banner */
+    .pending-cart-card {
+      background: #EFF6FF;
+      border: 1px solid #0866c8;
+      border-radius: 14px;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 4px 12px rgba(8, 102, 200, 0.1);
+    }
+
+    html[data-theme="dark"] .pending-cart-card {
+      background: rgba(8, 102, 200, 0.15);
+      border-color: #38bdf8;
+    }
+
+    .pending-cart-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .pending-cart-icon {
+      font-size: 28px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .pending-cart-card strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 800;
+      color: #0866c8;
+      margin-bottom: 2px;
+    }
+
+    html[data-theme="dark"] .pending-cart-card strong {
+      color: #38bdf8;
+    }
+
+    .pending-cart-card p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--ink);
+      opacity: 0.85;
+    }
+
+    .btn-finalize-pending {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #0866c8;
+      color: #ffffff !important;
+      font-size: 13.5px;
+      font-weight: 750;
+      padding: 11px 22px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(8, 102, 200, 0.25);
+      white-space: nowrap;
+    }
+
+    .btn-finalize-pending:hover {
+      background: #0652a1;
+      transform: translateY(-1px);
     }
 
     /* Orders Section */

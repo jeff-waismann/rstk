@@ -12,8 +12,60 @@ export async function sendEmail({ to, subject, htmlText, plainText, env }) {
   let provider = 'rstk_logger';
   let errorMessage = null;
 
-  // Se houver integração com Resend, MailChannels ou SendGrid via env
-  if (env?.RESEND_API_KEY) {
+  // 1. Integração oficial com Zoho ZeptoMail (api.zeptomail.com)
+  const zeptoKey = env?.ZEPTO_API_KEY || env?.ZEPTOMAIL_API_KEY || env?.ZEPTO_TOKEN;
+  if (zeptoKey) {
+    try {
+      const rawKey = String(zeptoKey).trim();
+      const authHeader = rawKey.startsWith('Zoho-enczapikey')
+        ? rawKey
+        : `Zoho-enczapikey ${rawKey}`;
+
+      const payload = {
+        from: {
+          address: 'naoresponda@smartweb.net.br',
+          name: 'RSTK Atacado'
+        },
+        to: [
+          {
+            email_address: {
+              address: recipient,
+              name: recipient.split('@')[0]
+            }
+          }
+        ],
+        subject: title,
+        htmlbody: htmlText,
+        textbody: plainText
+      };
+
+      const res = await fetch('https://api.zeptomail.com/v1.1/email', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        status = 'sent';
+        provider = 'zeptomail';
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        status = 'failed';
+        provider = 'zeptomail';
+        errorMessage = JSON.stringify(errData);
+      }
+    } catch (err) {
+      status = 'failed';
+      provider = 'zeptomail';
+      errorMessage = err.message;
+    }
+  }
+  // 2. Fallback alternativo para Resend se configurado
+  else if (env?.RESEND_API_KEY) {
     try {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -22,7 +74,7 @@ export async function sendEmail({ to, subject, htmlText, plainText, env }) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: 'RSTK Atacado <pedidos@rstk.com.br>',
+          from: 'RSTK Atacado <naoresponda@smartweb.net.br>',
           to: [recipient],
           subject: title,
           html: htmlText,
@@ -49,10 +101,18 @@ export async function sendEmail({ to, subject, htmlText, plainText, env }) {
   if (env?.DB) {
     try {
       await env.DB.prepare(
-        `INSERT INTO rstk_email_logs (recipient, subject, body_preview, status, provider, error_message, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+        `INSERT INTO rstk_email_logs (to_email, subject, body_html, email_type, status, provider, error_message, metadata_json, created_at)
+         VALUES (?, ?, ?, 'transactional', ?, ?, ?, ?, CURRENT_TIMESTAMP)`
       )
-        .bind(recipient, title, preview, status, provider, errorMessage)
+        .bind(
+          recipient,
+          title,
+          htmlText || plainText || '',
+          status,
+          provider,
+          errorMessage,
+          JSON.stringify({ plainPreview: preview })
+        )
         .run();
     } catch (dbErr) {
       console.error('Falha ao registrar log de email no D1:', dbErr);

@@ -660,10 +660,23 @@ const siteSettings = {
           var data = await res.json();
 
           if (res.ok && data.success) {
-            showAlert('Cadastro concluído com sucesso! Enviamos um e-mail de confirmação para ' + email + '. Redirecionando para seu painel...', false);
-            setTimeout(function () {
-              window.location.replace('/cliente/pedidos');
-            }, 1200);
+            var hasCartItems = false;
+            try {
+              var saved = JSON.parse(localStorage.getItem('rstk-selection') || '[]');
+              if (Array.isArray(saved) && saved.length > 0) hasCartItems = true;
+            } catch (e) {}
+
+            if (hasCartItems) {
+              showAlert('Cadastro concluído com sucesso! Seus discos continuam salvos no carrinho para envio direto pela sua conta. Abrindo seu pedido...', false);
+              setTimeout(function () {
+                window.location.replace('/?openCart=1');
+              }, 1200);
+            } else {
+              showAlert('Cadastro concluído com sucesso! Enviamos um e-mail de confirmação para ' + email + '. Redirecionando para seu painel...', false);
+              setTimeout(function () {
+                window.location.replace('/cliente/pedidos');
+              }, 1200);
+            }
           } else {
             showAlert(data.error || 'Erro ao realizar cadastro.', true);
             btnSubmit.disabled = false;

@@ -311,8 +311,18 @@ const artists = [...new Set(allProducts.map((p) => p.artist))].sort((a, b) =>
 
           if (res.ok && data.success) {
             showAlert('Login realizado com sucesso! Redirecionando...', false);
+
+            var params = new URLSearchParams(window.location.search);
+            var hasCartItems = false;
+            try {
+              var saved = JSON.parse(localStorage.getItem('rstk-selection') || '[]');
+              if (Array.isArray(saved) && saved.length > 0) hasCartItems = true;
+            } catch (e) {}
+
+            var dest = (params.get('from') === 'cart' || hasCartItems) ? '/?openCart=1' : '/cliente/pedidos';
+
             setTimeout(function () {
-              window.location.replace('/cliente/pedidos');
+              window.location.replace(dest);
             }, 600);
           } else {
             showAlert(data.error || 'Credenciais inválidas.', true);

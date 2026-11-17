@@ -452,6 +452,9 @@
 
     const emptyBtn = $('empty-selection');
     if (emptyBtn) emptyBtn.disabled = selected.size === 0;
+
+    const submitOrderBtn = $('btn-submit-order');
+    if (submitOrderBtn) submitOrderBtn.disabled = selected.size === 0;
   }
 
   function handleQuantityChange(id, delta) {
@@ -823,15 +826,17 @@
     }
   }
 
-  // --- Client Auth Status Hydration ---
+  // --- Client Auth Status Hydration & Direct Order Submission ---
+  let currentClient = null;
+
   async function initClientAuthState() {
     try {
       const res = await fetch('/api/client/me', { cache: 'no-store' });
       if (!res.ok) return;
       const data = await res.json();
       if (data?.loggedIn && data?.client) {
-        const client = data.client;
-        const displayName = client.nomeFantasia || client.razaoSocial || 'Área do Cliente';
+        currentClient = data.client;
+        const displayName = currentClient.nomeFantasia || currentClient.razaoSocial || 'Área do Cliente';
         const shortName = displayName.length > 18 ? displayName.slice(0, 16) + '…' : displayName;
 
         const headerBtn = $('header-login-btn');
@@ -841,15 +846,102 @@
           headerBtn.title = `Conectado como ${displayName}`;
           if (headerText) headerText.textContent = shortName;
         }
-
-        const modalBtn = $('btn-customer-login');
-        if (modalBtn) {
-          modalBtn.textContent = 'Meus Pedidos';
-          modalBtn.href = '/cliente/pedidos';
-        }
       }
     } catch {
       // Ignora falhas de rede no check de sessão
+    }
+  }
+
+  async function dispatchDirectOrder() {
+    if (selected.size === 0) {
+      toast('Seu carrinho está vazio. Adicione vinis antes de enviar.');
+      return;
+    }
+
+    if (!currentClient) {
+      try {
+        const checkRes = await fetch('/api/client/me', { cache: 'no-store' });
+        const checkData = await checkRes.json();
+        if (checkData?.loggedIn && checkData?.client) {
+          currentClient = checkData.client;
+        }
+      } catch (e) {}
+    }
+
+    if (!currentClient) {
+      toast('Faça login ou cadastre sua loja para enviar o pedido diretamente. Redirecionando...');
+      setTimeout(() => {
+        window.location.href = '/cliente/login?from=cart';
+      }, 700);
+      return;
+    }
+
+    const submitBtn = $('btn-submit-order');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enviando Pedido...';
+    }
+
+    const selectedItems = catalog.filter((p) => selected.has(Number(p.id)));
+    const items = selectedItems.map((p) => ({
+      id: Number(p.id),
+      title: p.title,
+      artist: p.artist,
+      units: Number(p.units) || 1,
+      priceCents: p.priceCents ?? settings.priceCents ?? 18999,
+      quantity: selected.get(Number(p.id)) || 1,
+      cover: p.cover
+    }));
+    const totalCents = items.reduce((s, it) => s + it.priceCents * it.quantity, 0) || (settings.priceCents ?? 18999);
+
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          totalCents,
+          origin: 'portal_direct_submit',
+          notes: `Pedido direto de ${items.reduce((s, it) => s + it.quantity, 0)} vinil(is) enviado pelo painel do lojista`
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && data.order?.orderNumber) {
+        const orderNum = data.order.orderNumber;
+
+        for (const it of items) {
+          const found = catalog.find((c) => Number(c.id) === Number(it.id));
+          if (found && typeof found.stock === 'number') {
+            found.stock = Math.max(0, found.stock - it.quantity);
+          }
+        }
+
+        selected.clear();
+        updateSelection();
+        if ($('selection')?.open) {
+          $('selection').close();
+        }
+        renderSelection();
+        draw();
+
+        toast(`Pedido #${orderNum} enviado com sucesso! Abrindo seus pedidos...`);
+        setTimeout(() => {
+          window.location.href = '/cliente/pedidos';
+        }, 900);
+      } else {
+        toast(data?.error || 'Erro ao enviar pedido.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Enviar Pedido';
+        }
+      }
+    } catch (err) {
+      toast('Erro de conexão ao enviar pedido. Tente novamente.');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar Pedido';
+      }
     }
   }
 
@@ -878,6 +970,7 @@
     syncUrlState();
   });
 
+  $('btn-submit-order')?.addEventListener('click', dispatchDirectOrder);
   $('whatsapp-modal')?.addEventListener('click', (e) => dispatchWhatsAppOrder(e, $('whatsapp-modal')));
   $('whatsapp-floating')?.addEventListener('click', (e) => dispatchWhatsAppOrder(e, $('whatsapp-floating')));
 
@@ -1056,4 +1149,17 @@
   }
   hydrateFromD1();
   initClientAuthState();
+
+  // Se a URL tiver ?openCart=1, abre automaticamente o carrinho
+  const bootParams = new URLSearchParams(window.location.search);
+  if (bootParams.get('openCart') === '1' && selected.size > 0) {
+    setTimeout(() => {
+      renderSelection();
+      const selDialog = $('selection');
+      if (selDialog && !selDialog.open) {
+        selDialog.showModal();
+      }
+      toast('Seu pedido está pronto! Clique em "Enviar Pedido" para finalizar.');
+    }, 300);
+  }
 })();
