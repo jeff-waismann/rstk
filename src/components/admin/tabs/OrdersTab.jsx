@@ -460,15 +460,41 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                               <strong className="text-xs text-[#0F172A] block font-semibold truncate max-w-[180px]">
                                 {order.customerName || 'Revenda Cadastrada'}
                               </strong>
-                              <span className="text-[10.5px] text-[#64748B] font-mono">
+                              <span className="text-[10.5px] text-[#64748B] font-mono block">
                                 {order.customerCnpj || 'CNPJ verificado'}
                               </span>
+                              {order.customerPhone && (
+                                <a
+                                  href={`https://wa.me/55${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Aqui é da equipe RSTK. Estamos entrando em contato sobre o pedido #${order.orderNumber}...`)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] text-[#128C7E] hover:text-[#075E54] font-bold mt-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 hover:border-emerald-300 transition-colors"
+                                  title="Conversar com o cliente no WhatsApp"
+                                >
+                                  <span className="material-symbols-outlined text-[13px] text-[#25D366]">chat</span>
+                                  <span>{order.customerPhone}</span>
+                                </a>
+                              )}
                             </div>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1.5 text-[#64748B]">
-                            <span className="material-symbols-outlined text-slate-400 text-[18px]">person</span>
-                            <span className="text-xs italic">WhatsApp Avulso (Sem cadastro)</span>
+                          <div className="text-[#64748B]">
+                            <div className="flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-slate-400 text-[18px]">person</span>
+                              <span className="text-xs italic">WhatsApp Avulso (Sem cadastro)</span>
+                            </div>
+                            {order.customerPhone && (
+                              <a
+                                href={`https://wa.me/55${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Aqui é da equipe RSTK. Estamos entrando em contato sobre o pedido #${order.orderNumber}...`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] text-[#128C7E] hover:text-[#075E54] font-bold mt-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 hover:border-emerald-300 transition-colors"
+                                title="Conversar com o cliente no WhatsApp"
+                              >
+                                <span className="material-symbols-outlined text-[13px] text-[#25D366]">chat</span>
+                                <span>{order.customerPhone}</span>
+                              </a>
+                            )}
                           </div>
                         )}
                       </td>
@@ -510,6 +536,19 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                       </td>
 
                       <td className="py-3 px-4 text-right whitespace-nowrap">
+                        {order.customerPhone && (
+                          <a
+                            href={`https://wa.me/55${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Aqui é da equipe RSTK. Estamos entrando em contato sobre o pedido #${order.orderNumber}...`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-white bg-[#25D366] hover:bg-[#1ebe5d] rounded-lg mr-1 transition-colors shadow-xs"
+                            title={`Chamar no WhatsApp (${order.customerPhone})`}
+                          >
+                            <span className="material-symbols-outlined text-[15px]">chat</span>
+                            <span>WhatsApp</span>
+                          </a>
+                        )}
+
                         <button
                           type="button"
                           onClick={() => openOrderDetails(order)}
@@ -582,18 +621,65 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                       <span className="text-blue-700 block">CNPJ:</span>
                       <strong className="font-mono">{selectedOrder.customerCnpj}</strong>
                     </div>
+                    {selectedOrder.customerResponsible && (
+                      <div>
+                        <span className="text-blue-700 block">Responsável:</span>
+                        <strong>{selectedOrder.customerResponsible}</strong>
+                      </div>
+                    )}
                     {selectedOrder.customerEmail && (
                       <div>
                         <span className="text-blue-700 block">E-mail:</span>
                         <span>{selectedOrder.customerEmail}</span>
                       </div>
                     )}
+                    {selectedOrder.customerPhone && (
+                      <div className="col-span-full pt-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[20px] text-[#25D366]">chat</span>
+                            <div>
+                              <span className="text-[11px] text-emerald-800 font-semibold block">WhatsApp do Cliente:</span>
+                              <strong className="text-sm text-slate-800 font-mono">{selectedOrder.customerPhone}</strong>
+                            </div>
+                          </div>
+                          <a
+                            href={`https://wa.me/55${selectedOrder.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Aqui é da equipe RSTK. Estamos entrando em contato sobre o pedido #${selectedOrder.orderNumber}...`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold rounded-lg transition-colors shadow-xs"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">chat</span>
+                            <span>Chamar no WhatsApp</span>
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-slate-400 text-[18px]">info</span>
-                  <span>Este pedido foi disparado via WhatsApp avulso (usuário sem cadastro ou não autenticado).</span>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-slate-400 text-[18px]">info</span>
+                    <span>Este pedido foi disparado via WhatsApp avulso (usuário sem cadastro ou não autenticado).</span>
+                  </div>
+                  {selectedOrder.customerPhone && (
+                    <div className="mt-2.5 flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[18px] text-[#25D366]">chat</span>
+                        <span className="text-xs text-slate-800 font-mono font-bold">{selectedOrder.customerPhone}</span>
+                      </div>
+                      <a
+                        href={`https://wa.me/55${selectedOrder.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Aqui é da equipe RSTK. Estamos entrando em contato sobre o pedido #${selectedOrder.orderNumber}...`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold rounded-lg transition-colors shadow-xs"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">chat</span>
+                        <span>Chamar no WhatsApp</span>
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
 

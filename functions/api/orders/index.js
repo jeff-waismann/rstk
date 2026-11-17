@@ -7,7 +7,8 @@ import { getAuthenticatedClient } from '../../../server/client-auth.js';
 import {
   sendEmail,
   buildOrderApprovedEmail,
-  buildOrderChangedEmail
+  buildOrderChangedEmail,
+  buildNewOrderAdminEmail
 } from '../../../server/email.js';
 
 function generateOrderNumber() {
@@ -70,17 +71,29 @@ export async function onRequestPost({ request, env }) {
     // Identifica se há cliente logado via sessão
     const client = await getAuthenticatedClient(request, env).catch(() => null);
     const customerId = client?.id || null;
-    const customerCnpj = client?.cnpj || null;
-    const customerName = client ? (client.nomeFantasia || client.razaoSocial) : null;
-    const customerEmail = client?.email || null;
+    const customerCnpj = client?.cnpj || body.customerCnpj || null;
+    const customerName = client ? (client.nomeFantasia || client.razaoSocial) : (body.customerName || null);
+    const customerEmail = client?.email || body.customerEmail || null;
+    const customerPhone = client ? (client.telefone || client.phone) : (body.customerPhone || body.phone || null);
+    const customerResponsible = client ? (client.responsavelNome || client.responsible_name) : (body.customerResponsible || null);
+    const deliveryAddress = client
+      ? [
+          client.logradouro,
+          client.numero,
+          client.complemento,
+          client.bairro,
+          client.cidade ? `${client.cidade}/${client.uf || ''}` : '',
+          client.cep ? `CEP: ${client.cep}` : ''
+        ].filter(Boolean).join(', ')
+      : (body.deliveryAddress || null);
 
-    // 1. Grava o pedido no D1
+    // 1. Grava o pedido no D1 (incluindo customer_phone)
     const insertRes = await env.DB.prepare(
       `INSERT INTO rstk_orders (
-        order_number, customer_id, customer_cnpj, customer_name, customer_email,
+        order_number, customer_id, customer_cnpj, customer_name, customer_email, customer_phone,
         items_json, total_cents, item_count, status, origin, user_agent, notes,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'whatsapp_aberto', ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'whatsapp_aberto', ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
     )
       .bind(
         orderNumber,
@@ -88,6 +101,7 @@ export async function onRequestPost({ request, env }) {
         customerCnpj,
         customerName,
         customerEmail,
+        customerPhone,
         JSON.stringify(items),
         totalCents,
         itemCount,
@@ -113,6 +127,36 @@ export async function onRequestPost({ request, env }) {
       }
     }
 
+    // 3. Notificação por E-mail para neirtonjr@hotmail.com com dados, itens e botão WhatsApp
+    try {
+      const adminNotificationEmail = 'neirtonjr@hotmail.com';
+      const totalFormatted = formatBRL(totalCents);
+      const emailData = buildNewOrderAdminEmail({
+        orderNumber,
+        customerName,
+        customerCnpj,
+        customerResponsible,
+        customerEmail,
+        customerPhone,
+        deliveryAddress,
+        items,
+        totalFormatted,
+        itemCount,
+        notes,
+        origin
+      });
+
+      await sendEmail({
+        to: adminNotificationEmail,
+        subject: emailData.subject,
+        htmlText: emailData.htmlText,
+        plainText: emailData.plainText,
+        env
+      });
+    } catch (mailErr) {
+      console.error('Falha ao enviar e-mail de notificação de novo pedido:', mailErr);
+    }
+
     return jsonResponse({
       success: true,
       order: {
@@ -123,6 +167,7 @@ export async function onRequestPost({ request, env }) {
         customerId,
         customerName,
         customerCnpj,
+        customerPhone,
         status: 'whatsapp_aberto',
         items
       }
@@ -144,32 +189,41 @@ export async function onRequestGet({ request, env }) {
     const customerType = url.searchParams.get('customerType'); // 'registered' | 'guest'
     const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit')) || 100));
 
-    let query = 'SELECT * FROM rstk_orders';
+    let query = `
+      SELECT 
+        o.*,
+        COALESCE(o.customer_phone, c.telefone, c.phone) AS customer_phone,
+        COALESCE(c.responsavel_nome, c.responsible_name) AS customer_responsible,
+        c.cidade AS customer_city,
+        c.uf AS customer_uf
+      FROM rstk_orders o
+      LEFT JOIN rstk_customers c ON (o.customer_id IS NOT NULL AND o.customer_id = c.id) OR (o.customer_cnpj IS NOT NULL AND o.customer_cnpj = c.cnpj)
+    `;
     const params = [];
     const conditions = [];
 
     if (status) {
-      conditions.push('status = ?');
+      conditions.push('o.status = ?');
       params.push(status);
     }
 
     if (customerType === 'registered') {
-      conditions.push('customer_id IS NOT NULL');
+      conditions.push('o.customer_id IS NOT NULL');
     } else if (customerType === 'guest') {
-      conditions.push('customer_id IS NULL');
+      conditions.push('o.customer_id IS NULL');
     }
 
     if (search) {
-      conditions.push('(order_number LIKE ? OR items_json LIKE ? OR notes LIKE ? OR customer_name LIKE ? OR customer_cnpj LIKE ?)');
+      conditions.push('(o.order_number LIKE ? OR o.items_json LIKE ? OR o.notes LIKE ? OR o.customer_name LIKE ? OR o.customer_cnpj LIKE ? OR o.customer_phone LIKE ? OR c.telefone LIKE ?)');
       const s = `%${search}%`;
-      params.push(s, s, s, s, s);
+      params.push(s, s, s, s, s, s, s);
     }
 
     if (conditions.length) {
       query += ` WHERE ${conditions.join(' AND ')}`;
     }
 
-    query += ' ORDER BY created_at DESC, id DESC LIMIT ?';
+    query += ' ORDER BY o.created_at DESC, o.id DESC LIMIT ?';
     params.push(limit);
 
     const { results } = await env.DB.prepare(query).bind(...params).all();
@@ -196,6 +250,10 @@ export async function onRequestGet({ request, env }) {
         customerCnpj: row.customer_cnpj || null,
         customerName: row.customer_name || null,
         customerEmail: row.customer_email || null,
+        customerPhone: row.customer_phone || null,
+        customerResponsible: row.customer_responsible || null,
+        customerCity: row.customer_city || null,
+        customerUf: row.customer_uf || null,
         items,
         totalCents: Number(row.total_cents) || 0,
         itemCount: Number(row.item_count) || items.length,
@@ -393,6 +451,7 @@ export async function onRequestPatch({ request, env }) {
         customerCnpj: updated.customer_cnpj,
         customerName: updated.customer_name,
         customerEmail: updated.customer_email,
+        customerPhone: updated.customer_phone || null,
         items,
         totalCents: Number(updated.total_cents) || 0,
         itemCount: Number(updated.item_count) || items.length,

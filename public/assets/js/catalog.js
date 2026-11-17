@@ -758,6 +758,10 @@
           items,
           totalCents,
           origin: singleAlbumId ? 'modal_single_buy' : (sourceEl?.id === 'whatsapp-modal' ? 'modal_selection' : 'floating_whatsapp'),
+          customerPhone: currentClient?.telefone || currentClient?.phone || null,
+          customerName: currentClient?.nomeFantasia || currentClient?.razaoSocial || null,
+          customerEmail: currentClient?.email || null,
+          customerCnpj: currentClient?.cnpj || null,
           notes: items.length
             ? `Pedido de ${items.reduce((sum, it) => sum + it.quantity, 0)} vinil(is) solicitado via WhatsApp`
             : 'Consulta geral de catálogo via WhatsApp'
@@ -899,6 +903,10 @@
           items,
           totalCents,
           origin: 'portal_direct_submit',
+          customerPhone: currentClient?.telefone || currentClient?.phone || null,
+          customerName: currentClient?.nomeFantasia || currentClient?.razaoSocial || null,
+          customerEmail: currentClient?.email || null,
+          customerCnpj: currentClient?.cnpj || null,
           notes: `Pedido direto de ${items.reduce((s, it) => s + it.quantity, 0)} vinil(is) enviado pelo painel do lojista`
         })
       });
