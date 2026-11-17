@@ -157,14 +157,14 @@ export async function onRequestPost({ request, env }) {
 
     const insertResult = await env.DB.prepare(
       `INSERT INTO rstk_customers (
-        cnpj, razao_social, nome_fantasia, ie, ie_isento,
-        responsavel_nome, email, telefone, password_hash,
+        cnpj, razao_social, nome_fantasia, ie, inscricao_estadual, ie_isento,
+        responsavel_nome, responsible_name, email, telefone, phone, password_hash,
         cep, logradouro, numero, complemento, bairro, cidade, uf,
         addresses_json, status, email_verified, verification_token,
         created_at, updated_at
       ) VALUES (
-        ?, ?, ?, ?, ?,
-        ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?, ?,
         ?, 'active', 0, ?,
         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
@@ -175,9 +175,12 @@ export async function onRequestPost({ request, env }) {
         razaoSocial,
         nomeFantasia,
         ieIsento ? 'ISENTO' : ie,
+        ieIsento ? 'ISENTO' : ie,
         ieIsento ? 1 : 0,
         responsavelNome,
+        responsavelNome,
         email,
+        formattedTel,
         formattedTel,
         passwordHash,
         cep,

@@ -7,9 +7,13 @@ import type { SiteSettings, VinylAlbum } from '../../utils/format';
 const allProducts = catalogData as VinylAlbum[];
 const siteSettings = {
   ...(siteSettingsData as SiteSettings),
-  seoTitle: 'Login do Lojista e Revenda — RSTK Atacado',
-  seoDescription: 'Acesse o portal exclusivo de revenda da RSTK Atacado para acompanhar seus pedidos de vinis importados e lançamentos em tempo real.'
+  seoTitle: 'Login do Lojista — RSTK Atacado',
+  seoDescription: 'Acesse o portal exclusivo de pedidos da RSTK Atacado para acompanhar seus lotes de vinis importados e lançamentos em tempo real.'
 };
+
+const artists = [...new Set(allProducts.map((p) => p.artist))].sort((a, b) =>
+  a.localeCompare(b, 'pt-BR')
+);
 ---
 
 <BaseLayout
@@ -18,98 +22,207 @@ const siteSettings = {
   heroCovers={allProducts.slice(0, 3)}
   canonicalPath="/cliente/login"
 >
+  {/* Header com Logo RSTK, Menu para voltar e Tema */}
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="RSTK Atacado — início">
+        <img
+          id="brand-logo"
+          src={siteSettings.logoUrl || '/assets/images/logo-rstk.webp'}
+          alt={siteSettings.brandAlt || 'RSTK ATACADO'}
+          width="205"
+          height="88"
+          fetchpriority="high"
+        />
+      </a>
+      <div class="top-right">
+        <a href="/" class="header-back-catalog">
+          ← Voltar para o Catálogo
+        </a>
+        <div class="theme" role="group" aria-label="Tema de aparência">
+          <button id="light" type="button" aria-pressed="true">☀ Claro</button>
+          <button id="dark" type="button" aria-pressed="false">☾ Escuro</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {/* Faixa de Busca, Artistas, Formato e Ordenação */}
+  <div class="filter-strip-wrap">
+    <div class="wrap">
+      <form class="controls" id="catalog-redirect-controls" action="/" method="GET">
+        <label class="search" for="search">
+          <span class="sr">Buscar artista ou álbum</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <circle cx="10.5" cy="10.5" r="6.5"></circle>
+            <path d="m16 16 5 5"></path>
+          </svg>
+          <input
+            id="search"
+            name="search"
+            type="search"
+            placeholder="Busque por artista ou álbum no catálogo…"
+            autocomplete="off"
+          />
+        </label>
+
+        <label class="sr" for="artist">Filtrar por artista</label>
+        <select id="artist" name="artist" onchange="this.form.submit()">
+          <option value="">Todos os artistas</option>
+          {artists.map((artist) => (
+            <option value={artist}>{artist}</option>
+          ))}
+        </select>
+
+        <label class="sr" for="format">Filtrar por formato de álbum</label>
+        <select id="format" name="format" onchange="this.form.submit()">
+          <option value="">Todos os formatos</option>
+          <option value="1">Álbum Simples</option>
+          <option value="2">Álbum Duplo</option>
+        </select>
+
+        <label class="sr" for="sort">Ordenação</label>
+        <select id="sort" name="sort" onchange="this.form.submit()">
+          <option value="artist">Artista: A → Z</option>
+          <option value="title">Título: A → Z</option>
+          <option value="newest">Mais recentes</option>
+        </select>
+
+        <button type="submit" class="btn-search-redirect">
+          Buscar no Catálogo →
+        </button>
+      </form>
+    </div>
+  </div>
+
   <main class="auth-page">
     <div class="auth-container">
-      {/* 1. Cadastre-se em cima BEM VISÍVEL */}
+      {/* 1. Cadastre sua Loja no Topo (1260px) */}
       <div class="top-register-banner">
         <div>
           <span class="badge-new">Novo por aqui?</span>
-          <p class="top-register-title">Sua empresa ainda não tem cadastro como revenda?</p>
-          <p class="top-register-sub">Cadastre seu CNPJ para ter acesso aos preços especiais de atacado e controle total.</p>
+          <p class="top-register-title">Sua loja ainda não tem cadastro?</p>
+          <p class="top-register-sub">Cadastre seu CNPJ para ter acesso aos preços especiais de atacado e controle total dos seus pedidos.</p>
         </div>
         <a href="/cliente/cadastro" class="btn-goto-register">
-          Cadastre sua Revenda B2B →
+          Cadastre sua Loja →
         </a>
       </div>
 
-      <div class="auth-card">
-        <div class="auth-card-header">
-          <div class="auth-icon-circle">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6" aria-hidden="true">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-          </div>
-          <h1>Área do Cliente & Revenda</h1>
-          <p>Digite seu CNPJ ou E-mail cadastrado e sua senha de acesso.</p>
-        </div>
+      {/* Grid Principal de 1260px: Lado Esquerdo (Vantagens) e Lado Direito (Login) */}
+      <div class="auth-layout-grid">
+        {/* Coluna da Esquerda: Benefícios e Informações */}
+        <div class="benefits-column">
+          <div class="callout-benefits-card">
+            <div class="benefits-header">
+              <span class="callout-icon">💡</span>
+              <div>
+                <h2>Por que ter uma conta na RSTK?</h2>
+                <p>Controle completo das compras da sua loja de discos com total transparência.</p>
+              </div>
+            </div>
 
-        {/* Informative Callout explaining registration benefits vs buying on WhatsApp */}
-        <div class="callout-benefits">
-          <div class="callout-icon">💡</div>
-          <div class="callout-text">
-            <strong>Por que acessar ou cadastrar sua conta?</strong>
-            <ul>
-              <li>Acompanhe em tempo real a aprovação e separação dos seus pedidos.</li>
-              <li>Receba avisos instantâneos por e-mail e no painel caso haja ajuste de estoque ou valor.</li>
-              <li>Histórico de compras e faturamento da sua loja salvo em um só lugar.</li>
-              <li><em>Você também pode continuar encomendando via WhatsApp sem login, mas com a conta você nunca perde o controle!</em></li>
+            <ul class="benefits-list">
+              <li>
+                <div class="benefit-bullet">✓</div>
+                <div>
+                  <strong>Acompanhamento em Tempo Real</strong>
+                  <p>Veja quando seu pedido for aprovado, separado e expedido pela equipe RSTK.</p>
+                </div>
+              </li>
+              <li>
+                <div class="benefit-bullet">✓</div>
+                <div>
+                  <strong>Avisos Automáticos de Estoque</strong>
+                  <p>Receba alertas imediatos caso algum disco esgote ou a quantidade seja ajustada, com o novo valor total recalculado.</p>
+                </div>
+              </li>
+              <li>
+                <div class="benefit-bullet">✓</div>
+                <div>
+                  <strong>Histórico Unificado</strong>
+                  <p>Todos os pedidos finalizados salvos no painel da sua empresa para consulta rápida e reordenação.</p>
+                </div>
+              </li>
+              <li>
+                <div class="benefit-bullet">✓</div>
+                <div>
+                  <strong>Flexibilidade Total</strong>
+                  <p>Você pode continuar encomendando via WhatsApp quando quiser. Com a conta, seus pedidos ficam organizados e protegidos.</p>
+                </div>
+              </li>
             </ul>
           </div>
         </div>
 
-        <div id="auth-alert" class="alert-box" hidden></div>
-
-        <form id="login-form" class="auth-form" novalidate>
-          <div class="form-group">
-            <label for="identifier">CNPJ ou E-mail do Responsável</label>
-            <input
-              type="text"
-              id="identifier"
-              name="identifier"
-              placeholder="00.000.000/0001-00 ou seu@email.com"
-              required
-              autocomplete="username"
-            />
-          </div>
-
-          <div class="form-group">
-            <div class="label-row">
-              <label for="password">Senha</label>
+        {/* Coluna da Direita: Card de Login */}
+        <div class="login-column">
+          <div class="auth-card">
+            <div class="auth-card-header">
+              <div class="auth-icon-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6" aria-hidden="true">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <h1>Área do Cliente</h1>
+              <p>Informe o CNPJ ou E-mail cadastrado e sua senha de acesso.</p>
             </div>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              placeholder="Sua senha de acesso"
-              required
-              autocomplete="current-password"
-            />
+
+            <div id="auth-alert" class="alert-box" hidden></div>
+
+            <form id="login-form" class="auth-form" novalidate>
+              <div class="form-group">
+                <label for="identifier">CNPJ ou E-mail do Responsável</label>
+                <input
+                  type="text"
+                  id="identifier"
+                  name="identifier"
+                  placeholder="00.000.000/0001-00 ou seu@email.com"
+                  required
+                  autocomplete="username"
+                />
+              </div>
+
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="password">Senha de Acesso</label>
+                </div>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  placeholder="Sua senha de acesso"
+                  required
+                  autocomplete="current-password"
+                />
+              </div>
+
+              {/* Cloudflare Turnstile */}
+              <div class="turnstile-container">
+                <div
+                  class="cf-turnstile"
+                  data-sitekey="0x4AAAAAADN7xiosBuzdsddL"
+                  data-theme="auto"
+                ></div>
+              </div>
+
+              <button type="submit" id="btn-submit" class="btn-primary-auth">
+                <span>Entrar na Área do Cliente</span>
+              </button>
+            </form>
+
+            {/* Esqueci minha senha embaixo */}
+            <div class="auth-card-footer">
+              <a href="/cliente/recuperar-senha" class="footer-link">
+                Esqueci minha senha
+              </a>
+              <span class="sep">·</span>
+              <a href="/" class="footer-link">
+                ← Voltar ao Catálogo
+              </a>
+            </div>
           </div>
-
-          <!-- Cloudflare Turnstile -->
-          <div class="turnstile-container">
-            <div
-              class="cf-turnstile"
-              data-sitekey="0x4AAAAAADN7xiosBuzdsddL"
-              data-theme="auto"
-            ></div>
-          </div>
-
-          <button type="submit" id="btn-submit" class="btn-primary-auth">
-            <span>Entrar na Área do Cliente</span>
-          </button>
-        </form>
-
-        {/* Esqueci minha senha embaixo */}
-        <div class="auth-card-footer">
-          <a href="/cliente/recuperar-senha" class="footer-link">
-            Esqueci minha senha
-          </a>
-          <span class="sep">·</span>
-          <a href="/" class="footer-link">
-            ← Voltar ao Catálogo
-          </a>
         </div>
       </div>
     </div>
@@ -224,33 +337,83 @@ const siteSettings = {
   </script>
 
   <style>
+    /* Header & Filter Strip */
+    .header-back-catalog {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      transition: all 0.2s ease;
+    }
+
+    .header-back-catalog:hover {
+      border-color: #0866c8;
+      color: #0866c8;
+    }
+
+    .filter-strip-wrap {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 0;
+    }
+
+    .filter-strip-wrap .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-search-redirect {
+      background: #0866c8;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 750;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-search-redirect:hover {
+      background: #0652a1;
+    }
+
+    /* Container de 1260px */
     .auth-page {
-      min-height: calc(100vh - 120px);
-      padding: 40px 16px 80px;
+      min-height: calc(100vh - 200px);
+      padding: 36px 16px 80px;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
       background: var(--bg);
     }
 
     .auth-container {
       width: 100%;
-      max-width: 540px;
+      max-width: 1260px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 24px;
     }
 
-    /* Cadastre-se em cima visível */
+    /* Cadastre sua Loja no Topo */
     .top-register-banner {
       background: linear-gradient(135deg, #006782 0%, #004d61 100%);
       color: #ffffff;
-      padding: 20px 24px;
+      padding: 22px 30px;
       border-radius: 14px;
       box-shadow: 0 4px 14px rgba(0, 103, 130, 0.2);
       display: flex;
-      flex-direction: column;
-      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
     .badge-new {
@@ -267,46 +430,134 @@ const siteSettings = {
     }
 
     .top-register-title {
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 750;
       margin: 0;
       line-height: 1.3;
     }
 
     .top-register-sub {
-      font-size: 13px;
+      font-size: 13.5px;
       opacity: 0.9;
       margin: 4px 0 0;
       line-height: 1.4;
     }
 
     .btn-goto-register {
-      align-self: flex-start;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #00C6F7;
-      color: #0F172A;
-      font-size: 13px;
+      background: #0866c8;
+      color: #ffffff;
+      font-size: 14px;
       font-weight: 750;
-      padding: 10px 18px;
+      padding: 12px 24px;
       border-radius: 8px;
       text-decoration: none;
       transition: all 0.2s ease;
-      box-shadow: 0 2px 6px rgba(0, 198, 247, 0.3);
+      box-shadow: 0 3px 10px rgba(8, 102, 200, 0.35);
+      white-space: nowrap;
     }
 
     .btn-goto-register:hover {
-      background: #33d4ff;
+      background: #0652a1;
       transform: translateY(-1px);
     }
 
-    /* Card principal de Login */
+    /* Grid Layout de 1260px */
+    .auth-layout-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    /* Card de Benefícios */
+    .callout-benefits-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .benefits-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .benefits-header h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--ink);
+      margin: 0 0 4px;
+    }
+
+    .benefits-header p {
+      font-size: 13.5px;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .callout-icon {
+      font-size: 26px;
+    }
+
+    .benefits-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .benefits-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .benefit-bullet {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(8, 102, 200, 0.15);
+      color: #0866c8;
+      font-weight: 800;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .benefits-list strong {
+      font-size: 14px;
+      color: var(--ink);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .benefits-list p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    /* Card de Login */
     .auth-card {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 32px 28px;
+      padding: 32px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
 
@@ -319,8 +570,8 @@ const siteSettings = {
       width: 52px;
       height: 52px;
       border-radius: 50%;
-      background: rgba(0, 198, 247, 0.12);
-      color: var(--blue);
+      background: rgba(8, 102, 200, 0.12);
+      color: #0866c8;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -338,49 +589,6 @@ const siteSettings = {
       font-size: 13px;
       color: var(--muted);
       margin: 0;
-    }
-
-    /* Benefits callout */
-    .callout-benefits {
-      background: rgba(0, 103, 130, 0.06);
-      border: 1px solid rgba(0, 103, 130, 0.15);
-      border-radius: 10px;
-      padding: 14px 16px;
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    .callout-icon {
-      font-size: 18px;
-      flex-shrink: 0;
-      padding-top: 2px;
-    }
-
-    .callout-text strong {
-      color: var(--blue-dark);
-      display: block;
-      margin-bottom: 4px;
-      font-size: 13px;
-    }
-
-    .callout-text ul {
-      margin: 4px 0 0;
-      padding-left: 18px;
-      color: var(--ink);
-    }
-
-    .callout-text li {
-      margin-bottom: 3px;
-    }
-
-    .callout-text em {
-      display: block;
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 11px;
     }
 
     /* Alerts */
@@ -439,8 +647,8 @@ const siteSettings = {
 
     .form-group input:focus {
       outline: none;
-      border-color: #00C6F7;
-      box-shadow: 0 0 0 3px rgba(0, 198, 247, 0.2);
+      border-color: #0866c8;
+      box-shadow: 0 0 0 3px rgba(8, 102, 200, 0.2);
     }
 
     .turnstile-container {
@@ -451,7 +659,7 @@ const siteSettings = {
     }
 
     .btn-primary-auth {
-      background: var(--blue);
+      background: #0866c8;
       color: #ffffff;
       border: none;
       padding: 14px 20px;
@@ -463,11 +671,11 @@ const siteSettings = {
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(0, 103, 130, 0.25);
+      box-shadow: 0 2px 8px rgba(8, 102, 200, 0.25);
     }
 
     .btn-primary-auth:hover {
-      background: var(--blue-dark);
+      background: #0652a1;
       transform: translateY(-1px);
     }
 
@@ -477,7 +685,7 @@ const siteSettings = {
       transform: none;
     }
 
-    /* Esqueci minha senha embaixo */
+    /* Esqueci minha senha */
     .auth-card-footer {
       margin-top: 24px;
       padding-top: 18px;
@@ -497,7 +705,7 @@ const siteSettings = {
     }
 
     .footer-link:hover {
-      color: var(--blue);
+      color: #0866c8;
       text-decoration: underline;
     }
 
@@ -505,12 +713,24 @@ const siteSettings = {
       color: var(--line);
     }
 
-    @media (max-width: 480px) {
-      .auth-card {
-        padding: 24px 18px;
+    @media (max-width: 900px) {
+      .auth-layout-grid {
+        grid-template-columns: 1fr;
       }
+    }
+
+    @media (max-width: 600px) {
       .top-register-banner {
-        padding: 16px 18px;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .btn-goto-register {
+        width: 100%;
+        justify-content: center;
+      }
+      .callout-benefits-card,
+      .auth-card {
+        padding: 22px 18px;
       }
     }
   </style>

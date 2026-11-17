@@ -19,12 +19,36 @@ const siteSettings = {
   canonicalPath="/cliente/pedidos"
   noindex={true}
 >
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="RSTK Atacado — início">
+        <img
+          id="brand-logo"
+          src={siteSettings.logoUrl || '/assets/images/logo-rstk.webp'}
+          alt={siteSettings.brandAlt || 'RSTK ATACADO'}
+          width="205"
+          height="88"
+          fetchpriority="high"
+        />
+      </a>
+      <div class="top-right">
+        <a href="/" class="header-back-catalog">
+          ← Catálogo de Vinis
+        </a>
+        <div class="theme" role="group" aria-label="Tema de aparência">
+          <button id="light" type="button" aria-pressed="true">☀ Claro</button>
+          <button id="dark" type="button" aria-pressed="false">☾ Escuro</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
   <main class="portal-page">
     <div class="portal-container">
       {/* Top Header do Portal do Cliente */}
       <div class="portal-header">
         <div class="portal-welcome">
-          <span class="badge-b2b">Portal da Revenda B2B</span>
+          <span class="badge-b2b">Área da Loja</span>
           <h1 id="client-company-name">Carregando seus dados...</h1>
           <p id="client-info-sub" class="client-sub">Consultando seus dados cadastrais...</p>
         </div>
@@ -308,6 +332,23 @@ const siteSettings = {
   </script>
 
   <style>
+    .header-back-catalog {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      transition: all 0.2s ease;
+    }
+
+    .header-back-catalog:hover {
+      border-color: #0866c8;
+      color: #0866c8;
+    }
+
     .portal-page {
       min-height: calc(100vh - 120px);
       padding: 36px 16px 80px;
@@ -318,7 +359,7 @@ const siteSettings = {
 
     .portal-container {
       width: 100%;
-      max-width: 900px;
+      max-width: 1260px;
       display: flex;
       flex-direction: column;
       gap: 24px;

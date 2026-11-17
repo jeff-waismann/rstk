@@ -7,8 +7,8 @@ import type { SiteSettings, VinylAlbum } from '../../utils/format';
 const allProducts = catalogData as VinylAlbum[];
 const siteSettings = {
   ...(siteSettingsData as SiteSettings),
-  seoTitle: 'Cadastro de Revenda e Lojista B2B — RSTK Atacado',
-  seoDescription: 'Cadastre sua loja ou distribuidora de vinis na RSTK Atacado. Condições exclusivas de atacado para vinis lacrados e importados com faturamento B2B.'
+  seoTitle: 'Cadastro de Loja — RSTK Atacado',
+  seoDescription: 'Cadastre sua loja na RSTK Atacado. Condições exclusivas de atacado para vinis lacrados e importados com faturamento corporativo.'
 };
 ---
 
@@ -18,13 +18,40 @@ const siteSettings = {
   heroCovers={allProducts.slice(0, 3)}
   canonicalPath="/cliente/cadastro"
 >
+  {/* Header com Logo RSTK e links */}
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="RSTK Atacado — início">
+        <img
+          id="brand-logo"
+          src={siteSettings.logoUrl || '/assets/images/logo-rstk.webp'}
+          alt={siteSettings.brandAlt || 'RSTK ATACADO'}
+          width="205"
+          height="88"
+          fetchpriority="high"
+        />
+      </a>
+      <div class="top-right">
+        <a href="/cliente/login" class="header-back-catalog">
+          Já tem conta? Fazer Login
+        </a>
+        <a href="/" class="header-back-catalog">
+          ← Voltar para o Catálogo
+        </a>
+        <div class="theme" role="group" aria-label="Tema de aparência">
+          <button id="light" type="button" aria-pressed="true">☀ Claro</button>
+          <button id="dark" type="button" aria-pressed="false">☾ Escuro</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
   <main class="register-page">
     <div class="register-container">
       <div class="register-header">
-        <a href="/cliente/login" class="back-link">← Já tem conta? Faça Login</a>
-        <div class="badge-b2b">Revenda & Lojistas B2B</div>
-        <h1>Cadastro de Revenda RSTK</h1>
-        <p>Preencha os dados da sua empresa para ter acesso aos pedidos corporativos, faturamento e rastreamento em tempo real.</p>
+        <div class="badge-store">Área do Lojista</div>
+        <h1>Cadastro da Loja — RSTK Atacado</h1>
+        <p>Preencha os dados da sua loja para ter acesso aos pedidos corporativos, faturamento e rastreamento em tempo real.</p>
       </div>
 
       <div id="register-alert" class="alert-box" hidden></div>
@@ -314,7 +341,7 @@ const siteSettings = {
 
         <div class="submit-wrap">
           <button type="submit" id="btn-submit-register" class="btn-primary-register">
-            <span>Finalizar Cadastro da Minha Revenda →</span>
+            <span>Finalizar Cadastro</span>
           </button>
           <p class="submit-note">Ao se cadastrar, você concorda em receber confirmações de pedidos e notificações da RSTK.</p>
         </div>
@@ -641,7 +668,7 @@ const siteSettings = {
             showAlert(data.error || 'Erro ao realizar cadastro.', true);
             btnSubmit.disabled = false;
             btnSubmit.classList.remove('loading');
-            btnSubmit.innerHTML = '<span>Finalizar Cadastro da Minha Revenda →</span>';
+            btnSubmit.innerHTML = '<span>Finalizar Cadastro</span>';
             if (window.turnstile) {
               window.turnstile.reset();
             }
@@ -650,7 +677,7 @@ const siteSettings = {
           showAlert('Erro de conexão ao servidor. Tente novamente.', true);
           btnSubmit.disabled = false;
           btnSubmit.classList.remove('loading');
-          btnSubmit.innerHTML = '<span>Finalizar Cadastro da Minha Revenda →</span>';
+          btnSubmit.innerHTML = '<span>Finalizar Cadastro</span>';
           if (window.turnstile) {
             window.turnstile.reset();
           }
@@ -660,6 +687,23 @@ const siteSettings = {
   </script>
 
   <style>
+    .header-back-catalog {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      transition: all 0.2s ease;
+    }
+
+    .header-back-catalog:hover {
+      border-color: #0866c8;
+      color: #0866c8;
+    }
+
     .register-page {
       min-height: calc(100vh - 120px);
       padding: 40px 16px 80px;
@@ -670,7 +714,7 @@ const siteSettings = {
 
     .register-container {
       width: 100%;
-      max-width: 780px;
+      max-width: 1260px;
       display: flex;
       flex-direction: column;
       gap: 24px;
@@ -680,28 +724,15 @@ const siteSettings = {
       text-align: center;
     }
 
-    .back-link {
+    .badge-store {
       display: inline-block;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--blue);
-      text-decoration: none;
-      margin-bottom: 16px;
-    }
-
-    .back-link:hover {
-      text-decoration: underline;
-    }
-
-    .badge-b2b {
-      display: inline-block;
-      background: rgba(0, 198, 247, 0.15);
-      color: var(--blue-dark);
+      background: rgba(8, 102, 200, 0.12);
+      color: #0866c8;
       font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      padding: 4px 12px;
+      padding: 4px 14px;
       border-radius: 999px;
       margin-bottom: 12px;
     }
@@ -718,7 +749,7 @@ const siteSettings = {
       font-size: 14px;
       color: var(--muted);
       margin: 0 auto;
-      max-width: 580px;
+      max-width: 650px;
       line-height: 1.5;
     }
 
@@ -726,7 +757,7 @@ const siteSettings = {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 36px 32px;
+      padding: 40px 36px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
       display: flex;
       flex-direction: column;
@@ -765,7 +796,7 @@ const siteSettings = {
       width: 26px;
       height: 26px;
       border-radius: 50%;
-      background: var(--blue);
+      background: #0866c8;
       color: #ffffff;
       font-size: 12px;
       font-weight: 800;
@@ -830,8 +861,8 @@ const siteSettings = {
     .form-group input:focus,
     .form-group select:focus {
       outline: none;
-      border-color: #00C6F7;
-      box-shadow: 0 0 0 3px rgba(0, 198, 247, 0.2);
+      border-color: #0866c8;
+      box-shadow: 0 0 0 3px rgba(8, 102, 200, 0.2);
     }
 
     .input-hint {
@@ -870,15 +901,15 @@ const siteSettings = {
       top: 50%;
       transform: translateY(-50%);
       font-size: 11px;
-      color: var(--blue);
+      color: #0866c8;
       font-weight: 600;
     }
 
     /* Endereços Adicionais */
     .btn-secondary-sm {
       background: transparent;
-      border: 1px dashed var(--blue);
-      color: var(--blue);
+      border: 1px dashed #0866c8;
+      color: #0866c8;
       font-size: 12px;
       font-weight: 700;
       padding: 6px 14px;
@@ -888,7 +919,7 @@ const siteSettings = {
     }
 
     .btn-secondary-sm:hover {
-      background: rgba(0, 198, 247, 0.1);
+      background: rgba(8, 102, 200, 0.1);
     }
 
     .additional-addresses-list {
@@ -953,21 +984,24 @@ const siteSettings = {
     .btn-primary-register {
       width: 100%;
       max-width: 420px;
-      background: var(--blue);
-      color: #ffffff;
-      border: none;
+      background: #0866c8 !important;
+      color: #ffffff !important;
+      border: 1px solid #0866c8;
       padding: 16px 24px;
       border-radius: 10px;
       font-size: 15px;
       font-weight: 800;
       cursor: pointer;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 14px rgba(0, 103, 130, 0.3);
+      box-shadow: 0 4px 14px rgba(8, 102, 200, 0.3);
     }
 
     .btn-primary-register:hover {
-      background: var(--blue-dark);
+      background: #0652a1 !important;
+      color: #ffffff !important;
+      border-color: #0652a1 !important;
       transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(8, 102, 200, 0.4);
     }
 
     .btn-primary-register:disabled {
