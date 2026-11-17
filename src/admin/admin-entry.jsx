@@ -170,16 +170,18 @@ function AdminApp() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0F172A] px-4">
         <div className="w-full max-w-md bg-white rounded-2xl border border-[#E2E8F0] shadow-2xl p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-11 h-11 rounded-xl bg-[#0F172A] flex items-center justify-center text-[#00C6F7]">
-              <span className="material-symbols-outlined text-[24px]">album</span>
+          <div className="mb-6 flex flex-col items-center text-center">
+            <div className="w-full bg-[#0F172A] rounded-xl py-4 px-6 flex items-center justify-center mb-4 shadow-sm border border-slate-800">
+              <img
+                src="/assets/images/logo-smartweb.svg"
+                alt="Smartweb"
+                className="h-7 w-auto max-w-[200px] object-contain"
+              />
             </div>
-            <div>
-              <h1 className="text-lg font-extrabold text-[#0F172A] tracking-tight">
-                Smartweb Content Manager
-              </h1>
-              <p className="text-xs text-[#64748B]">Gestão de Catálogo · Cloudflare D1 + R2</p>
-            </div>
+            <h1 className="text-lg font-extrabold text-[#0F172A] tracking-tight">
+              Smartweb Content Manager
+            </h1>
+            <p className="text-xs text-[#64748B] mt-0.5">Gestão de Catálogo · Cloudflare D1 + R2</p>
           </div>
 
           {loginError && (
