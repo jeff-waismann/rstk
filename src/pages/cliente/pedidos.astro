@@ -205,39 +205,51 @@ const siteSettings = {
         if (!clientData) return;
         var displayName = clientData.nomeFantasia || clientData.razaoSocial;
         companyNameEl.textContent = displayName;
+        var isVerified = Boolean(clientData.emailVerified === true || clientData.emailVerified === 1 || clientData.emailVerified === '1');
         infoSubEl.textContent = 'CNPJ: ' + clientData.cnpj + ' · Responsável: ' + clientData.responsavelNome + ' (' + clientData.email + ')';
 
-        if (!clientData.emailVerified) {
+        if (!isVerified) {
           unverifiedBanner.hidden = false;
+          unverifiedBanner.style.display = 'flex';
         } else {
           unverifiedBanner.hidden = true;
+          unverifiedBanner.style.display = 'none';
         }
       }
 
       async function loadOrders() {
         loadingEl.hidden = false;
+        loadingEl.style.display = 'block';
         emptyEl.hidden = true;
+        emptyEl.style.display = 'none';
         ordersContainer.hidden = true;
+        ordersContainer.style.display = 'none';
 
         try {
           var res = await fetch('/api/client/orders', { cache: 'no-store' });
           var data = await res.json();
 
           loadingEl.hidden = true;
+          loadingEl.style.display = 'none';
 
           if (res.ok && data.success && Array.isArray(data.orders)) {
             if (data.orders.length === 0) {
               emptyEl.hidden = false;
+              emptyEl.style.display = 'block';
             } else {
               renderOrders(data.orders);
               ordersContainer.hidden = false;
+              ordersContainer.style.display = 'flex';
             }
           } else {
             emptyEl.hidden = false;
+            emptyEl.style.display = 'block';
           }
         } catch (err) {
           loadingEl.hidden = true;
+          loadingEl.style.display = 'none';
           emptyEl.hidden = false;
+          emptyEl.style.display = 'block';
         }
       }
 
@@ -347,10 +359,12 @@ const siteSettings = {
               titleEl.textContent = 'Você possui ' + count + ' vinil(is) no carrinho prontos para envio!';
             }
             banner.hidden = false;
+            banner.style.display = 'flex';
             return;
           }
         } catch (e) {}
         banner.hidden = true;
+        banner.style.display = 'none';
       }
 
       var btnResend = document.getElementById('btn-resend-verification');
@@ -513,6 +527,17 @@ const siteSettings = {
       border-color: #F75656;
       color: #F75656;
       background: rgba(247, 86, 86, 0.05);
+    }
+
+    /* Hidden elements strictly hidden */
+    [hidden],
+    .unverified-banner[hidden],
+    .pending-cart-card[hidden],
+    .alert-box[hidden],
+    .orders-loading[hidden],
+    .orders-empty[hidden],
+    .orders-list[hidden] {
+      display: none !important;
     }
 
     /* Unverified Banner */
