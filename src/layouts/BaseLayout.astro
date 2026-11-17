@@ -64,7 +64,7 @@ const jsonLd = {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="color-scheme" content="light" />
     <title>{settings.seoTitle}</title>
     <meta name="description" content={settings.seoDescription} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
@@ -88,14 +88,12 @@ const jsonLd = {
       <link rel="preload" as="image" href={album.cover} />
     ))}
 
-    <!-- Apply saved theme before paint to prevent FOUC -->
+    <!-- Force pure light theme -->
     <script is:inline>
       (function () {
         try {
-          var savedTheme = JSON.parse(localStorage.getItem('rstk-theme') || 'null');
-          if (savedTheme === 'dark' || savedTheme === 'light') {
-            document.documentElement.dataset.theme = savedTheme;
-          }
+          document.documentElement.dataset.theme = 'light';
+          localStorage.removeItem('rstk-theme');
         } catch (e) {}
       })();
     </script>

@@ -123,22 +123,11 @@
   let openAlbumId = null;
   let toastTimer = null;
 
-  // --- Theme Controller ---
-  function setTheme(theme) {
-    const resolved = theme === 'dark' ? 'dark' : 'light';
-    document.documentElement.dataset.theme = resolved;
-    const lightBtn = $('light');
-    const darkBtn = $('dark');
-    if (lightBtn) lightBtn.setAttribute('aria-pressed', String(resolved === 'light'));
-    if (darkBtn) darkBtn.setAttribute('aria-pressed', String(resolved === 'dark'));
-    storage.set('rstk-theme', resolved);
-  }
-
-  const savedTheme = storage.get('rstk-theme', 'light');
-  setTheme(savedTheme === 'dark' ? 'dark' : 'light');
-
-  $('light')?.addEventListener('click', () => setTheme('light'));
-  $('dark')?.addEventListener('click', () => setTheme('dark'));
+  // --- Theme Controller (Pure Light Theme) ---
+  document.documentElement.dataset.theme = 'light';
+  try {
+    localStorage.removeItem('rstk-theme');
+  } catch (e) {}
 
   // --- URL State Persistence (F5 & Deep-linking) ---
   function readUrlState() {
@@ -693,6 +682,74 @@
     }
   }
 
+  // --- Client Auth & Delivery Addresses Helpers ---
+  let currentClient = null;
+  let isSubmittingOrder = false;
+
+  function formatAddressInline(addr) {
+    if (!addr) return '';
+    const parts = [
+      addr.logradouro ? `${addr.logradouro}${addr.numero ? ', ' + addr.numero : ''}` : '',
+      addr.complemento || '',
+      addr.bairro || '',
+      addr.cidade ? `${addr.cidade}/${addr.uf || ''}` : '',
+      addr.cep ? `CEP ${addr.cep}` : ''
+    ].filter(Boolean);
+    return parts.join(' - ');
+  }
+
+  function setupCartDeliverySelector(client) {
+    const box = $('cart-delivery-container');
+    const select = $('cart-delivery-select');
+    const preview = $('cart-delivery-preview');
+    if (!box || !select || !client) return;
+
+    box.hidden = false;
+    select.innerHTML = '';
+
+    // Matriz (Endereço Principal)
+    const matrizAddr = client.address || {};
+    const matrizFormatted = formatAddressInline(matrizAddr);
+    const matrizOpt = document.createElement('option');
+    matrizOpt.value = `Matriz (Principal): ${matrizFormatted}`;
+    matrizOpt.textContent = `🏢 Matriz: ${matrizAddr.logradouro || 'Endereço Principal'}, ${matrizAddr.numero || 'S/N'} (${matrizAddr.cidade || ''}/${matrizAddr.uf || ''})`;
+    matrizOpt.dataset.preview = matrizFormatted;
+    select.appendChild(matrizOpt);
+
+    // Filiais cadastradas
+    const additionals = Array.isArray(client.additionalAddresses) ? client.additionalAddresses : [];
+    additionals.forEach((filial, idx) => {
+      const fFormatted = formatAddressInline(filial);
+      const label = filial.label || `Filial ${idx + 1}`;
+      const opt = document.createElement('option');
+      opt.value = `${label}: ${fFormatted}`;
+      opt.textContent = `🏬 ${label}: ${filial.logradouro || 'Endereço'}, ${filial.numero || 'S/N'} (${filial.cidade || ''}/${filial.uf || ''})`;
+      opt.dataset.preview = fFormatted;
+      select.appendChild(opt);
+    });
+
+    function updatePreview() {
+      const selOpt = select.options[select.selectedIndex];
+      if (preview && selOpt) {
+        preview.textContent = selOpt.dataset.preview || selOpt.value;
+      }
+    }
+
+    select.onchange = updatePreview;
+    updatePreview();
+  }
+
+  function getSelectedDeliveryAddress() {
+    const select = $('cart-delivery-select');
+    if (select && select.value) {
+      return select.value;
+    }
+    if (currentClient?.address) {
+      return `Matriz (Principal): ${formatAddressInline(currentClient.address)}`;
+    }
+    return null;
+  }
+
   async function dispatchWhatsAppOrder(event, sourceEl, singleAlbumId = null) {
     if (event) event.preventDefault();
 
@@ -766,6 +823,7 @@
             customerName: currentClient?.nomeFantasia || currentClient?.razaoSocial || null,
             customerEmail: currentClient?.email || null,
             customerCnpj: currentClient?.cnpj || null,
+            deliveryAddress: getSelectedDeliveryAddress(),
             notes: `Pedido de ${items.reduce((sum, it) => sum + it.quantity, 0)} vinil(is) solicitado via WhatsApp`
           }),
           signal: controller.signal,
@@ -812,6 +870,11 @@
       message = settings.whatsappDefaultMessage || `Olá, RSTK! Tenho interesse nos vinis lacrados e importados para minha loja. Gostaria de saber mais sobre as vendas no atacado e a oferta de lançamento de ${formatPriceBRL(settings.priceCents ?? 18999)}.`;
     }
 
+    const chosenAddress = getSelectedDeliveryAddress();
+    if (chosenAddress && (selected.size > 0 || singleAlbumId)) {
+      message += `\n\n📍 *Endereço de Entrega:* ${chosenAddress}`;
+    }
+
     if (orderNumber) {
       message += `\n\n*(Pedido registrado: #${orderNumber})*`;
     }
@@ -832,9 +895,6 @@
   }
 
   // --- Client Auth Status Hydration & Direct Order Submission ---
-  let currentClient = null;
-  let isSubmittingOrder = false;
-
   async function initClientAuthState() {
     try {
       const res = await fetch('/api/client/me', { cache: 'no-store' });
@@ -843,15 +903,16 @@
       if (data?.loggedIn && data?.client) {
         currentClient = data.client;
         const displayName = currentClient.nomeFantasia || currentClient.razaoSocial || 'Área do Cliente';
-        const shortName = displayName.length > 18 ? displayName.slice(0, 16) + '…' : displayName;
 
         const headerBtn = $('header-login-btn');
         const headerText = $('header-login-text');
         if (headerBtn) {
-          headerBtn.href = '/cliente/pedidos';
-          headerBtn.title = `Conectado como ${displayName}`;
-          if (headerText) headerText.textContent = shortName;
+          headerBtn.href = '/cliente/pedidos?tab=conta';
+          headerBtn.title = `Minha Conta — Conectado como ${displayName}`;
+          if (headerText) headerText.textContent = 'Minha Conta';
         }
+
+        setupCartDeliverySelector(currentClient);
       }
     } catch {
       // Ignora falhas de rede no check de sessão
@@ -920,6 +981,7 @@
           customerName: currentClient?.nomeFantasia || currentClient?.razaoSocial || null,
           customerEmail: currentClient?.email || null,
           customerCnpj: currentClient?.cnpj || null,
+          deliveryAddress: getSelectedDeliveryAddress(),
           notes: `Pedido direto de ${items.reduce((s, it) => s + it.quantity, 0)} vinil(is) enviado pelo painel do lojista`
         })
       });

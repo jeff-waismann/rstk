@@ -35,10 +35,6 @@ const siteSettings = {
         <a href="/" class="header-back-catalog">
           ← Voltar ao Catálogo
         </a>
-        <div class="theme" role="group" aria-label="Tema de aparência">
-          <button id="light" type="button" aria-pressed="true">☀ Claro</button>
-          <button id="dark" type="button" aria-pressed="false">☾ Escuro</button>
-        </div>
       </div>
     </div>
   </header>
@@ -92,50 +88,293 @@ const siteSettings = {
 
       <div id="portal-alert" class="alert-box" hidden></div>
 
-      {/* Seção Principal: Tabela de Pedidos Identica ao Painel Admin */}
-      <div class="portal-content">
-        <div id="orders-loading" class="orders-loading">
-          <div class="spinner"></div>
-          <p>Carregando histórico de pedidos da sua loja...</p>
-        </div>
+      {/* Abas de Navegação: Pedidos vs Minha Conta & Endereços */}
+      <div class="portal-nav-bar">
+        <button type="button" id="tab-btn-orders" class="portal-nav-btn active">
+          <svg viewBox="0 0 24 24" class="portal-tab-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          <span>Meus Pedidos</span>
+        </button>
+        <button type="button" id="tab-btn-account" class="portal-nav-btn">
+          <svg viewBox="0 0 24 24" class="portal-tab-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Minha Conta & Endereços</span>
+        </button>
+      </div>
 
-        <div id="orders-empty" class="orders-empty" hidden>
-          <div class="empty-icon">📦</div>
-          <h3>Nenhum pedido encontrado</h3>
-          <p>Sua loja ainda não realizou pedidos vinculados a esta conta. Escolha seus vinis no catálogo e envie seu pedido para acompanhar tudo por aqui!</p>
-          <a href="/" class="btn-primary-portal">Explorar Catálogo de Vinis →</a>
-        </div>
+      {/* Conteúdo Aba: Pedidos */}
+      <div id="section-orders">
+        <div class="portal-content">
+          <div id="orders-loading" class="orders-loading">
+            <div class="spinner"></div>
+            <p>Carregando histórico de pedidos da sua loja...</p>
+          </div>
 
-        {/* Card da Tabela de Pedidos Estilo Admin */}
-        <div id="orders-table-card" class="orders-card-admin" hidden>
-          <div class="orders-card-header">
-            <div>
-              <h3 class="orders-card-title">Histórico de Pedidos & Revendas</h3>
-              <p class="orders-card-sub">Pedidos associados a sua conta de revenda (B2B) ou enviados via WhatsApp.</p>
+          <div id="orders-empty" class="orders-empty" hidden>
+            <div class="empty-icon">📦</div>
+            <h3>Nenhum pedido encontrado</h3>
+            <p>Sua loja ainda não realizou pedidos vinculados a esta conta. Escolha seus vinis no catálogo e envie seu pedido para acompanhar tudo por aqui!</p>
+            <a href="/" class="btn-primary-portal">Explorar Catálogo de Vinis →</a>
+          </div>
+
+          {/* Card da Tabela de Pedidos Estilo Admin */}
+          <div id="orders-table-card" class="orders-card-admin" hidden>
+            <div class="orders-card-header">
+              <div>
+                <h3 class="orders-card-title">Histórico de Pedidos & Revendas</h3>
+                <p class="orders-card-sub">Pedidos associados a sua conta de revenda (B2B) ou enviados via WhatsApp.</p>
+              </div>
+              <div class="orders-card-right">
+                <span id="orders-count-badge" class="orders-count-text">0 pedido(s)</span>
+                <button type="button" id="btn-refresh-orders" class="btn-refresh-admin" title="Atualizar pedidos">
+                  <span class="refresh-icon">↻</span>
+                </button>
+              </div>
             </div>
-            <div class="orders-card-right">
-              <span id="orders-count-badge" class="orders-count-text">0 pedido(s)</span>
-              <button type="button" id="btn-refresh-orders" class="btn-refresh-admin" title="Atualizar pedidos">
-                <span class="refresh-icon">↻</span>
-              </button>
+
+            <div class="orders-table-scroll">
+              <table class="admin-orders-table">
+                <thead>
+                  <tr>
+                    <th class="th-code">PEDIDO / DATA</th>
+                    <th class="th-items">ITENS</th>
+                    <th class="th-total">VALOR TOTAL</th>
+                    <th class="th-status">STATUS</th>
+                    <th class="th-actions text-right">AÇÕES</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-tbody">
+                  {/* Linhas inseridas dinamicamente via JS */}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Conteúdo Aba: Minha Conta & Endereços */}
+      <div id="section-account" class="account-section" hidden>
+        <div class="account-grid">
+          {/* Card 1: Dados Cadastrais da Empresa */}
+          <div class="account-card">
+            <div class="account-card-header">
+              <div>
+                <h3 class="account-card-title">Dados da Empresa / Revenda</h3>
+                <p class="account-card-sub">Informações cadastrais para faturamento, nota fiscal e contato direto.</p>
+              </div>
+              <span class="badge-account-verified" id="badge-account-status">✓ Verificado</span>
+            </div>
+            <div class="account-info-grid">
+              <div class="info-field">
+                <span class="info-label">Razão Social:</span>
+                <strong class="info-value" id="acc-razao">—</strong>
+              </div>
+              <div class="info-field">
+                <span class="info-label">Nome Fantasia:</span>
+                <strong class="info-value" id="acc-fantasia">—</strong>
+              </div>
+              <div class="info-field">
+                <span class="info-label">CNPJ:</span>
+                <strong class="info-value" id="acc-cnpj">—</strong>
+              </div>
+              <div class="info-field">
+                <span class="info-label">Inscrição Estadual:</span>
+                <strong class="info-value" id="acc-ie">—</strong>
+              </div>
+              <div class="info-field">
+                <span class="info-label">Nome do Responsável:</span>
+                <strong class="info-value" id="acc-responsavel">—</strong>
+              </div>
+              <div class="info-field">
+                <span class="info-label">Telefone WhatsApp:</span>
+                <strong class="info-value" id="acc-telefone">—</strong>
+              </div>
+              <div class="info-field" style="grid-column: 1 / -1;">
+                <span class="info-label">E-mail Cadastrado:</span>
+                <strong class="info-value" id="acc-email">—</strong>
+              </div>
             </div>
           </div>
 
-          <div class="orders-table-scroll">
-            <table class="admin-orders-table">
-              <thead>
-                <tr>
-                  <th class="th-code">PEDIDO / DATA</th>
-                  <th class="th-items">ITENS</th>
-                  <th class="th-total">VALOR TOTAL</th>
-                  <th class="th-status">STATUS</th>
-                  <th class="th-actions text-right">AÇÕES</th>
-                </tr>
-              </thead>
-              <tbody id="orders-tbody">
-                {/* Linhas inseridas dinamicamente via JS */}
-              </tbody>
-            </table>
+          {/* Card 2: Alteração de Senha */}
+          <div class="account-card">
+            <div class="account-card-header">
+              <div>
+                <h3 class="account-card-title">Alterar Senha de Acesso</h3>
+                <p class="account-card-sub">Mantenha sua conta de revenda segura atualizando sua senha periodicamente.</p>
+              </div>
+            </div>
+            <form id="form-change-password" class="account-form">
+              <div id="pwd-alert" class="account-alert" hidden></div>
+              <div class="form-group">
+                <label for="pwd-current" class="form-label">Senha Atual</label>
+                <input type="password" id="pwd-current" required placeholder="Digite sua senha atual" class="form-input" autocomplete="current-password" />
+              </div>
+              <div class="form-group-row">
+                <div class="form-group" style="flex: 1; min-width: 220px;">
+                  <label for="pwd-new" class="form-label">Nova Senha</label>
+                  <input type="password" id="pwd-new" required minlength="6" placeholder="Mínimo 6 caracteres" class="form-input" autocomplete="new-password" />
+                </div>
+                <div class="form-group" style="flex: 1; min-width: 220px;">
+                  <label for="pwd-confirm" class="form-label">Confirmar Nova Senha</label>
+                  <input type="password" id="pwd-confirm" required minlength="6" placeholder="Repita a nova senha" class="form-input" autocomplete="new-password" />
+                </div>
+              </div>
+              <div class="form-actions-right">
+                <button type="submit" id="btn-save-password" class="btn-primary-blue">
+                  Salvar Nova Senha
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Card 3: Endereço Principal (Matriz) */}
+          <div class="account-card">
+            <div class="account-card-header">
+              <div>
+                <h3 class="account-card-title">Endereço Principal (Matriz)</h3>
+                <p class="account-card-sub">Endereço padrão da matriz para entrega e emissão de notas fiscais.</p>
+              </div>
+              <button type="button" id="btn-toggle-edit-principal" class="btn-secondary-sm">
+                ✏️ Editar Endereço
+              </button>
+            </div>
+
+            {/* Visualização do Endereço Principal */}
+            <div id="principal-view-box" class="address-display-box">
+              <p id="principal-address-text" class="address-display-text">Carregando endereço principal...</p>
+            </div>
+
+            {/* Formulário de Edição do Endereço Principal */}
+            <form id="form-edit-principal" class="account-form" hidden>
+              <div id="principal-alert" class="account-alert" hidden></div>
+              <div class="form-group-row">
+                <div class="form-group" style="max-width: 170px;">
+                  <label for="p-cep" class="form-label">CEP *</label>
+                  <input type="text" id="p-cep" required maxlength="9" placeholder="00000-000" class="form-input" />
+                </div>
+                <div class="form-group" style="flex: 1; min-width: 220px;">
+                  <label for="p-logradouro" class="form-label">Logradouro / Rua *</label>
+                  <input type="text" id="p-logradouro" required placeholder="Ex: Av. Afonso Pena" class="form-input" />
+                </div>
+                <div class="form-group" style="max-width: 130px;">
+                  <label for="p-numero" class="form-label">Número *</label>
+                  <input type="text" id="p-numero" required placeholder="123" class="form-input" />
+                </div>
+              </div>
+              <div class="form-group-row">
+                <div class="form-group" style="flex: 1; min-width: 180px;">
+                  <label for="p-complemento" class="form-label">Complemento</label>
+                  <input type="text" id="p-complemento" placeholder="Sala, Bloco, etc." class="form-input" />
+                </div>
+                <div class="form-group" style="flex: 1; min-width: 180px;">
+                  <label for="p-bairro" class="form-label">Bairro *</label>
+                  <input type="text" id="p-bairro" required placeholder="Bairro" class="form-input" />
+                </div>
+                <div class="form-group" style="flex: 1; min-width: 180px;">
+                  <label for="p-cidade" class="form-label">Cidade *</label>
+                  <input type="text" id="p-cidade" required placeholder="Cidade" class="form-input" />
+                </div>
+                <div class="form-group" style="max-width: 90px;">
+                  <label for="p-uf" class="form-label">UF *</label>
+                  <input type="text" id="p-uf" required maxlength="2" placeholder="MG" class="form-input" style="text-transform: uppercase;" />
+                </div>
+              </div>
+              <div class="form-actions-right">
+                <button type="button" id="btn-cancel-principal" class="btn-secondary-sm">Cancelar</button>
+                <button type="submit" id="btn-save-principal" class="btn-primary-blue">Salvar Endereço</button>
+              </div>
+            </form>
+          </div>
+
+          {/* Card 4: Filiais & Outras Lojas */}
+          <div class="account-card">
+            <div class="account-card-header">
+              <div>
+                <h3 class="account-card-title">Filiais & Outras Lojas de Entrega</h3>
+                <p class="account-card-sub">Cadastre outras lojas físicas ou filiais da sua rede para selecionar a entrega ao finalizar pedidos no catálogo.</p>
+              </div>
+              <button type="button" id="btn-add-filial" class="btn-primary-blue">
+                + Nova Loja / Filial
+              </button>
+            </div>
+
+            {/* Formulário de Nova / Editar Filial */}
+            <div id="filial-form-box" class="filial-form-wrapper" hidden>
+              <div class="filial-form-header">
+                <h4 id="filial-form-title" class="filial-form-title">Cadastrar Nova Loja / Filial</h4>
+                <button type="button" id="btn-close-filial-form" class="modal-close-icon">✕</button>
+              </div>
+              <form id="form-filial" class="account-form">
+                <div id="filial-alert" class="account-alert" hidden></div>
+                <input type="hidden" id="f-id" value="" />
+                <div class="form-group">
+                  <label for="f-label" class="form-label">Identificação / Nome da Filial *</label>
+                  <input type="text" id="f-label" required placeholder="Ex: Filial Shopping Center, Loja 2 - Bairro Brasil" class="form-input" />
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group" style="max-width: 170px;">
+                    <label for="f-cep" class="form-label">CEP *</label>
+                    <input type="text" id="f-cep" required maxlength="9" placeholder="00000-000" class="form-input" />
+                  </div>
+                  <div class="form-group" style="flex: 1; min-width: 220px;">
+                    <label for="f-logradouro" class="form-label">Logradouro / Rua *</label>
+                    <input type="text" id="f-logradouro" required placeholder="Ex: Av. Brasil" class="form-input" />
+                  </div>
+                  <div class="form-group" style="max-width: 130px;">
+                    <label for="f-numero" class="form-label">Número *</label>
+                    <input type="text" id="f-numero" required placeholder="500" class="form-input" />
+                  </div>
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group" style="flex: 1; min-width: 180px;">
+                    <label for="f-complemento" class="form-label">Complemento</label>
+                    <input type="text" id="f-complemento" placeholder="Loja 12, Piso 2, etc." class="form-input" />
+                  </div>
+                  <div class="form-group" style="flex: 1; min-width: 180px;">
+                    <label for="f-bairro" class="form-label">Bairro *</label>
+                    <input type="text" id="f-bairro" required placeholder="Bairro" class="form-input" />
+                  </div>
+                  <div class="form-group" style="flex: 1; min-width: 180px;">
+                    <label for="f-cidade" class="form-label">Cidade *</label>
+                    <input type="text" id="f-cidade" required placeholder="Cidade" class="form-input" />
+                  </div>
+                  <div class="form-group" style="max-width: 90px;">
+                    <label for="f-uf" class="form-label">UF *</label>
+                    <input type="text" id="f-uf" required maxlength="2" placeholder="SP" class="form-input" style="text-transform: uppercase;" />
+                  </div>
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group" style="flex: 1; min-width: 220px;">
+                    <label for="f-phone" class="form-label">Telefone no Local (opcional)</label>
+                    <input type="text" id="f-phone" placeholder="(00) 00000-0000" class="form-input" />
+                  </div>
+                  <div class="form-group" style="flex: 1; min-width: 220px;">
+                    <label for="f-contact" class="form-label">Responsável no Local (opcional)</label>
+                    <input type="text" id="f-contact" placeholder="Nome do gerente ou encarregado" class="form-input" />
+                  </div>
+                </div>
+                <div class="form-actions-right">
+                  <button type="button" id="btn-cancel-filial" class="btn-secondary-sm">Cancelar</button>
+                  <button type="submit" id="btn-save-filial" class="btn-primary-blue">Salvar Filial</button>
+                </div>
+              </form>
+            </div>
+
+            {/* Lista de Filiais Cadastradas */}
+            <div id="filiais-list-container" class="filiais-list">
+              <div id="filiais-empty" class="filiais-empty-box">
+                <span style="font-size: 32px;">🏬</span>
+                <p style="font-weight: 700; color: #0F172A; margin: 6px 0 2px;">Nenhuma filial adicional cadastrada</p>
+                <small style="color: #64748B;">Se sua empresa possui mais de uma loja física ou centro de distribuição, adicione os endereços acima para selecionar a entrega no catálogo.</small>
+              </div>
+              <div id="filiais-cards" class="filiais-cards-grid"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -354,6 +593,7 @@ const siteSettings = {
           }
           clientData = data.client;
           renderClientHeader();
+          renderAccountDetails();
           loadOrders();
         } catch (err) {
           window.location.replace('/cliente/login');
@@ -824,6 +1064,535 @@ const siteSettings = {
         });
       }
 
+      // ========================================================
+      // GESTÃO DE CONTA, SEGURANÇA E ENDEREÇOS (MATRIZ & FILIAIS)
+      // ========================================================
+
+      function formatCNPJ(cnpj) {
+        if (!cnpj) return '—';
+        var d = String(cnpj).replace(/\D/g, '');
+        if (d.length !== 14) return cnpj;
+        return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+      }
+
+      function initAccountTabs() {
+        var tabOrdersBtn = document.getElementById('tab-btn-orders');
+        var tabAccountBtn = document.getElementById('tab-btn-account');
+        var secOrders = document.getElementById('section-orders');
+        var secAccount = document.getElementById('section-account');
+
+        function activateTab(tabName) {
+          var isAccount = (tabName === 'conta');
+          if (tabOrdersBtn) tabOrdersBtn.classList.toggle('active', !isAccount);
+          if (tabAccountBtn) tabAccountBtn.classList.toggle('active', isAccount);
+
+          if (secOrders) {
+            secOrders.hidden = isAccount;
+            secOrders.style.display = isAccount ? 'none' : 'block';
+          }
+          if (secAccount) {
+            secAccount.hidden = !isAccount;
+            secAccount.style.display = isAccount ? 'block' : 'none';
+          }
+
+          var url = new URL(window.location);
+          url.searchParams.set('tab', isAccount ? 'conta' : 'pedidos');
+          window.history.replaceState({}, '', url);
+        }
+
+        if (tabOrdersBtn) tabOrdersBtn.addEventListener('click', function () { activateTab('pedidos'); });
+        if (tabAccountBtn) tabAccountBtn.addEventListener('click', function () { activateTab('conta'); });
+
+        var initialTab = new URLSearchParams(window.location.search).get('tab');
+        if (initialTab === 'conta') {
+          activateTab('conta');
+        }
+      }
+
+      function renderAccountDetails() {
+        if (!clientData) return;
+
+        // 1. Dados cadastrais
+        var elRazao = document.getElementById('acc-razao');
+        var elFantasia = document.getElementById('acc-fantasia');
+        var elCnpj = document.getElementById('acc-cnpj');
+        var elIe = document.getElementById('acc-ie');
+        var elResp = document.getElementById('acc-responsavel');
+        var elTel = document.getElementById('acc-telefone');
+        var elEmail = document.getElementById('acc-email');
+
+        if (elRazao) elRazao.textContent = clientData.razaoSocial || '—';
+        if (elFantasia) elFantasia.textContent = clientData.nomeFantasia || '—';
+        if (elCnpj) elCnpj.textContent = formatCNPJ(clientData.cnpj);
+        if (elIe) elIe.textContent = clientData.ieIsento ? 'ISENTO' : (clientData.ie || 'Não informada');
+        if (elResp) elResp.textContent = clientData.responsavelNome || '—';
+        if (elTel) elTel.textContent = clientData.telefone || '—';
+        if (elEmail) elEmail.textContent = clientData.email || '—';
+
+        // 2. Endereço Principal (Matriz)
+        renderPrincipalAddress();
+
+        // 3. Filiais
+        renderFiliais();
+      }
+
+      function renderPrincipalAddress() {
+        var addr = clientData?.address || {};
+        var textEl = document.getElementById('principal-address-text');
+        if (!textEl) return;
+
+        var parts = [
+          addr.logradouro ? addr.logradouro + (addr.numero ? ', ' + addr.numero : '') : '',
+          addr.complemento ? 'Compl: ' + addr.complemento : '',
+          addr.bairro ? 'Bairro: ' + addr.bairro : '',
+          addr.cidade ? addr.cidade + '/' + (addr.uf || '') : '',
+          addr.cep ? 'CEP: ' + addr.cep : ''
+        ].filter(Boolean);
+
+        if (parts.length) {
+          textEl.textContent = parts.join(' · ');
+        } else {
+          textEl.textContent = 'Endereço principal não informado. Clique em Editar para preencher.';
+        }
+
+        // Preenche campos do formulário de edição
+        var pCep = document.getElementById('p-cep');
+        var pLog = document.getElementById('p-logradouro');
+        var pNum = document.getElementById('p-numero');
+        var pComp = document.getElementById('p-complemento');
+        var pBai = document.getElementById('p-bairro');
+        var pCid = document.getElementById('p-cidade');
+        var pUf = document.getElementById('p-uf');
+
+        if (pCep) pCep.value = addr.cep || '';
+        if (pLog) pLog.value = addr.logradouro || '';
+        if (pNum) pNum.value = addr.numero || '';
+        if (pComp) pComp.value = addr.complemento || '';
+        if (pBai) pBai.value = addr.bairro || '';
+        if (pCid) pCid.value = addr.cidade || '';
+        if (pUf) pUf.value = addr.uf || '';
+      }
+
+      function setupPrincipalAddress() {
+        var toggleBtn = document.getElementById('btn-toggle-edit-principal');
+        var cancelBtn = document.getElementById('btn-cancel-principal');
+        var viewBox = document.getElementById('principal-view-box');
+        var editForm = document.getElementById('form-edit-principal');
+        var alertEl = document.getElementById('principal-alert');
+        var cepInput = document.getElementById('p-cep');
+
+        function showEdit(show) {
+          if (viewBox) viewBox.hidden = show;
+          if (editForm) {
+            editForm.hidden = !show;
+            if (show) editForm.style.display = 'flex';
+            else editForm.style.display = 'none';
+          }
+          if (alertEl) alertEl.hidden = true;
+        }
+
+        if (toggleBtn) toggleBtn.addEventListener('click', function () { showEdit(true); });
+        if (cancelBtn) cancelBtn.addEventListener('click', function () { showEdit(false); });
+
+        // Consulta ViaCEP automática
+        if (cepInput) {
+          cepInput.addEventListener('blur', async function () {
+            var raw = cepInput.value.replace(/\D/g, '');
+            if (raw.length === 8) {
+              try {
+                var res = await fetch('https://viacep.com.br/ws/' + raw + '/json/');
+                var data = await res.json();
+                if (!data.erro) {
+                  var pLog = document.getElementById('p-logradouro');
+                  var pBai = document.getElementById('p-bairro');
+                  var pCid = document.getElementById('p-cidade');
+                  var pUf = document.getElementById('p-uf');
+                  var pNum = document.getElementById('p-numero');
+
+                  if (pLog && data.logradouro) pLog.value = data.logradouro;
+                  if (pBai && data.bairro) pBai.value = data.bairro;
+                  if (pCid && data.localidade) pCid.value = data.localidade;
+                  if (pUf && data.uf) pUf.value = data.uf;
+                  if (pNum) pNum.focus();
+                }
+              } catch (e) {}
+            }
+          });
+        }
+
+        if (editForm) {
+          editForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var submitBtn = document.getElementById('btn-save-principal');
+            if (submitBtn) {
+              submitBtn.disabled = true;
+              submitBtn.textContent = 'Salvando...';
+            }
+
+            var principalAddress = {
+              cep: (document.getElementById('p-cep')?.value || '').trim(),
+              logradouro: (document.getElementById('p-logradouro')?.value || '').trim(),
+              numero: (document.getElementById('p-numero')?.value || '').trim(),
+              complemento: (document.getElementById('p-complemento')?.value || '').trim(),
+              bairro: (document.getElementById('p-bairro')?.value || '').trim(),
+              cidade: (document.getElementById('p-cidade')?.value || '').trim(),
+              uf: (document.getElementById('p-uf')?.value || '').trim().toUpperCase()
+            };
+
+            try {
+              var res = await fetch('/api/client/addresses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ principalAddress: principalAddress })
+              });
+              var data = await res.json();
+
+              if (res.ok && data.success) {
+                if (!clientData.address) clientData.address = {};
+                Object.assign(clientData.address, principalAddress);
+                renderPrincipalAddress();
+                showEdit(false);
+                alert('Endereço principal atualizado com sucesso!');
+              } else {
+                if (alertEl) {
+                  alertEl.hidden = false;
+                  alertEl.className = 'account-alert alert-error';
+                  alertEl.textContent = data.error || 'Erro ao atualizar endereço principal.';
+                }
+              }
+            } catch (err) {
+              if (alertEl) {
+                alertEl.hidden = false;
+                alertEl.className = 'account-alert alert-error';
+                alertEl.textContent = 'Erro de conexão ao salvar endereço.';
+              }
+            } finally {
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Salvar Endereço';
+              }
+            }
+          });
+        }
+      }
+
+      function setupPasswordChange() {
+        var form = document.getElementById('form-change-password');
+        var alertEl = document.getElementById('pwd-alert');
+        var submitBtn = document.getElementById('btn-save-password');
+
+        if (!form) return;
+
+        form.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          if (alertEl) alertEl.hidden = true;
+
+          var cur = (document.getElementById('pwd-current')?.value || '').trim();
+          var n1 = (document.getElementById('pwd-new')?.value || '').trim();
+          var n2 = (document.getElementById('pwd-confirm')?.value || '').trim();
+
+          if (!cur) {
+            showAlert('Informe sua senha atual.', 'error');
+            return;
+          }
+          if (n1.length < 6) {
+            showAlert('A nova senha deve ter no mínimo 6 caracteres.', 'error');
+            return;
+          }
+          if (n1 !== n2) {
+            showAlert('A nova senha e a confirmação não conferem.', 'error');
+            return;
+          }
+
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Atualizando...';
+          }
+
+          try {
+            var res = await fetch('/api/client/change-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                currentPassword: cur,
+                newPassword: n1,
+                confirmPassword: n2
+              })
+            });
+            var data = await res.json();
+
+            if (res.ok && data.success) {
+              showAlert('Sua senha foi alterada com sucesso!', 'success');
+              form.reset();
+            } else {
+              showAlert(data.error || 'Erro ao alterar senha.', 'error');
+            }
+          } catch (err) {
+            showAlert('Erro de conexão ao alterar senha.', 'error');
+          } finally {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Salvar Nova Senha';
+            }
+          }
+        });
+
+        function showAlert(msg, type) {
+          if (!alertEl) return;
+          alertEl.hidden = false;
+          alertEl.className = 'account-alert alert-' + (type === 'success' ? 'success' : 'error');
+          alertEl.textContent = msg;
+        }
+      }
+
+      function renderFiliais() {
+        var emptyEl = document.getElementById('filiais-empty');
+        var cardsContainer = document.getElementById('filiais-cards');
+        if (!cardsContainer) return;
+
+        var filiais = Array.isArray(clientData?.additionalAddresses) ? clientData.additionalAddresses : [];
+
+        if (filiais.length === 0) {
+          if (emptyEl) {
+            emptyEl.hidden = false;
+            emptyEl.style.display = 'block';
+          }
+          cardsContainer.innerHTML = '';
+          return;
+        }
+
+        if (emptyEl) {
+          emptyEl.hidden = true;
+          emptyEl.style.display = 'none';
+        }
+
+        cardsContainer.innerHTML = filiais.map(function (filial, idx) {
+          var label = filial.label || ('Filial ' + (idx + 1));
+          var addrParts = [
+            filial.logradouro ? filial.logradouro + (filial.numero ? ', ' + filial.numero : '') : '',
+            filial.complemento ? 'Compl: ' + filial.complemento : '',
+            filial.bairro ? 'Bairro: ' + filial.bairro : '',
+            filial.cidade ? filial.cidade + '/' + (filial.uf || '') : '',
+            filial.cep ? 'CEP: ' + filial.cep : ''
+          ].filter(Boolean);
+
+          var contactParts = [
+            filial.phone ? 'Tel: ' + filial.phone : '',
+            filial.contactName ? 'Responsável: ' + filial.contactName : ''
+          ].filter(Boolean);
+
+          return `
+            <div class="filial-card-item">
+              <div class="filial-card-left">
+                <div class="filial-header-row">
+                  <span class="filial-badge-title">🏬 ${escapeHtml(label)}</span>
+                </div>
+                <p class="filial-card-address">${escapeHtml(addrParts.join(' · '))}</p>
+                ${contactParts.length ? `<p class="filial-card-subinfo">${escapeHtml(contactParts.join(' · '))}</p>` : ''}
+              </div>
+              <div class="filial-card-actions">
+                <button type="button" class="btn-secondary-sm" data-edit-filial="${idx}">
+                  ✏️ Editar
+                </button>
+                <button type="button" class="btn-delete-filial" data-delete-filial="${idx}" title="Excluir filial">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Wire up edit and delete buttons
+        cardsContainer.querySelectorAll('[data-edit-filial]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var idx = parseInt(btn.getAttribute('data-edit-filial'), 10);
+            openFilialForm(idx);
+          });
+        });
+
+        cardsContainer.querySelectorAll('[data-delete-filial]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var idx = parseInt(btn.getAttribute('data-delete-filial'), 10);
+            deleteFilial(idx);
+          });
+        });
+      }
+
+      function openFilialForm(editIndex) {
+        var box = document.getElementById('filial-form-box');
+        var titleEl = document.getElementById('filial-form-title');
+        var alertEl = document.getElementById('filial-alert');
+        if (!box) return;
+
+        if (alertEl) alertEl.hidden = true;
+
+        var isEdit = (typeof editIndex === 'number' && editIndex >= 0);
+        var filiais = Array.isArray(clientData?.additionalAddresses) ? clientData.additionalAddresses : [];
+        var f = isEdit ? filiais[editIndex] : null;
+
+        if (titleEl) {
+          titleEl.textContent = isEdit ? 'Editar Loja / Filial' : 'Cadastrar Nova Loja / Filial';
+        }
+
+        document.getElementById('f-id').value = isEdit ? (f.id || String(editIndex + 1)) : ('f_' + Date.now());
+        document.getElementById('f-label').value = f?.label || '';
+        document.getElementById('f-cep').value = f?.cep || '';
+        document.getElementById('f-logradouro').value = f?.logradouro || '';
+        document.getElementById('f-numero').value = f?.numero || '';
+        document.getElementById('f-complemento').value = f?.complemento || '';
+        document.getElementById('f-bairro').value = f?.bairro || '';
+        document.getElementById('f-cidade').value = f?.cidade || '';
+        document.getElementById('f-uf').value = f?.uf || '';
+        document.getElementById('f-phone').value = f?.phone || '';
+        document.getElementById('f-contact').value = f?.contactName || '';
+
+        box.hidden = false;
+        box.style.display = 'block';
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function closeFilialForm() {
+        var box = document.getElementById('filial-form-box');
+        if (box) {
+          box.hidden = true;
+          box.style.display = 'none';
+        }
+      }
+
+      async function deleteFilial(idx) {
+        var filiais = Array.isArray(clientData?.additionalAddresses) ? clientData.additionalAddresses : [];
+        var target = filiais[idx];
+        if (!target) return;
+
+        var label = target.label || ('Filial ' + (idx + 1));
+        if (!confirm('Deseja realmente excluir o endereço da "' + label + '"?')) return;
+
+        filiais.splice(idx, 1);
+
+        try {
+          var res = await fetch('/api/client/addresses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ additionalAddresses: filiais })
+          });
+          var data = await res.json();
+          if (res.ok && data.success) {
+            clientData.additionalAddresses = filiais;
+            renderFiliais();
+          } else {
+            alert(data.error || 'Erro ao excluir filial.');
+          }
+        } catch (e) {
+          alert('Erro de conexão ao excluir filial.');
+        }
+      }
+
+      function setupFiliais() {
+        var btnAdd = document.getElementById('btn-add-filial');
+        var btnClose = document.getElementById('btn-close-filial-form');
+        var btnCancel = document.getElementById('btn-cancel-filial');
+        var form = document.getElementById('form-filial');
+        var cepInput = document.getElementById('f-cep');
+        var alertEl = document.getElementById('filial-alert');
+
+        if (btnAdd) btnAdd.addEventListener('click', function () { openFilialForm(-1); });
+        if (btnClose) btnClose.addEventListener('click', closeFilialForm);
+        if (btnCancel) btnCancel.addEventListener('click', closeFilialForm);
+
+        // Auto ViaCEP na Filial
+        if (cepInput) {
+          cepInput.addEventListener('blur', async function () {
+            var raw = cepInput.value.replace(/\D/g, '');
+            if (raw.length === 8) {
+              try {
+                var res = await fetch('https://viacep.com.br/ws/' + raw + '/json/');
+                var data = await res.json();
+                if (!data.erro) {
+                  var fLog = document.getElementById('f-logradouro');
+                  var fBai = document.getElementById('f-bairro');
+                  var fCid = document.getElementById('f-cidade');
+                  var fUf = document.getElementById('f-uf');
+                  var fNum = document.getElementById('f-numero');
+
+                  if (fLog && data.logradouro) fLog.value = data.logradouro;
+                  if (fBai && data.bairro) fBai.value = data.bairro;
+                  if (fCid && data.localidade) fCid.value = data.localidade;
+                  if (fUf && data.uf) fUf.value = data.uf;
+                  if (fNum) fNum.focus();
+                }
+              } catch (e) {}
+            }
+          });
+        }
+
+        if (form) {
+          form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var submitBtn = document.getElementById('btn-save-filial');
+            if (submitBtn) {
+              submitBtn.disabled = true;
+              submitBtn.textContent = 'Salvando...';
+            }
+
+            var filialId = document.getElementById('f-id')?.value || ('f_' + Date.now());
+            var newFilial = {
+              id: filialId,
+              label: (document.getElementById('f-label')?.value || '').trim(),
+              cep: (document.getElementById('f-cep')?.value || '').trim(),
+              logradouro: (document.getElementById('f-logradouro')?.value || '').trim(),
+              numero: (document.getElementById('f-numero')?.value || '').trim(),
+              complemento: (document.getElementById('f-complemento')?.value || '').trim(),
+              bairro: (document.getElementById('f-bairro')?.value || '').trim(),
+              cidade: (document.getElementById('f-cidade')?.value || '').trim(),
+              uf: (document.getElementById('f-uf')?.value || '').trim().toUpperCase(),
+              phone: (document.getElementById('f-phone')?.value || '').trim(),
+              contactName: (document.getElementById('f-contact')?.value || '').trim()
+            };
+
+            var filiais = Array.isArray(clientData?.additionalAddresses) ? clientData.additionalAddresses.slice() : [];
+            var existingIdx = filiais.findIndex(function (f) { return f.id === filialId; });
+            if (existingIdx >= 0) {
+              filiais[existingIdx] = newFilial;
+            } else {
+              filiais.push(newFilial);
+            }
+
+            try {
+              var res = await fetch('/api/client/addresses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ additionalAddresses: filiais })
+              });
+              var data = await res.json();
+
+              if (res.ok && data.success) {
+                clientData.additionalAddresses = filiais;
+                renderFiliais();
+                closeFilialForm();
+                alert('Filial / loja salva com sucesso!');
+              } else {
+                if (alertEl) {
+                  alertEl.hidden = false;
+                  alertEl.className = 'account-alert alert-error';
+                  alertEl.textContent = data.error || 'Erro ao salvar filial.';
+                }
+              }
+            } catch (err) {
+              if (alertEl) {
+                alertEl.hidden = false;
+                alertEl.className = 'account-alert alert-error';
+                alertEl.textContent = 'Erro de conexão ao salvar filial.';
+              }
+            } finally {
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Salvar Filial';
+              }
+            }
+          });
+        }
+      }
+
       btnLogout.addEventListener('click', async function () {
         if (!confirm('Deseja realmente sair da sua conta?')) return;
         try {
@@ -840,6 +1609,11 @@ const siteSettings = {
         loadOrders();
         checkPendingCart();
       });
+
+      initAccountTabs();
+      setupPrincipalAddress();
+      setupPasswordChange();
+      setupFiliais();
 
       checkAuth();
       checkPendingCart();
@@ -970,8 +1744,375 @@ const siteSettings = {
     .orders-loading[hidden],
     .orders-empty[hidden],
     .orders-card-admin[hidden],
-    .modal-backdrop[hidden] {
+    .modal-backdrop[hidden],
+    .account-section[hidden],
+    .filial-form-wrapper[hidden],
+    .account-alert[hidden] {
       display: none !important;
+    }
+
+    /* Portal Navigation Tabs */
+    .portal-nav-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 2px solid #E2E8F0;
+      padding-bottom: 0;
+      margin-bottom: 4px;
+    }
+
+    .portal-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: #64748B;
+      font-size: 14px;
+      font-weight: 750;
+      padding: 12px 20px;
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.2s ease;
+      margin-bottom: -2px;
+    }
+
+    .portal-nav-btn:hover {
+      color: #0866c8;
+      background: rgba(8, 102, 200, 0.04);
+    }
+
+    .portal-nav-btn.active {
+      color: #0866c8;
+      border-bottom-color: #0866c8;
+      background: #FFFFFF;
+      box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.02);
+    }
+
+    .portal-tab-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Account Section & Cards */
+    .account-section {
+      width: 100%;
+    }
+
+    .account-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .account-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 24px 28px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .account-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #F1F5F9;
+    }
+
+    .account-card-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #0F172A;
+      margin: 0;
+    }
+
+    .account-card-sub {
+      font-size: 12.5px;
+      color: #64748B;
+      margin: 4px 0 0;
+    }
+
+    .badge-account-verified {
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      font-size: 11px;
+      font-weight: 750;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .account-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .info-field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .info-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748B;
+    }
+
+    .info-value {
+      font-size: 14px;
+      color: #0F172A;
+      font-weight: 650;
+    }
+
+    /* Forms */
+    .account-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0F172A;
+    }
+
+    .form-input {
+      font-size: 13.5px;
+      padding: 9px 12px;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      color: #0F172A;
+      background: #FFFFFF;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .form-input:focus {
+      border-color: #0866c8;
+      box-shadow: 0 0 0 2px rgba(8, 102, 200, 0.15);
+    }
+
+    .form-actions-right {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .btn-primary-blue {
+      background: #0866c8 !important;
+      color: #ffffff !important;
+      border: 1px solid #0866c8 !important;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(8, 102, 200, 0.25);
+    }
+
+    .btn-primary-blue:hover {
+      background: #0652a1 !important;
+      border-color: #0652a1 !important;
+      color: #ffffff !important;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary-blue:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary-sm {
+      background: #F8FAFC;
+      border: 1px solid #CBD5E1;
+      color: #0F172A;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12.5px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary-sm:hover {
+      background: #E2E8F0;
+      border-color: #94A3B8;
+    }
+
+    /* Address displays */
+    .address-display-box {
+      padding: 16px 20px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+    }
+
+    .address-display-text {
+      font-size: 14px;
+      color: #334155;
+      line-height: 1.5;
+      font-weight: 550;
+      margin: 0;
+    }
+
+    /* Filiais list */
+    .filial-form-wrapper {
+      background: #F8FAFC;
+      border: 1px solid #CBD5E1;
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin-bottom: 20px;
+    }
+
+    .filial-form-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+
+    .filial-form-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0F172A;
+      margin: 0;
+    }
+
+    .filiais-empty-box {
+      text-align: center;
+      padding: 32px 16px;
+      background: #F8FAFC;
+      border: 1px dashed #CBD5E1;
+      border-radius: 12px;
+    }
+
+    .filiais-cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .filial-card-item {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      transition: all 0.15s ease;
+    }
+
+    .filial-card-item:hover {
+      border-color: #CBD5E1;
+      background: #FFFFFF;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .filial-card-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .filial-badge-title {
+      display: inline-block;
+      background: rgba(8, 102, 200, 0.1);
+      color: #0866c8;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(8, 102, 200, 0.2);
+    }
+
+    .filial-card-address {
+      font-size: 13.5px;
+      color: #334155;
+      line-height: 1.45;
+      margin: 4px 0 0;
+    }
+
+    .filial-card-subinfo {
+      font-size: 12px;
+      color: #64748B;
+      margin: 2px 0 0;
+    }
+
+    .filial-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-delete-filial {
+      background: transparent;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      padding: 7px 11px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-delete-filial:hover {
+      background: rgba(247, 86, 86, 0.1);
+      border-color: #F75656;
+    }
+
+    .account-alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .account-alert.alert-success {
+      background: #DEF7EC;
+      color: #03543F;
+      border: 1px solid #84E1BC;
+    }
+
+    .account-alert.alert-error {
+      background: #FDE8E8;
+      color: #9B1C1C;
+      border: 1px solid #F8B4B4;
     }
 
     /* Unverified Banner */

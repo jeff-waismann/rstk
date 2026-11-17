@@ -192,7 +192,7 @@ export async function onRequestPost({ request, env }) {
     const orderNumber = generateOrderNumber();
     const origin = String(body.origin || 'whatsapp_catalog').slice(0, 50);
     const userAgent = (request.headers.get('user-agent') || '').slice(0, 255);
-    const notes = String(body.notes || (items.length ? 'Iniciado via clique WhatsApp no catálogo' : 'Consulta geral')).slice(0, 500);
+    let rawNotes = String(body.notes || (items.length ? 'Iniciado via clique WhatsApp no catálogo' : 'Consulta geral'));
 
     // Identifica se há cliente logado via sessão
     const client = await getAuthenticatedClient(request, env).catch(() => null);
@@ -202,16 +202,21 @@ export async function onRequestPost({ request, env }) {
     const customerEmail = client?.email || body.customerEmail || null;
     const customerPhone = client ? (client.telefone || client.phone) : (body.customerPhone || body.phone || null);
     const customerResponsible = client ? (client.responsavelNome || client.responsible_name) : (body.customerResponsible || null);
-    const deliveryAddress = client
+    const deliveryAddress = body.deliveryAddress || (client
       ? [
-          client.logradouro,
-          client.numero,
-          client.complemento,
-          client.bairro,
-          client.cidade ? `${client.cidade}/${client.uf || ''}` : '',
-          client.cep ? `CEP: ${client.cep}` : ''
+          client.address?.logradouro || client.logradouro,
+          client.address?.numero || client.numero,
+          client.address?.complemento || client.complemento,
+          client.address?.bairro || client.bairro,
+          (client.address?.cidade || client.cidade) ? `${client.address?.cidade || client.cidade}/${client.address?.uf || client.uf || ''}` : '',
+          (client.address?.cep || client.cep) ? `CEP: ${client.address?.cep || client.cep}` : ''
         ].filter(Boolean).join(', ')
-      : (body.deliveryAddress || null);
+      : null);
+
+    let notes = rawNotes;
+    if (deliveryAddress && !notes.includes(deliveryAddress)) {
+      notes = `[Entrega: ${deliveryAddress}] ${notes}`.slice(0, 500);
+    }
 
     // 1. Grava o pedido no D1 (incluindo customer_phone)
     const insertRes = await env.DB.prepare(

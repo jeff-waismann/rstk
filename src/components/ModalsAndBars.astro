@@ -42,6 +42,22 @@ const defaultWhatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${enco
   <h2 id="selection-title">Seu Pedido</h2>
   <p class="copy-note">Revise os títulos e quantidades para consultar e encomendar via WhatsApp.</p>
   <ul class="selected-list" id="selected-list"></ul>
+  <div id="cart-delivery-container" class="cart-delivery-box" hidden>
+    <div class="cart-delivery-top">
+      <label for="cart-delivery-select" class="cart-delivery-label">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;" aria-hidden="true">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        Endereço de Entrega
+      </label>
+      <a href="/cliente/pedidos?tab=conta" class="cart-delivery-manage-link" title="Cadastrar nova loja ou filial">
+        + Gerenciar Lojas
+      </a>
+    </div>
+    <select id="cart-delivery-select" class="cart-delivery-select" aria-label="Selecione a loja ou endereço de entrega"></select>
+    <p id="cart-delivery-preview" class="cart-delivery-preview"></p>
+  </div>
   <div class="actions">
     <a
       class="whatsapp-action"
