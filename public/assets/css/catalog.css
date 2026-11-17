@@ -11,7 +11,9 @@
   --muted: #94a3b8;
   --line: #263345;
   --blue: #2488eb;
+  --blue-dark: #0652a1;
   --button: #0866c8;
+  --button-hover: #0652a1;
   --shadow: 0 20px 65px #0004;
 }
 
@@ -22,7 +24,10 @@ html[data-theme="light"] {
   --ink: #101d30;
   --muted: #5c6c80;
   --line: #d9e1eb;
-  --blue: #0969ca;
+  --blue: #0866c8;
+  --blue-dark: #0652a1;
+  --button: #0866c8;
+  --button-hover: #0652a1;
   --shadow: 0 20px 65px #172f4918;
 }
 
@@ -205,10 +210,11 @@ html[data-theme="dark"] .brand img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   text-decoration: none;
-  font-size: 13.5px;
-  font-weight: 750;
-  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 650;
+  padding: 11px 18px;
   border-radius: 8px;
   background: #0866c8 !important;
   color: #ffffff !important;
@@ -217,6 +223,14 @@ html[data-theme="dark"] .brand img {
   transition: all 0.2s ease;
   box-shadow: 0 2px 6px rgba(8, 102, 200, 0.25);
   min-height: 44px;
+  box-sizing: border-box;
+}
+
+#btn-customer-login *,
+.btn-client-auth-modal *,
+#btn-submit-order *,
+.btn-send-order * {
+  color: #ffffff !important;
 }
 
 #btn-customer-login:hover,
@@ -227,13 +241,22 @@ html[data-theme="dark"] .brand img {
   border-color: #0652a1 !important;
   color: #ffffff !important;
   transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(8, 102, 200, 0.35);
+}
+
+#btn-customer-login:hover *,
+.btn-client-auth-modal:hover *,
+#btn-submit-order:hover *,
+.btn-send-order:hover * {
+  color: #ffffff !important;
 }
 
 #btn-submit-order:disabled,
 .btn-send-order:disabled {
-  opacity: 0.65;
+  opacity: 0.55;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 /* --- Hero Section --- */
@@ -999,13 +1022,22 @@ html[data-theme="dark"] .btn-add-cart:hover {
 
 .primary {
   border-radius: 7px;
-  background: var(--button);
-  color: #ffffff;
+  background: #0866c8 !important;
+  color: #ffffff !important;
   padding: 11px 17px;
   font-weight: 650;
   font-size: 12px;
   white-space: nowrap;
   min-height: 44px;
+  border: 1px solid #0866c8 !important;
+  transition: all 0.2s ease;
+}
+
+.primary:hover {
+  background: #0652a1 !important;
+  border-color: #0652a1 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
 }
 
 .whatsapp-floating,

@@ -100,7 +100,7 @@ const jsonLd = {
       })();
     </script>
 
-    <link rel="stylesheet" href="/assets/css/catalog.css" />
+    <link rel="stylesheet" href={`/assets/css/catalog.css?v=${Date.now()}`} />
 
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>

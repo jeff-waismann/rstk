@@ -43,9 +43,6 @@ const defaultWhatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${enco
   <p class="copy-note">Revise os títulos e quantidades para consultar e encomendar via WhatsApp.</p>
   <ul class="selected-list" id="selected-list"></ul>
   <div class="actions">
-    <button class="btn-send-order" id="btn-submit-order" type="button">
-      Enviar Pedido
-    </button>
     <a
       class="whatsapp-action"
       id="whatsapp-modal"
@@ -55,6 +52,15 @@ const defaultWhatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${enco
     >
       Finalizar no WhatsApp ↗
     </a>
+    <button
+      class="btn-send-order"
+      id="btn-submit-order"
+      type="button"
+      onclick="window.dispatchDirectOrder && window.dispatchDirectOrder()"
+      style="background: #0866c8 !important; color: #ffffff !important; border: 1px solid #0866c8 !important;"
+    >
+      Enviar Pedido
+    </button>
     <button class="text-button" id="empty-selection" type="button">Limpar Pedido</button>
   </div>
   <textarea

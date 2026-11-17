@@ -942,6 +942,8 @@
     }
   }
 
+  window.dispatchDirectOrder = dispatchDirectOrder;
+
   $('view-selection')?.addEventListener('click', () => {
     renderSelection();
     $('selection')?.showModal();
@@ -972,8 +974,15 @@
   $('whatsapp-floating')?.addEventListener('click', (e) => dispatchWhatsAppOrder(e, $('whatsapp-floating')));
 
   document.addEventListener('click', (event) => {
-    const target = event.target instanceof Element
-      ? event.target.closest('[data-detail],[data-genre],[data-close],[data-clear],[data-buy-now],[data-qty-dec],[data-qty-inc],[data-add-cart],[data-detail-qty-dec],[data-detail-qty-inc],[data-detail-add-cart],[data-cart-dec],[data-cart-inc],[data-cart-remove]')
+    const rawTarget = event.target instanceof Element ? event.target : null;
+    if (rawTarget && (rawTarget.id === 'btn-submit-order' || rawTarget.closest('#btn-submit-order, .btn-send-order'))) {
+      event.preventDefault();
+      dispatchDirectOrder();
+      return;
+    }
+
+    const target = rawTarget
+      ? rawTarget.closest('[data-detail],[data-genre],[data-close],[data-clear],[data-buy-now],[data-qty-dec],[data-qty-inc],[data-add-cart],[data-detail-qty-dec],[data-detail-qty-inc],[data-detail-add-cart],[data-cart-dec],[data-cart-inc],[data-cart-remove]')
       : null;
     if (!target) return;
 

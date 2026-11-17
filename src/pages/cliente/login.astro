@@ -457,8 +457,9 @@ const artists = [...new Set(allProducts.map((p) => p.artist))].sort((a, b) =>
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #0866c8;
-      color: #ffffff;
+      background: #0866c8 !important;
+      color: #ffffff !important;
+      border: 1px solid #0866c8 !important;
       font-size: 14px;
       font-weight: 750;
       padding: 12px 24px;
@@ -470,7 +471,9 @@ const artists = [...new Set(allProducts.map((p) => p.artist))].sort((a, b) =>
     }
 
     .btn-goto-register:hover {
-      background: #0652a1;
+      background: #0652a1 !important;
+      border-color: #0652a1 !important;
+      color: #ffffff !important;
       transform: translateY(-1px);
     }
 
@@ -669,9 +672,9 @@ const artists = [...new Set(allProducts.map((p) => p.artist))].sort((a, b) =>
     }
 
     .btn-primary-auth {
-      background: #0866c8;
-      color: #ffffff;
-      border: none;
+      background: #0866c8 !important;
+      color: #ffffff !important;
+      border: 1px solid #0866c8 !important;
       padding: 14px 20px;
       border-radius: 8px;
       font-size: 14px;
@@ -684,9 +687,21 @@ const artists = [...new Set(allProducts.map((p) => p.artist))].sort((a, b) =>
       box-shadow: 0 2px 8px rgba(8, 102, 200, 0.25);
     }
 
+    .btn-primary-auth *,
+    .btn-goto-register * {
+      color: #ffffff !important;
+    }
+
     .btn-primary-auth:hover {
-      background: #0652a1;
+      background: #0652a1 !important;
+      border-color: #0652a1 !important;
+      color: #ffffff !important;
       transform: translateY(-1px);
+    }
+
+    .btn-primary-auth:hover *,
+    .btn-goto-register:hover * {
+      color: #ffffff !important;
     }
 
     .btn-primary-auth:disabled {
