@@ -214,7 +214,7 @@ const siteSettings = {
           </a>
 
           <button type="button" id="modal-approve-btn" class="btn-admin-approve" hidden>
-            <span>✓ Confirmar Alterações</span>
+            <span>✓ Aprovar</span>
           </button>
 
           <button type="button" id="modal-secondary-close" class="btn-admin-close">
@@ -432,7 +432,7 @@ const siteSettings = {
 
           // Capas sobrepostas (estilo admin -space-x-2)
           var coversHtml = items.slice(0, 3).map(function (it) {
-            return `<img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="item-stack-thumb" loading="lazy" />`;
+            return `<img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="item-stack-thumb" style="width:32px !important;height:32px !important;min-width:32px !important;max-width:32px !important;object-fit:cover;border-radius:6px;border:1px solid #FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-right:-8px;background:#F7F9FB;flex-shrink:0;display:inline-block;" loading="lazy" />`;
           }).join('');
 
           var titleSummary = (firstItem.title || 'Disco de Vinil') + (remainingCount > 0 ? ` (+${remainingCount})` : '');
@@ -639,7 +639,7 @@ const siteSettings = {
             var originalReq = (change && change.oldQty) ? change.oldQty : (it.requestedQuantity || 1);
             rowDiv.innerHTML = `
               <div class="item-left-block">
-                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="admin-item-thumb" loading="lazy" />
+                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="admin-item-thumb" style="width:44px !important;height:44px !important;min-width:44px !important;max-width:44px !important;border-radius:8px;object-fit:cover;border:1px solid #E2E8F0;flex-shrink:0;background:#F7F9FB;display:block;" loading="lazy" />
                 <div class="item-meta-block">
                   <p class="item-title-text line-through-text"><s>${escapeHtml(it.title || 'Disco de Vinil')}</s></p>
                   <p class="item-sub-text">${escapeHtml(it.artist || 'Artista')} · ${albumFormat} · ${formatBRL(unitPrice)} un.</p>
@@ -661,7 +661,7 @@ const siteSettings = {
             rowDiv.className = 'admin-item-row row-modified';
             rowDiv.innerHTML = `
               <div class="item-left-block">
-                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="admin-item-thumb" loading="lazy" />
+                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="admin-item-thumb" style="width:44px !important;height:44px !important;min-width:44px !important;max-width:44px !important;border-radius:8px;object-fit:cover;border:1px solid #E2E8F0;flex-shrink:0;background:#F7F9FB;display:block;" loading="lazy" />
                 <div class="item-meta-block">
                   <p class="item-title-text">${escapeHtml(it.title || 'Disco de Vinil')}</p>
                   <p class="item-sub-text">${escapeHtml(it.artist || 'Artista')} · ${albumFormat} · ${formatBRL(unitPrice)} un.</p>
@@ -683,7 +683,7 @@ const siteSettings = {
             rowDiv.className = 'admin-item-row row-normal';
             rowDiv.innerHTML = `
               <div class="item-left-block">
-                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="admin-item-thumb" loading="lazy" />
+                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="admin-item-thumb" style="width:44px !important;height:44px !important;min-width:44px !important;max-width:44px !important;border-radius:8px;object-fit:cover;border:1px solid #E2E8F0;flex-shrink:0;background:#F7F9FB;display:block;" loading="lazy" />
                 <div class="item-meta-block">
                   <p class="item-title-text">${escapeHtml(it.title || 'Disco de Vinil')}</p>
                   <p class="item-sub-text">${escapeHtml(it.artist || 'Artista')} · ${albumFormat} · ${formatBRL(unitPrice)} un.</p>
@@ -845,7 +845,7 @@ const siteSettings = {
     })();
   </script>
 
-  <style>
+  <style is:global>
     .header-back-catalog {
       font-size: 13px;
       font-weight: 700;
