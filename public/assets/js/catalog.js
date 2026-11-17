@@ -585,15 +585,6 @@
               </button>
             </div>
             <div id="modal-sold-out-notice" style="color:#DC2626;font-size:12px;font-weight:700;text-align:center;padding:4px 0;" hidden></div>
-            ${
-              isSoldOut
-                ? `<button class="whatsapp-action" type="button" data-buy-now="${numericId}" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#DC2626;color:#FFF;font-weight:700;padding:0.75rem 1rem;border-radius:999px;border:none;cursor:pointer;width:100%;text-decoration:none;">
-                    Consultar fila de espera via WhatsApp ↗
-                  </button>`
-                : `<button class="whatsapp-action" type="button" data-buy-now="${numericId}" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#25D366;color:#000;font-weight:700;padding:0.75rem 1rem;border-radius:999px;border:none;cursor:pointer;width:100%;text-decoration:none;">
-                    Comprar este vinil via WhatsApp ↗
-                  </button>`
-            }
           </div>
           <p class="note">${escapeHTML(noteText)}</p>
           ${
