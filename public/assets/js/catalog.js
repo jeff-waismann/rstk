@@ -812,6 +812,17 @@
 
     const finalUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(finalUrl, '_blank', 'noopener,noreferrer');
+
+    // Limpa a lista do usuário após o envio e gravação do pedido para que ele comece de novo
+    if (!singleAlbumId && items.length > 0) {
+      selected.clear();
+      updateSelection();
+      if ($('selection')?.open) {
+        $('selection').close();
+      }
+      renderSelection();
+      draw();
+    }
   }
 
   // --- Event Listeners ---
