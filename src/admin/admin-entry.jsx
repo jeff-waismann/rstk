@@ -176,7 +176,7 @@ function AdminApp() {
             </div>
             <div>
               <h1 className="text-lg font-extrabold text-[#0F172A] tracking-tight">
-                RSTK Agile Admin
+                Smartweb Content Manager
               </h1>
               <p className="text-xs text-[#64748B]">Gestão de Catálogo · Cloudflare D1 + R2</p>
             </div>
@@ -268,7 +268,7 @@ function AdminApp() {
         }`}
       >
         <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
-          <a href="/admin" className="flex items-center" title="Smartweb Agile Admin">
+          <a href="/admin" className="flex items-center" title="Smartweb Content Manager">
             <img
               src="/assets/images/logo-smartweb.svg"
               alt="Smartweb"
