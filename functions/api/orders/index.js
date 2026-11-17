@@ -25,6 +25,99 @@ function formatBRL(cents) {
   return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+const ORDER_WITH_CUSTOMER_SELECT = `
+  SELECT 
+    o.*,
+    COALESCE(o.customer_phone, c.telefone, c.phone) AS customer_phone,
+    COALESCE(c.responsavel_nome, c.responsible_name) AS customer_responsible,
+    COALESCE(o.customer_name, c.nome_fantasia, c.razao_social) AS customer_name,
+    c.razao_social AS customer_razao_social,
+    c.nome_fantasia AS customer_nome_fantasia,
+    c.ie AS customer_ie,
+    c.inscricao_estadual AS customer_inscricao_estadual,
+    c.ie_isento AS customer_ie_isento,
+    c.email AS customer_account_email,
+    c.email_verified AS customer_email_verified,
+    c.cep AS customer_cep,
+    c.logradouro AS customer_logradouro,
+    c.numero AS customer_numero,
+    c.complemento AS customer_complemento,
+    c.bairro AS customer_bairro,
+    c.cidade AS customer_city,
+    c.uf AS customer_uf,
+    c.addresses_json AS customer_addresses_json,
+    c.created_at AS customer_registered_at
+  FROM rstk_orders o
+  LEFT JOIN rstk_customers c ON (o.customer_id IS NOT NULL AND o.customer_id = c.id) OR (o.customer_cnpj IS NOT NULL AND o.customer_cnpj = c.cnpj)
+`;
+
+function formatOrderRow(row) {
+  let items = [];
+  try {
+    items = JSON.parse(row.items_json);
+  } catch {
+    items = [];
+  }
+
+  let changes = null;
+  try {
+    changes = row.changes_json ? JSON.parse(row.changes_json) : null;
+  } catch {
+    changes = null;
+  }
+
+  let customerAdditionalAddresses = [];
+  try {
+    customerAdditionalAddresses = row.customer_addresses_json ? JSON.parse(row.customer_addresses_json) : [];
+  } catch {
+    customerAdditionalAddresses = [];
+  }
+
+  return {
+    id: Number(row.id),
+    orderNumber: row.order_number,
+    customerId: row.customer_id ? Number(row.customer_id) : null,
+    customerCnpj: row.customer_cnpj || null,
+    customerName: row.customer_name || null,
+    customerEmail: row.customer_email || row.customer_account_email || null,
+    customerPhone: row.customer_phone || null,
+    customerResponsible: row.customer_responsible || null,
+    customerCity: row.customer_city || null,
+    customerUf: row.customer_uf || null,
+    customerRazaoSocial: row.customer_razao_social || null,
+    customerNomeFantasia: row.customer_nome_fantasia || null,
+    customerIe: row.customer_ie || row.customer_inscricao_estadual || (row.customer_ie_isento ? 'ISENTO' : null),
+    customerIeIsento: Boolean(row.customer_ie_isento),
+    customerAccountEmail: row.customer_account_email || null,
+    customerEmailVerified: Boolean(row.customer_email_verified),
+    customerRegisteredAt: row.customer_registered_at || null,
+    customerAddress: {
+      cep: row.customer_cep || null,
+      logradouro: row.customer_logradouro || null,
+      numero: row.customer_numero || null,
+      complemento: row.customer_complemento || null,
+      bairro: row.customer_bairro || null,
+      cidade: row.customer_city || null,
+      uf: row.customer_uf || null
+    },
+    customerAdditionalAddresses,
+    items,
+    totalCents: Number(row.total_cents) || 0,
+    itemCount: Number(row.item_count) || items.length,
+    status: row.status,
+    origin: row.origin,
+    userAgent: row.user_agent,
+    notes: row.notes,
+    changes,
+    approvedAt: row.approved_at,
+    clientApprovedAt: row.client_approved_at,
+    dispatchedAt: row.dispatched_at,
+    adminNotes: row.admin_notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
 export async function onRequestPost({ request, env }) {
   try {
     if (!env?.DB) {
@@ -59,10 +152,42 @@ export async function onRequestPost({ request, env }) {
     });
 
     const itemCount = items.reduce((sum, it) => sum + it.quantity, 0);
+    if (items.length === 0 || itemCount === 0) {
+      return jsonResponse({ success: false, error: 'O pedido precisa conter pelo menos 1 item.' }, 400);
+    }
+
     const computedTotal = items.reduce((sum, it) => sum + (it.priceCents * it.quantity), 0);
     const totalCents = Number.isFinite(Number(body.totalCents)) && Number(body.totalCents) > 0
       ? Math.round(Number(body.totalCents))
       : (computedTotal || 18999);
+
+    const itemsJsonStr = JSON.stringify(items);
+    const recentDup = await env.DB.prepare(
+      `SELECT id, order_number, status, total_cents, item_count, created_at
+       FROM rstk_orders
+       WHERE total_cents = ?
+         AND item_count = ?
+         AND items_json = ?
+         AND created_at >= datetime('now', '-15 seconds')
+       ORDER BY id DESC LIMIT 1`
+    )
+      .bind(totalCents, itemCount, itemsJsonStr)
+      .first();
+
+    if (recentDup) {
+      return jsonResponse({
+        success: true,
+        deduplicated: true,
+        order: {
+          id: Number(recentDup.id),
+          orderNumber: recentDup.order_number,
+          status: recentDup.status,
+          totalCents: Number(recentDup.total_cents),
+          itemCount: Number(recentDup.item_count),
+          createdAt: recentDup.created_at
+        }
+      }, 200);
+    }
 
     const orderNumber = generateOrderNumber();
     const origin = String(body.origin || 'whatsapp_catalog').slice(0, 50);
@@ -103,7 +228,7 @@ export async function onRequestPost({ request, env }) {
         customerName,
         customerEmail,
         customerPhone,
-        JSON.stringify(items),
+        itemsJsonStr,
         totalCents,
         itemCount,
         origin,
@@ -190,31 +315,7 @@ export async function onRequestGet({ request, env }) {
     const customerType = url.searchParams.get('customerType'); // 'registered' | 'guest'
     const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit')) || 100));
 
-    let query = `
-      SELECT 
-        o.*,
-        COALESCE(o.customer_phone, c.telefone, c.phone) AS customer_phone,
-        COALESCE(c.responsavel_nome, c.responsible_name) AS customer_responsible,
-        COALESCE(o.customer_name, c.nome_fantasia, c.razao_social) AS customer_name,
-        c.razao_social AS customer_razao_social,
-        c.nome_fantasia AS customer_nome_fantasia,
-        c.ie AS customer_ie,
-        c.inscricao_estadual AS customer_inscricao_estadual,
-        c.ie_isento AS customer_ie_isento,
-        c.email AS customer_account_email,
-        c.email_verified AS customer_email_verified,
-        c.cep AS customer_cep,
-        c.logradouro AS customer_logradouro,
-        c.numero AS customer_numero,
-        c.complemento AS customer_complemento,
-        c.bairro AS customer_bairro,
-        c.cidade AS customer_city,
-        c.uf AS customer_uf,
-        c.addresses_json AS customer_addresses_json,
-        c.created_at AS customer_registered_at
-      FROM rstk_orders o
-      LEFT JOIN rstk_customers c ON (o.customer_id IS NOT NULL AND o.customer_id = c.id) OR (o.customer_cnpj IS NOT NULL AND o.customer_cnpj = c.cnpj)
-    `;
+    let query = ORDER_WITH_CUSTOMER_SELECT;
     const params = [];
     const conditions = [];
 
@@ -244,72 +345,7 @@ export async function onRequestGet({ request, env }) {
 
     const { results } = await env.DB.prepare(query).bind(...params).all();
 
-    const orders = (results || []).map((row) => {
-      let items = [];
-      try {
-        items = JSON.parse(row.items_json);
-      } catch {
-        items = [];
-      }
-
-      let changes = null;
-      try {
-        changes = row.changes_json ? JSON.parse(row.changes_json) : null;
-      } catch {
-        changes = null;
-      }
-
-      let customerAdditionalAddresses = [];
-      try {
-        customerAdditionalAddresses = row.customer_addresses_json ? JSON.parse(row.customer_addresses_json) : [];
-      } catch {
-        customerAdditionalAddresses = [];
-      }
-
-      return {
-        id: Number(row.id),
-        orderNumber: row.order_number,
-        customerId: row.customer_id ? Number(row.customer_id) : null,
-        customerCnpj: row.customer_cnpj || null,
-        customerName: row.customer_name || null,
-        customerEmail: row.customer_email || row.customer_account_email || null,
-        customerPhone: row.customer_phone || null,
-        customerResponsible: row.customer_responsible || null,
-        customerCity: row.customer_city || null,
-        customerUf: row.customer_uf || null,
-        customerRazaoSocial: row.customer_razao_social || null,
-        customerNomeFantasia: row.customer_nome_fantasia || null,
-        customerIe: row.customer_ie || row.customer_inscricao_estadual || (row.customer_ie_isento ? 'ISENTO' : null),
-        customerIeIsento: Boolean(row.customer_ie_isento),
-        customerAccountEmail: row.customer_account_email || null,
-        customerEmailVerified: Boolean(row.customer_email_verified),
-        customerRegisteredAt: row.customer_registered_at || null,
-        customerAddress: {
-          cep: row.customer_cep || null,
-          logradouro: row.customer_logradouro || null,
-          numero: row.customer_numero || null,
-          complemento: row.customer_complemento || null,
-          bairro: row.customer_bairro || null,
-          cidade: row.customer_city || null,
-          uf: row.customer_uf || null
-        },
-        customerAdditionalAddresses,
-        items,
-        totalCents: Number(row.total_cents) || 0,
-        itemCount: Number(row.item_count) || items.length,
-        status: row.status,
-        origin: row.origin,
-        userAgent: row.user_agent,
-        notes: row.notes,
-        changes,
-        approvedAt: row.approved_at,
-        clientApprovedAt: row.client_approved_at,
-        dispatchedAt: row.dispatched_at,
-        adminNotes: row.admin_notes,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      };
-    });
+    const orders = (results || []).map(formatOrderRow);
 
     return jsonResponse({
       success: true,
@@ -478,48 +514,13 @@ export async function onRequestPatch({ request, env }) {
       }
     }
 
-    const updated = await env.DB.prepare('SELECT * FROM rstk_orders WHERE id = ?')
+    const updated = await env.DB.prepare(`${ORDER_WITH_CUSTOMER_SELECT} WHERE o.id = ?`)
       .bind(id)
       .first();
 
-    let items = [];
-    try {
-      items = JSON.parse(updated.items_json);
-    } catch {
-      items = [];
-    }
-
-    let parsedChanges = null;
-    try {
-      parsedChanges = updated.changes_json ? JSON.parse(updated.changes_json) : null;
-    } catch {
-      parsedChanges = null;
-    }
-
     return jsonResponse({
       success: true,
-      order: {
-        id: Number(updated.id),
-        orderNumber: updated.order_number,
-        customerId: updated.customer_id ? Number(updated.customer_id) : null,
-        customerCnpj: updated.customer_cnpj,
-        customerName: updated.customer_name,
-        customerEmail: updated.customer_email,
-        customerPhone: updated.customer_phone || null,
-        items,
-        totalCents: Number(updated.total_cents) || 0,
-        itemCount: Number(updated.item_count) || items.length,
-        status: updated.status,
-        origin: updated.origin,
-        notes: updated.notes,
-        adminNotes: updated.admin_notes,
-        changes: parsedChanges,
-        approvedAt: updated.approved_at,
-        clientApprovedAt: updated.client_approved_at,
-        dispatchedAt: updated.dispatched_at,
-        createdAt: updated.created_at,
-        updatedAt: updated.updated_at
-      }
+      order: updated ? formatOrderRow(updated) : null
     });
   } catch (err) {
     console.error('Order update error:', err);

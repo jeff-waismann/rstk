@@ -743,56 +743,60 @@
     const totalCents = items.reduce((s, it) => s + it.priceCents * it.quantity, 0) || (settings.priceCents ?? 18999);
     let orderNumber = '';
 
-    if (sourceEl) {
-      sourceEl.setAttribute('aria-busy', 'true');
-    }
+    if (items.length > 0) {
+      if (isSubmittingOrder) return;
+      isSubmittingOrder = true;
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2500);
-
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items,
-          totalCents,
-          origin: singleAlbumId ? 'modal_single_buy' : (sourceEl?.id === 'whatsapp-modal' ? 'modal_selection' : 'floating_whatsapp'),
-          customerPhone: currentClient?.telefone || currentClient?.phone || null,
-          customerName: currentClient?.nomeFantasia || currentClient?.razaoSocial || null,
-          customerEmail: currentClient?.email || null,
-          customerCnpj: currentClient?.cnpj || null,
-          notes: items.length
-            ? `Pedido de ${items.reduce((sum, it) => sum + it.quantity, 0)} vinil(is) solicitado via WhatsApp`
-            : 'Consulta geral de catálogo via WhatsApp'
-        }),
-        signal: controller.signal,
-        keepalive: true
-      });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.order?.orderNumber) {
-          orderNumber = data.order.orderNumber;
-          for (const it of items) {
-            const found = catalog.find((c) => Number(c.id) === Number(it.id));
-            if (found && typeof found.stock === 'number') {
-              found.stock = Math.max(0, found.stock - it.quantity);
-            }
-          }
-          draw();
-          if ($('detail')?.open && openAlbumId) {
-            showDetail(openAlbumId, false);
-          }
-          toast(`Pedido #${orderNumber} gravado! Abrindo WhatsApp...`);
-        }
-      }
-    } catch (err) {
-      console.warn('Registro de pedido offline ou excedeu tempo limite:', err);
-    } finally {
       if (sourceEl) {
-        sourceEl.removeAttribute('aria-busy');
+        sourceEl.setAttribute('aria-busy', 'true');
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items,
+            totalCents,
+            origin: singleAlbumId ? 'modal_single_buy' : (sourceEl?.id === 'whatsapp-modal' ? 'modal_selection' : 'floating_whatsapp'),
+            customerPhone: currentClient?.telefone || currentClient?.phone || null,
+            customerName: currentClient?.nomeFantasia || currentClient?.razaoSocial || null,
+            customerEmail: currentClient?.email || null,
+            customerCnpj: currentClient?.cnpj || null,
+            notes: `Pedido de ${items.reduce((sum, it) => sum + it.quantity, 0)} vinil(is) solicitado via WhatsApp`
+          }),
+          signal: controller.signal,
+          keepalive: true
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.order?.orderNumber) {
+            orderNumber = data.order.orderNumber;
+            for (const it of items) {
+              const found = catalog.find((c) => Number(c.id) === Number(it.id));
+              if (found && typeof found.stock === 'number') {
+                found.stock = Math.max(0, found.stock - it.quantity);
+              }
+            }
+            draw();
+            if ($('detail')?.open && openAlbumId) {
+              showDetail(openAlbumId, false);
+            }
+            toast(`Pedido #${orderNumber} gravado! Abrindo WhatsApp...`);
+          }
+        }
+      } catch (err) {
+        console.warn('Registro de pedido offline ou excedeu tempo limite:', err);
+      } finally {
+        isSubmittingOrder = false;
+        if (sourceEl) {
+          sourceEl.removeAttribute('aria-busy');
+        }
       }
     }
 
@@ -829,6 +833,7 @@
 
   // --- Client Auth Status Hydration & Direct Order Submission ---
   let currentClient = null;
+  let isSubmittingOrder = false;
 
   async function initClientAuthState() {
     try {
@@ -854,9 +859,18 @@
   }
 
   async function dispatchDirectOrder() {
+    if (isSubmittingOrder) return;
+
     if (selected.size === 0) {
       toast('Seu carrinho está vazio. Adicione vinis antes de enviar.');
       return;
+    }
+
+    isSubmittingOrder = true;
+    const submitBtn = $('btn-submit-order');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enviando Pedido...';
     }
 
     if (!currentClient) {
@@ -870,17 +884,16 @@
     }
 
     if (!currentClient) {
+      isSubmittingOrder = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar Pedido';
+      }
       toast('Faça login ou cadastre sua loja para enviar o pedido diretamente. Redirecionando...');
       setTimeout(() => {
         window.location.href = '/cliente/login?from=cart';
       }, 700);
       return;
-    }
-
-    const submitBtn = $('btn-submit-order');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Enviando Pedido...';
     }
 
     const selectedItems = catalog.filter((p) => selected.has(Number(p.id)));
@@ -935,6 +948,7 @@
           window.location.href = '/cliente/pedidos';
         }, 900);
       } else {
+        isSubmittingOrder = false;
         toast(data?.error || 'Erro ao enviar pedido.');
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -942,6 +956,7 @@
         }
       }
     } catch (err) {
+      isSubmittingOrder = false;
       toast('Erro de conexão ao enviar pedido. Tente novamente.');
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -977,7 +992,6 @@
     syncUrlState();
   });
 
-  $('btn-submit-order')?.addEventListener('click', dispatchDirectOrder);
   $('whatsapp-modal')?.addEventListener('click', (e) => dispatchWhatsAppOrder(e, $('whatsapp-modal')));
   $('whatsapp-floating')?.addEventListener('click', (e) => dispatchWhatsAppOrder(e, $('whatsapp-floating')));
 
@@ -985,6 +999,7 @@
     const rawTarget = event.target instanceof Element ? event.target : null;
     if (rawTarget && (rawTarget.id === 'btn-submit-order' || rawTarget.closest('#btn-submit-order, .btn-send-order'))) {
       event.preventDefault();
+      event.stopPropagation();
       dispatchDirectOrder();
       return;
     }
