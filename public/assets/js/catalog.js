@@ -907,7 +907,7 @@
         const headerBtn = $('header-login-btn');
         const headerText = $('header-login-text');
         if (headerBtn) {
-          headerBtn.href = '/cliente/pedidos?tab=conta';
+          headerBtn.href = '/cliente/pedidos?tab=pedidos';
           headerBtn.title = `Minha Conta — Conectado como ${displayName}`;
           if (headerText) headerText.textContent = 'Minha Conta';
         }
