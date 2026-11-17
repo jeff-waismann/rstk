@@ -4,4 +4,4 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://rstk-catalogo.pages.dev/sitemap-index.xml
+Sitemap: https://rstk.com.br/sitemap-index.xml

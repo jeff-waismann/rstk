@@ -1,7 +1,7 @@
 {
   "brandName": "RSTK",
   "brandAlt": "RSTK ATACADO",
-  "logoUrl": "/assets/images/logo-rstk.png",
+  "logoUrl": "/assets/images/logo-rstk.webp",
   "headerTagline": "Vinis importados · Atacado",
   "heroEyebrow": "Catálogo Novembro 2026",
   "heroTitle": "Vinis lacrados e importados",
@@ -25,6 +25,6 @@
   "footerTextSecondary": "Capas de referência dos álbuns; a arte e os detalhes da edição física podem variar. Datas conforme a lista fornecida. Gêneros organizados para facilitar a navegação.",
   "seoTitle": "RSTK • Catálogo Novembro 2026 | Vinis Lacrados no Atacado",
   "seoDescription": "Catálogo RSTK Atacado de vinis lacrados e importados para lojistas. Mais de 50 títulos clássicos e contemporâneos em LP com preço único de lançamento.",
-  "ogImage": "/assets/covers/album-28.jpg",
-  "siteUrl": "https://rstk.pages.dev"
+  "ogImage": "/assets/covers/album-28.webp",
+  "siteUrl": "https://rstk.com.br"
 }

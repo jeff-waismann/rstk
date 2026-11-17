@@ -83,9 +83,10 @@ const sortedProducts = [...products].sort(
   </div>
 
   <div class="grid" id="grid">
-    {sortedProducts.map((album) => {
+    {sortedProducts.map((album, idx) => {
       const unitLabel = album.units === 1 ? 'Álbum Simples' : (album.units === 2 ? 'Álbum Duplo' : `${album.units} LPs`);
       const isSoldOut = !album.active || Math.max(0, Number(album.stock ?? 30)) === 0;
+      const isAboveFold = idx < 4;
       return (
         <article class={`card ${isSoldOut ? 'sold-out' : ''}`} data-id={album.id}>
           <div class="art">
@@ -97,7 +98,8 @@ const sortedProducts = [...products].sort(
             >
               <img
                 src={album.cover}
-                loading="lazy"
+                loading={isAboveFold ? 'eager' : 'lazy'}
+                fetchpriority={isAboveFold ? 'high' : 'auto'}
                 decoding="async"
                 width="600"
                 height="600"

@@ -17,11 +17,11 @@ const {
   noindex = false
 } = Astro.props;
 
-const baseUrl = (settings.siteUrl || 'https://rstk-catalogo.pages.dev').replace(/\/$/, '');
+const baseUrl = (settings.siteUrl || 'https://rstk.com.br').replace(/\/$/, '');
 const canonicalUrl = `${baseUrl}${canonicalPath === '/' ? '/' : canonicalPath}`;
 const ogImageUrl = settings.ogImage?.startsWith('http')
   ? settings.ogImage
-  : `${baseUrl}${settings.ogImage || '/assets/covers/album-28.jpg'}`;
+  : `${baseUrl}${settings.ogImage || '/assets/covers/album-28.webp'}`;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -31,7 +31,7 @@ const jsonLd = {
       '@id': `${baseUrl}/#organization`,
       name: settings.brandAlt || 'RSTK Atacado',
       url: baseUrl,
-      logo: `${baseUrl}${settings.logoUrl || '/assets/images/logo-rstk.png'}`,
+      logo: `${baseUrl}${settings.logoUrl || '/assets/images/logo-rstk.webp'}`,
       description: settings.seoDescription
     },
     {

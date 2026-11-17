@@ -343,7 +343,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                             {order.items.slice(0, 3).map((it, idx) => (
                               <img
                                 key={idx}
-                                src={it.cover || '/assets/covers/album-01.jpg'}
+                                src={it.cover || '/assets/covers/album-01.webp'}
                                 alt={it.title}
                                 className="inline-block w-8 h-8 rounded-md object-cover border border-white shadow-xs"
                                 loading="lazy"
@@ -507,7 +507,7 @@ export default function OrdersTab({ onNotify, onRefreshCatalog }) {
                     <div key={idx} className="p-3 flex items-center justify-between gap-3 bg-white">
                       <div className="flex items-center gap-3 min-w-0">
                         <img
-                          src={it.cover || '/assets/covers/album-01.jpg'}
+                          src={it.cover || '/assets/covers/album-01.webp'}
                           alt={it.title}
                           className="w-12 h-12 rounded-lg object-cover border border-[#E2E8F0] flex-shrink-0"
                           loading="lazy"

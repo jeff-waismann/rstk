@@ -33,7 +33,7 @@ export default function ImageField({ label, value = '', onChange, helperText = '
               type="text"
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              placeholder="/assets/covers/album-01.jpg ou /uploads/..."
+              placeholder="/assets/covers/album-01.webp ou /uploads/..."
               className="flex-1 min-w-[180px] text-xs font-mono text-[#0F172A] bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00C6F7]"
             />
             <button
