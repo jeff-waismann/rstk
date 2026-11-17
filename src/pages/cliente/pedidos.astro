@@ -92,7 +92,7 @@ const siteSettings = {
 
       <div id="portal-alert" class="alert-box" hidden></div>
 
-      {/* Seção Principal de Pedidos */}
+      {/* Seção Principal de Pedidos: Tabela Limpa e Profissional */}
       <div class="portal-content">
         <div class="orders-section-header">
           <div class="orders-title-group">
@@ -100,7 +100,7 @@ const siteSettings = {
               <h2>Histórico de Pedidos</h2>
               <span id="orders-count-badge" class="orders-count-badge">0 pedidos</span>
             </div>
-            <p>Acompanhe o status de faturamento, aprovação e expedição dos pedidos da sua loja. Clique em qualquer pedido para ver os itens detalhados.</p>
+            <p>Acompanhe todos os pedidos da sua loja em tempo real. Clique em qualquer linha para abrir os detalhes completos em pop-up.</p>
           </div>
           <button type="button" id="btn-refresh-orders" class="btn-refresh">
             <span class="refresh-icon">↻</span>
@@ -116,24 +116,110 @@ const siteSettings = {
         <div id="orders-empty" class="orders-empty" hidden>
           <div class="empty-icon">📦</div>
           <h3>Nenhum pedido encontrado</h3>
-          <p>Sua loja ainda não realizou pedidos vinculados a esta conta. Escolha seus vinis no catálogo e clique em "Enviar Pedido" para acompanhar tudo por aqui em tempo real!</p>
+          <p>Sua loja ainda não realizou pedidos vinculados a esta conta. Escolha seus vinis no catálogo e envie seu pedido para acompanhar tudo por aqui!</p>
           <a href="/" class="btn-primary-portal">Explorar Catálogo de Vinis →</a>
         </div>
 
-        <div id="orders-list" class="orders-list" hidden>
-          {/* Inserido dinamicamente via JS como cards accordion */}
+        {/* Tabela de Pedidos Profissional (1 Linha por Pedido) */}
+        <div id="orders-table-card" class="orders-table-card" hidden>
+          <div class="orders-table-scroll">
+            <table class="orders-table">
+              <thead>
+                <tr>
+                  <th class="th-code">Pedido</th>
+                  <th class="th-date">Data / Hora</th>
+                  <th class="th-qty">Discos</th>
+                  <th class="th-total">Valor Total</th>
+                  <th class="th-status">Status</th>
+                  <th class="th-action text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="orders-tbody">
+                {/* Linhas inseridas dinamicamente via JS */}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   </main>
 
+  {/* ========================================================
+      MODAL / POP-UP DE DETALHES DO PEDIDO
+      ======================================================== */}
+  <div id="order-modal" class="modal-backdrop" hidden>
+    <div class="modal-container" role="dialog" aria-modal="true" aria-labelledby="modal-order-number">
+      {/* Header do Pop-up */}
+      <div class="modal-header">
+        <div>
+          <span class="modal-eyebrow">Detalhes do Pedido</span>
+          <h3 id="modal-order-number" class="modal-title">#PED-XXXXXX</h3>
+          <span id="modal-order-date" class="modal-date">—</span>
+        </div>
+        <button type="button" id="modal-close-btn" class="modal-close" aria-label="Fechar janela">
+          ✕
+        </button>
+      </div>
+
+      {/* Conteúdo com Scroll */}
+      <div class="modal-body">
+        {/* Banner de Aviso / Notificação de Alterações */}
+        <div id="modal-notice-container"></div>
+
+        {/* Lista de Discos Solicitados */}
+        <div class="modal-discs-section">
+          <div class="modal-discs-header">
+            <h4>Discos Solicitados</h4>
+            <span id="modal-items-count-badge" class="modal-count-badge">0 discos</span>
+          </div>
+          <div id="modal-discs-list" class="modal-discs-list">
+            {/* Itens inseridos dinamicamente */}
+          </div>
+        </div>
+
+        {/* Observações do Pedido */}
+        <div id="modal-notes-box" class="modal-notes-box" hidden>
+          <span class="modal-notes-label">Observações da Loja:</span>
+          <p id="modal-notes-text" class="modal-notes-text"></p>
+        </div>
+      </div>
+
+      {/* Rodapé do Pop-up */}
+      <div class="modal-footer">
+        <div class="modal-footer-left">
+          <span class="modal-footer-caption">Total do Pedido:</span>
+          <strong id="modal-total-cents" class="modal-footer-total">R$ 0,00</strong>
+        </div>
+
+        <div class="modal-footer-actions">
+          <a id="modal-whatsapp-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn-modal-whatsapp">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor">
+              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.586-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.941-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.288.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.302c-.087.087-.179.18-.077.355.101.174.45 1.742 1.488 2.063.267.082.477.068.654-.044.224-.143.636-.738.809-.991.173-.253.347-.211.583-.125.237.086 1.503.708 1.763.838.26.13.433.195.498.304.065.109.065.636-.079 1.041z"/>
+            </svg>
+            <span>Chamar no WhatsApp</span>
+          </a>
+
+          <button type="button" id="modal-approve-btn" class="btn-modal-approve" hidden>
+            <span>✓ Confirmar Alterações</span>
+          </button>
+
+          <button type="button" id="modal-secondary-close" class="btn-modal-close">
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script is:inline>
     (function () {
       var clientData = null;
       var ordersData = [];
-      var expandedOrderIds = {}; // Armazena quais pedidos estão abertos
+      var selectedOrder = null;
+
       var alertBox = document.getElementById('portal-alert');
-      var ordersContainer = document.getElementById('orders-list');
+      var tableCardEl = document.getElementById('orders-table-card');
+      var tbodyEl = document.getElementById('orders-tbody');
       var loadingEl = document.getElementById('orders-loading');
       var emptyEl = document.getElementById('orders-empty');
       var countBadgeEl = document.getElementById('orders-count-badge');
@@ -142,6 +228,21 @@ const siteSettings = {
       var unverifiedBanner = document.getElementById('unverified-banner');
       var btnLogout = document.getElementById('btn-logout');
       var btnRefresh = document.getElementById('btn-refresh-orders');
+
+      // Elementos do Modal
+      var modalEl = document.getElementById('order-modal');
+      var modalCloseBtn = document.getElementById('modal-close-btn');
+      var modalSecondaryClose = document.getElementById('modal-secondary-close');
+      var modalOrderNumber = document.getElementById('modal-order-number');
+      var modalOrderDate = document.getElementById('modal-order-date');
+      var modalNoticeContainer = document.getElementById('modal-notice-container');
+      var modalCountBadge = document.getElementById('modal-items-count-badge');
+      var modalDiscsList = document.getElementById('modal-discs-list');
+      var modalNotesBox = document.getElementById('modal-notes-box');
+      var modalNotesText = document.getElementById('modal-notes-text');
+      var modalTotalCents = document.getElementById('modal-total-cents');
+      var modalWhatsappBtn = document.getElementById('modal-whatsapp-btn');
+      var modalApproveBtn = document.getElementById('modal-approve-btn');
 
       function formatBRL(cents) {
         return ((cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -182,50 +283,42 @@ const siteSettings = {
         enviado: {
           label: 'Enviado / Em Análise',
           badgeClass: 'badge-status-enviado',
-          icon: '📋',
-          desc: 'Seu pedido foi registrado e está sendo conferido pela equipe RSTK.'
+          icon: '📋'
         },
         whatsapp_aberto: {
           label: 'Enviado / Em Análise',
           badgeClass: 'badge-status-enviado',
-          icon: '📋',
-          desc: 'Seu pedido foi registrado e está sendo conferido pela equipe RSTK.'
+          icon: '📋'
         },
         aprovado: {
           label: 'Aprovado pela RSTK',
           badgeClass: 'badge-status-aprovado',
-          icon: '✓',
-          desc: 'Pedido aprovado! Itens confirmados e em processo de separação.'
+          icon: '✓'
         },
         confirmado: {
           label: 'Aprovado pela RSTK',
           badgeClass: 'badge-status-aprovado',
-          icon: '✓',
-          desc: 'Pedido aprovado! Itens confirmados e em processo de separação.'
+          icon: '✓'
         },
         aprovado_com_alteracoes: {
-          label: 'Aprovado com Alterações',
+          label: 'Aprovado c/ Alterações',
           badgeClass: 'badge-status-alteracoes',
-          icon: '⚠️',
-          desc: 'Houve alteração no estoque de alguns itens. Confira e aprove as alterações abaixo.'
+          icon: '⚠️'
         },
         alteracoes_aceitas: {
           label: 'Alterações Aprovadas',
           badgeClass: 'badge-status-aceito',
-          icon: '✓',
-          desc: 'Você aprovou as alterações! A equipe RSTK foi notificada para despachar.'
+          icon: '✓'
         },
         despachado: {
           label: 'Despachado / Enviado',
           badgeClass: 'badge-status-despachado',
-          icon: '🚚',
-          desc: 'Pedido despachado! Seus vinis estão a caminho da sua loja.'
+          icon: '🚚'
         },
         cancelado: {
           label: 'Cancelado',
           badgeClass: 'badge-status-cancelado',
-          icon: '✕',
-          desc: 'Pedido cancelado.'
+          icon: '✕'
         }
       };
 
@@ -266,8 +359,8 @@ const siteSettings = {
         loadingEl.style.display = 'block';
         emptyEl.hidden = true;
         emptyEl.style.display = 'none';
-        ordersContainer.hidden = true;
-        ordersContainer.style.display = 'none';
+        tableCardEl.hidden = true;
+        tableCardEl.style.display = 'none';
 
         try {
           var res = await fetch('/api/client/orders', { cache: 'no-store' });
@@ -284,15 +377,17 @@ const siteSettings = {
               emptyEl.style.display = 'block';
             } else {
               if (countBadgeEl) countBadgeEl.textContent = ordersData.length + (ordersData.length === 1 ? ' pedido' : ' pedidos');
-              
-              // Se nenhuma ordem estiver expandida ainda, expande o primeiro pedido automaticamente
-              if (Object.keys(expandedOrderIds).length === 0 && ordersData[0]) {
-                expandedOrderIds[ordersData[0].id] = true;
-              }
+              renderOrdersTable(ordersData);
+              tableCardEl.hidden = false;
+              tableCardEl.style.display = 'block';
 
-              renderOrders(ordersData);
-              ordersContainer.hidden = false;
-              ordersContainer.style.display = 'flex';
+              // Se o modal estiver aberto, atualiza os dados do pedido selecionado
+              if (selectedOrder) {
+                var refreshed = ordersData.find(function (o) { return o.id === selectedOrder.id; });
+                if (refreshed) {
+                  openOrderModal(refreshed);
+                }
+              }
             }
           } else {
             emptyEl.hidden = false;
@@ -306,21 +401,14 @@ const siteSettings = {
         }
       }
 
-      function renderOrders(orders) {
-        ordersContainer.innerHTML = '';
+      function renderOrdersTable(orders) {
+        tbodyEl.innerHTML = '';
 
         orders.forEach(function (order) {
           var statusInfo = STATUS_MAP[order.status] || STATUS_MAP.enviado;
-          var isExpanded = Boolean(expandedOrderIds[order.id]);
-
-          // Mapeia alterações
-          var changesMap = {};
-          if (Array.isArray(order.changes)) {
-            order.changes.forEach(function (c) {
-              if (c.id) changesMap[String(c.id)] = c;
-              if (c.title) changesMap[c.title.toLowerCase().trim()] = c;
-            });
-          }
+          var tr = document.createElement('tr');
+          tr.className = 'order-row';
+          tr.setAttribute('data-order-id', order.id);
 
           var hasChanges = Boolean(
             (order.changes && order.changes.length > 0) ||
@@ -328,359 +416,334 @@ const siteSettings = {
             order.status === 'alteracoes_aceitas'
           );
 
-          var isPendingApproval = Boolean(
-            order.status === 'aprovado_com_alteracoes' ||
-            (hasChanges && !order.clientApprovedAt && order.status !== 'alteracoes_aceitas' && order.status !== 'despachado')
+          tr.innerHTML = `
+            <td class="td-code">
+              <span class="order-code-badge">#${order.orderNumber}</span>
+            </td>
+            <td class="td-date">
+              <span class="order-date-text">${formatDateTimeBR(order.createdAt)}</span>
+            </td>
+            <td class="td-qty">
+              <span class="qty-pill"><strong>${order.itemCount}</strong> disco(s)</span>
+            </td>
+            <td class="td-total">
+              <strong class="total-val">${formatBRL(order.totalCents)}</strong>
+            </td>
+            <td class="td-status">
+              <span class="badge-status-pill ${statusInfo.badgeClass}">
+                <span class="badge-status-dot"></span>
+                <span>${statusInfo.label}</span>
+              </span>
+            </td>
+            <td class="td-action text-right">
+              <button type="button" class="btn-open-order" data-order-id="${order.id}">
+                <span>Ver Detalhes</span>
+                <span class="arrow-icon">→</span>
+              </button>
+            </td>
+          `;
+
+          // Clicar em qualquer lugar da linha abre o modal de detalhes
+          tr.addEventListener('click', function (e) {
+            openOrderModal(order);
+          });
+
+          tbodyEl.appendChild(tr);
+        });
+      }
+
+      // ========================================================
+      // GESTÃO DO POP-UP (MODAL DE DETALHES)
+      // ========================================================
+      function openOrderModal(order) {
+        selectedOrder = order;
+        var statusInfo = STATUS_MAP[order.status] || STATUS_MAP.enviado;
+
+        modalOrderNumber.textContent = '#' + order.orderNumber;
+        modalOrderDate.textContent = 'Realizado em ' + formatDateTimeBR(order.createdAt);
+        modalCountBadge.textContent = order.itemCount + (order.itemCount === 1 ? ' disco' : ' discos');
+        modalTotalCents.textContent = formatBRL(order.totalCents);
+
+        // Mapeia alterações efetuadas pela equipe RSTK
+        var changesMap = {};
+        if (Array.isArray(order.changes)) {
+          order.changes.forEach(function (c) {
+            if (c.id) changesMap[String(c.id)] = c;
+            if (c.title) changesMap[c.title.toLowerCase().trim()] = c;
+          });
+        }
+
+        var hasChanges = Boolean(
+          (order.changes && order.changes.length > 0) ||
+          order.status === 'aprovado_com_alteracoes' ||
+          order.status === 'alteracoes_aceitas'
+        );
+
+        var isPendingApproval = Boolean(
+          order.status === 'aprovado_com_alteracoes' ||
+          (hasChanges && !order.clientApprovedAt && order.status !== 'alteracoes_aceitas' && order.status !== 'despachado')
+        );
+
+        var isChangesApproved = Boolean(
+          order.status === 'alteracoes_aceitas' ||
+          order.clientApprovedAt
+        );
+
+        var isApprovedClean = Boolean(
+          (order.status === 'aprovado' || order.status === 'confirmado') &&
+          !hasChanges
+        );
+
+        var isDispatched = Boolean(
+          order.status === 'despachado' ||
+          order.dispatchedAt
+        );
+
+        // Banner informativo dentro do Pop-up
+        modalNoticeContainer.innerHTML = '';
+        if (isPendingApproval) {
+          modalNoticeContainer.innerHTML = `
+            <div class="modal-notice-card notice-warning">
+              <div class="notice-top">
+                <span class="notice-icon">⚠️</span>
+                <div class="notice-desc">
+                  <strong>Atenção: A RSTK ajustou itens deste pedido por disponibilidade em estoque</strong>
+                  <p>Veja os itens em destaque amarelo ou vermelho abaixo. O valor total atualizado é <strong>${formatBRL(order.totalCents)}</strong>.</p>
+                  ${order.adminNotes ? `<p class="admin-quote"><strong>Mensagem da RSTK:</strong> "${escapeHtml(order.adminNotes)}"</p>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+          modalApproveBtn.hidden = false;
+          modalApproveBtn.style.display = 'inline-flex';
+        } else if (isChangesApproved) {
+          modalNoticeContainer.innerHTML = `
+            <div class="modal-notice-card notice-success">
+              <div class="notice-top">
+                <span class="notice-icon">✓</span>
+                <div class="notice-desc">
+                  <strong>Alterações aprovadas pela sua loja!</strong>
+                  <p>Você confirmou a composição atualizada deste pedido${order.clientApprovedAt ? ' em ' + formatDateTimeBR(order.clientApprovedAt) : ''}. A equipe RSTK foi notificada para despachar.</p>
+                </div>
+              </div>
+            </div>
+          `;
+          modalApproveBtn.hidden = true;
+          modalApproveBtn.style.display = 'none';
+        } else if (isDispatched) {
+          modalNoticeContainer.innerHTML = `
+            <div class="modal-notice-card notice-dispatched">
+              <div class="notice-top">
+                <span class="notice-icon">🚚</span>
+                <div class="notice-desc">
+                  <strong>Pedido Despachado com Sucesso!</strong>
+                  <p>Seus vinis já foram despachados pela equipe RSTK${order.dispatchedAt ? ' em ' + formatDateTimeBR(order.dispatchedAt) : ''}.</p>
+                </div>
+              </div>
+            </div>
+          `;
+          modalApproveBtn.hidden = true;
+          modalApproveBtn.style.display = 'none';
+        } else if (isApprovedClean) {
+          modalNoticeContainer.innerHTML = `
+            <div class="modal-notice-card notice-success">
+              <div class="notice-top">
+                <span class="notice-icon">✓</span>
+                <div class="notice-desc">
+                  <strong>Pedido 100% Aprovado pela RSTK!</strong>
+                  <p>Todos os itens solicitados foram confirmados em estoque e estão em fase de separação.</p>
+                </div>
+              </div>
+            </div>
+          `;
+          modalApproveBtn.hidden = true;
+          modalApproveBtn.style.display = 'none';
+        } else {
+          modalNoticeContainer.innerHTML = `
+            <div class="modal-notice-card notice-info">
+              <div class="notice-top">
+                <span class="notice-icon">📋</span>
+                <div class="notice-desc">
+                  <strong>Pedido Enviado — Em Análise pela RSTK</strong>
+                  <p>Nossa equipe está conferindo os títulos e estoque para faturamento. Qualquer atualização aparecerá aqui.</p>
+                </div>
+              </div>
+            </div>
+          `;
+          modalApproveBtn.hidden = true;
+          modalApproveBtn.style.display = 'none';
+        }
+
+        // Renderiza itens dentro do Pop-up (capa bem pequena, dados limpos, destaques de alteração)
+        modalDiscsList.innerHTML = '';
+        (order.items || []).forEach(function (it) {
+          var change = changesMap[String(it.id)] || (it.title ? changesMap[it.title.toLowerCase().trim()] : null);
+
+          var isCancelled = Boolean(
+            (change && Number(change.newQty) === 0) ||
+            Number(it.quantity) === 0 ||
+            it.status === 'cancelado'
           );
 
-          var isChangesApproved = Boolean(
-            order.status === 'alteracoes_aceitas' ||
-            order.clientApprovedAt
+          var isModified = !isCancelled && Boolean(
+            change && (Number(change.newQty) < Number(change.oldQty) || Number(change.newQty) !== Number(change.oldQty))
           );
 
-          var isApprovedClean = Boolean(
-            (order.status === 'aprovado' || order.status === 'confirmado') &&
-            !hasChanges
-          );
+          var unitPrice = it.priceCents || 18999;
+          var currentQty = isCancelled ? 0 : Number(it.quantity || 1);
+          var itemTotal = unitPrice * currentQty;
+          var albumFormat = Number(it.units) === 1 ? 'Álbum Simples' : (Number(it.units) === 2 ? 'Álbum Duplo' : `${it.units || 1} LPs`);
 
-          var isDispatched = Boolean(
-            order.status === 'despachado' ||
-            order.dispatchedAt
-          );
+          var rowDiv = document.createElement('div');
 
-          // Card principal do Accordion
-          var card = document.createElement('article');
-          card.className = 'order-accordion-card ' + (isExpanded ? 'is-expanded' : '');
-          card.setAttribute('data-order-id', order.id);
-
-          // Gera HTML dos itens
-          var itemsHtml = (order.items || []).map(function (it, idx) {
-            var change = changesMap[String(it.id)] || (it.title ? changesMap[it.title.toLowerCase().trim()] : null);
-            
-            // É cancelado?
-            var isCancelled = Boolean(
-              (change && Number(change.newQty) === 0) ||
-              Number(it.quantity) === 0 ||
-              it.status === 'cancelado'
-            );
-
-            // É quantidade reduzida/alterada?
-            var isModified = !isCancelled && Boolean(
-              change && (Number(change.newQty) < Number(change.oldQty) || Number(change.newQty) !== Number(change.oldQty))
-            );
-
-            var rowClass = 'item-row-normal';
-            var tagBadgeHtml = '';
-            var qtyDisplay = '';
-            var priceDisplay = '';
-
-            var unitPrice = it.priceCents || 18999;
-            var currentQty = isCancelled ? 0 : Number(it.quantity || 1);
-            var itemTotal = unitPrice * currentQty;
-
-            if (isCancelled) {
-              rowClass = 'item-row-cancelled';
-              var originalReq = (change && change.oldQty) ? change.oldQty : (it.requestedQuantity || 1);
-              tagBadgeHtml = '<span class="item-tag tag-cancelled">🚫 Item Cancelado — Esgotado no estoque</span>';
-              qtyDisplay = `
-                <div class="item-qty-box">
+          if (isCancelled) {
+            rowDiv.className = 'modal-disc-row disc-row-cancelled';
+            var originalReq = (change && change.oldQty) ? change.oldQty : (it.requestedQuantity || 1);
+            rowDiv.innerHTML = `
+              <div class="disc-row-left">
+                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="disc-thumb" loading="lazy" />
+                <div class="disc-info">
+                  <div class="disc-title-line">
+                    <strong class="title-cancelled"><s>${escapeHtml(it.title || 'Disco de Vinil')}</s></strong>
+                    <span class="tag-cancelled">🚫 Cancelado — Esgotado</span>
+                  </div>
+                  <span class="disc-sub">${escapeHtml(it.artist || 'Artista')} · ${albumFormat}</span>
+                </div>
+              </div>
+              <div class="disc-row-right">
+                <div class="disc-qty-col">
                   <span class="qty-badge-cancelled">0 un.</span>
                   <span class="qty-sub-cancelled">Solicitado: ${originalReq} un.</span>
                 </div>
-              `;
-              priceDisplay = `
-                <div class="item-price-box">
+                <div class="disc-price-col">
                   <del class="old-price-strike">${formatBRL(unitPrice * originalReq)}</del>
-                  <strong class="price-val-cancelled">R$ 0,00</strong>
+                  <strong class="price-cancelled">R$ 0,00</strong>
                 </div>
-              `;
-            } else if (isModified) {
-              rowClass = 'item-row-modified';
-              tagBadgeHtml = `<span class="item-tag tag-modified">⚠️ Qtd alterada por estoque (solicitado: ${change.oldQty} un.)</span>`;
-              qtyDisplay = `
-                <div class="item-qty-box">
+              </div>
+            `;
+          } else if (isModified) {
+            rowDiv.className = 'modal-disc-row disc-row-modified';
+            rowDiv.innerHTML = `
+              <div class="disc-row-left">
+                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="disc-thumb" loading="lazy" />
+                <div class="disc-info">
+                  <div class="disc-title-line">
+                    <strong>${escapeHtml(it.title || 'Disco de Vinil')}</strong>
+                    <span class="tag-modified">⚠️ Qtd alterada por estoque</span>
+                  </div>
+                  <span class="disc-sub">${escapeHtml(it.artist || 'Artista')} · ${albumFormat}</span>
+                </div>
+              </div>
+              <div class="disc-row-right">
+                <div class="disc-qty-col">
                   <span class="qty-badge-modified">${currentQty} un.</span>
                   <span class="qty-sub-modified">De ${change.oldQty} un. para ${currentQty} un.</span>
                 </div>
-              `;
-              priceDisplay = `
-                <div class="item-price-box">
-                  <span class="item-unit-price">${formatBRL(unitPrice)} un.</span>
-                  <strong class="price-val-modified">${formatBRL(itemTotal)}</strong>
-                </div>
-              `;
-            } else {
-              rowClass = 'item-row-normal';
-              qtyDisplay = `
-                <div class="item-qty-box">
-                  <span class="qty-badge-normal">${currentQty} un.</span>
-                </div>
-              `;
-              priceDisplay = `
-                <div class="item-price-box">
-                  <span class="item-unit-price">${formatBRL(unitPrice)} un.</span>
-                  <strong class="price-val-normal">${formatBRL(itemTotal)}</strong>
-                </div>
-              `;
-            }
-
-            var albumFormat = Number(it.units) === 1 ? 'Álbum Simples' : (Number(it.units) === 2 ? 'Álbum Duplo' : `${it.units || 1} LPs`);
-
-            return `
-              <div class="order-disc-row ${rowClass}">
-                <div class="disc-left">
-                  <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="disc-cover" loading="lazy" />
-                  <div class="disc-meta">
-                    <div class="disc-title-row">
-                      <strong class="disc-title ${isCancelled ? 'strike-title' : ''}">${escapeHtml(it.title || 'Disco de Vinil')}</strong>
-                      ${tagBadgeHtml}
-                    </div>
-                    <span class="disc-sub">${escapeHtml(it.artist || 'Artista')} · ${albumFormat}</span>
-                  </div>
-                </div>
-                <div class="disc-right">
-                  ${qtyDisplay}
-                  ${priceDisplay}
-                </div>
-              </div>
-            `;
-          }).join('');
-
-          // Mensagem de suporte via WhatsApp
-          var whatsappMsg = 'Olá, equipe RSTK! Gostaria de falar sobre o pedido #' + order.orderNumber + ' da minha loja (' + (clientData.nomeFantasia || clientData.razaoSocial) + ').';
-          var whatsappSupportUrl = 'https://wa.me/553488293565?text=' + encodeURIComponent(whatsappMsg);
-
-          // Constrói banners informativos
-          var noticeHtml = '';
-          if (isPendingApproval) {
-            noticeHtml = `
-              <div class="order-notice-box notice-warning">
-                <div class="notice-top">
-                  <div class="notice-icon-circle">⚠️</div>
-                  <div class="notice-text">
-                    <strong>Atenção: Houve alteração no seu pedido devido ao estoque disponível</strong>
-                    <p>Durante a separação, alguns discos tiveram a quantidade reajustada ou foram cancelados por esgotamento. Veja o destaque dos itens abaixo (em amarelo ou vermelho). O valor total atualizado do pedido é <strong>${formatBRL(order.totalCents)}</strong>.</p>
-                    ${order.adminNotes ? `<p class="admin-notice-quote"><strong>Mensagem da RSTK:</strong> "${escapeHtml(order.adminNotes)}"</p>` : ''}
-                  </div>
-                </div>
-                <div class="notice-bottom-action">
-                  <button type="button" class="btn-approve-changes" data-order-id="${order.id}">
-                    <span class="btn-icon">✓</span>
-                    <span>Aprovar Alterações do Pedido</span>
-                  </button>
-                </div>
-              </div>
-            `;
-          } else if (isChangesApproved) {
-            noticeHtml = `
-              <div class="order-notice-box notice-success">
-                <div class="notice-top">
-                  <div class="notice-icon-circle">✓</div>
-                  <div class="notice-text">
-                    <strong>Alterações aprovadas pela sua loja!</strong>
-                    <p>Você aprovou a composição revisada deste pedido${order.clientApprovedAt ? ' em ' + formatDateTimeBR(order.clientApprovedAt) : ''}. A equipe RSTK foi notificada e já pode despachar sua encomenda.</p>
-                  </div>
-                </div>
-              </div>
-            `;
-          } else if (isDispatched) {
-            noticeHtml = `
-              <div class="order-notice-box notice-dispatched">
-                <div class="notice-top">
-                  <div class="notice-icon-circle">🚚</div>
-                  <div class="notice-text">
-                    <strong>Pedido Despachado com Sucesso!</strong>
-                    <p>Seus vinis já foram despachados pela equipe RSTK${order.dispatchedAt ? ' em ' + formatDateTimeBR(order.dispatchedAt) : ''}. Em breve você receberá as informações de rastreio e entrega.</p>
-                  </div>
-                </div>
-              </div>
-            `;
-          } else if (isApprovedClean) {
-            noticeHtml = `
-              <div class="order-notice-box notice-success">
-                <div class="notice-top">
-                  <div class="notice-icon-circle">✓</div>
-                  <div class="notice-text">
-                    <strong>Pedido 100% Aprovado pela RSTK!</strong>
-                    <p>Todos os itens e quantidades foram confirmados em estoque. Seu pedido está em processo de separação e expedição.</p>
-                  </div>
+                <div class="disc-price-col">
+                  <span class="disc-unit-price">${formatBRL(unitPrice)} un.</span>
+                  <strong class="price-modified">${formatBRL(itemTotal)}</strong>
                 </div>
               </div>
             `;
           } else {
-            noticeHtml = `
-              <div class="order-notice-box notice-info">
-                <div class="notice-top">
-                  <div class="notice-icon-circle">📋</div>
-                  <div class="notice-text">
-                    <strong>Pedido Enviado — Em Análise pela RSTK</strong>
-                    <p>Seu pedido foi registrado no sistema. Nossa equipe está conferindo os títulos e estoque para faturamento. Qualquer alteração ou atualização de status será exibida aqui.</p>
-                  </div>
+            rowDiv.className = 'modal-disc-row disc-row-normal';
+            rowDiv.innerHTML = `
+              <div class="disc-row-left">
+                <img src="${it.cover || '/assets/covers/album-01.webp'}" alt="" class="disc-thumb" loading="lazy" />
+                <div class="disc-info">
+                  <strong class="disc-title">${escapeHtml(it.title || 'Disco de Vinil')}</strong>
+                  <span class="disc-sub">${escapeHtml(it.artist || 'Artista')} · ${albumFormat}</span>
+                </div>
+              </div>
+              <div class="disc-row-right">
+                <div class="disc-qty-col">
+                  <span class="qty-badge-normal">${currentQty} un.</span>
+                </div>
+                <div class="disc-price-col">
+                  <span class="disc-unit-price">${formatBRL(unitPrice)} un.</span>
+                  <strong class="price-normal">${formatBRL(itemTotal)}</strong>
                 </div>
               </div>
             `;
           }
 
-          card.innerHTML = `
-            <!-- Linha Resumo do Accordion (Clicável) -->
-            <div class="order-summary-row" role="button" tabindex="0" aria-expanded="${isExpanded}">
-              <div class="summary-col col-order-id">
-                <div class="order-hash-id">
-                  <span class="hash-symbol">#</span>
-                  <span class="hash-number">${order.orderNumber}</span>
-                </div>
-                <span class="order-created-date">${formatDateTimeBR(order.createdAt)}</span>
-              </div>
-
-              <div class="summary-col col-order-qty">
-                <span class="col-caption">Discos no Pedido</span>
-                <span class="col-value-qty"><strong>${order.itemCount}</strong> disco(s)</span>
-              </div>
-
-              <div class="summary-col col-order-total">
-                <span class="col-caption">Valor Total</span>
-                <span class="col-value-total">${formatBRL(order.totalCents)}</span>
-              </div>
-
-              <div class="summary-col col-order-status">
-                <span class="badge-status-pill ${statusInfo.badgeClass}">
-                  <span class="badge-status-dot"></span>
-                  <span class="badge-status-text">${statusInfo.label}</span>
-                </span>
-              </div>
-
-              <div class="summary-col col-order-toggle">
-                <span class="toggle-link-text">${isExpanded ? 'Ocultar detalhes' : 'Ver detalhes'}</span>
-                <span class="toggle-chevron ${isExpanded ? 'rotated' : ''}">▼</span>
-              </div>
-            </div>
-
-            <!-- Gaveta de Detalhes do Pedido -->
-            <div class="order-details-drawer" ${isExpanded ? '' : 'hidden'}>
-              ${noticeHtml}
-
-              <div class="discs-section">
-                <div class="discs-section-header">
-                  <h3>Itens do Pedido (${order.itemCount} unidades)</h3>
-                  <span class="discs-hint">Revise cada título e suas respectivas quantidades</span>
-                </div>
-
-                <div class="discs-list">
-                  ${itemsHtml}
-                </div>
-              </div>
-
-              ${order.notes ? `
-                <div class="order-notes-bar">
-                  <span class="notes-label">Observações da Loja:</span>
-                  <p class="notes-content">${escapeHtml(order.notes)}</p>
-                </div>
-              ` : ''}
-
-              <!-- Rodapé da Gaveta -->
-              <div class="order-drawer-footer">
-                <div class="footer-totals">
-                  <div class="footer-total-line">
-                    <span class="label">Total Final do Pedido:</span>
-                    <strong class="value">${formatBRL(order.totalCents)}</strong>
-                  </div>
-                </div>
-
-                <div class="footer-actions">
-                  <a href="${whatsappSupportUrl}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-order">
-                    <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor">
-                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.586-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.941-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.288.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.302c-.087.087-.179.18-.077.355.101.174.45 1.742 1.488 2.063.267.082.477.068.654-.044.224-.143.636-.738.809-.991.173-.253.347-.211.583-.125.237.086 1.503.708 1.763.838.26.13.433.195.498.304.065.109.065.636-.079 1.041z"/>
-                    </svg>
-                    <span>Falar no WhatsApp sobre este Pedido</span>
-                  </a>
-
-                  ${isPendingApproval ? `
-                    <button type="button" class="btn-approve-changes" data-order-id="${order.id}">
-                      <span class="btn-icon">✓</span>
-                      <span>Aprovar Alterações do Pedido</span>
-                    </button>
-                  ` : ''}
-                </div>
-              </div>
-            </div>
-          `;
-
-          // Event Listener para alternar Accordion ao clicar no resumo
-          var summaryRow = card.querySelector('.order-summary-row');
-          summaryRow.addEventListener('click', function (e) {
-            // Se clicou em um link ou botão dentro do cabeçalho, não alterna
-            if (e.target.closest('button, a')) return;
-            toggleAccordion(order.id);
-          });
-
-          // Acessibilidade por teclado (Enter ou Espaço)
-          summaryRow.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              toggleAccordion(order.id);
-            }
-          });
-
-          // Event Listener para o botão de aprovar alterações
-          var approveBtns = card.querySelectorAll('.btn-approve-changes');
-          approveBtns.forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-              e.stopPropagation();
-              handleApproveChanges(order.id, btn);
-            });
-          });
-
-          ordersContainer.appendChild(card);
+          modalDiscsList.appendChild(rowDiv);
         });
-      }
 
-      function toggleAccordion(orderId) {
-        if (expandedOrderIds[orderId]) {
-          delete expandedOrderIds[orderId];
+        // Observações do Pedido
+        if (order.notes && order.notes.trim()) {
+          modalNotesText.textContent = order.notes;
+          modalNotesBox.hidden = false;
+          modalNotesBox.style.display = 'block';
         } else {
-          expandedOrderIds[orderId] = true;
+          modalNotesBox.hidden = true;
+          modalNotesBox.style.display = 'none';
         }
-        renderOrders(ordersData);
+
+        // WhatsApp Link no Modal
+        var whatsappMsg = 'Olá, equipe RSTK! Gostaria de falar sobre o pedido #' + order.orderNumber + ' da minha loja (' + (clientData.nomeFantasia || clientData.razaoSocial) + ').';
+        modalWhatsappBtn.href = 'https://wa.me/553488293565?text=' + encodeURIComponent(whatsappMsg);
+
+        // Exibe o modal
+        modalEl.hidden = false;
+        modalEl.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
       }
 
-      async function handleApproveChanges(orderId, btnEl) {
-        if (!confirm('Deseja aprovar e confirmar as alterações deste pedido? A equipe RSTK será notificada imediatamente para despachar seus discos.')) {
+      function closeModal() {
+        modalEl.hidden = true;
+        modalEl.style.display = 'none';
+        document.body.style.overflow = '';
+        selectedOrder = null;
+      }
+
+      modalCloseBtn.addEventListener('click', closeModal);
+      modalSecondaryClose.addEventListener('click', closeModal);
+
+      modalEl.addEventListener('click', function (e) {
+        if (e.target === modalEl) {
+          closeModal();
+        }
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modalEl.hidden) {
+          closeModal();
+        }
+      });
+
+      // Ação de confirmar/aprovar alterações do pedido no modal
+      modalApproveBtn.addEventListener('click', async function () {
+        if (!selectedOrder) return;
+        if (!confirm('Deseja confirmar e aprovar as alterações deste pedido? A equipe RSTK será notificada imediatamente para despachar seus discos.')) {
           return;
         }
 
-        if (btnEl) {
-          btnEl.disabled = true;
-          btnEl.innerHTML = '<span class="spinner-small"></span> Aprovando...';
-        }
+        modalApproveBtn.disabled = true;
+        modalApproveBtn.innerHTML = '<span class="spinner-small"></span> Confirmando...';
 
         try {
           var res = await fetch('/api/client/approve-changes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId: orderId })
+            body: JSON.stringify({ orderId: selectedOrder.id })
           });
           var data = await res.json();
 
           if (res.ok && data.success) {
             alert(data.message || 'Alterações aprovadas com sucesso! A RSTK foi notificada para providenciar o despacho.');
-            // Mantém este pedido expandido
-            expandedOrderIds[orderId] = true;
-            loadOrders();
+            await loadOrders();
           } else {
             alert(data.error || 'Erro ao aprovar alterações.');
-            if (btnEl) {
-              btnEl.disabled = false;
-              btnEl.innerHTML = '<span class="btn-icon">✓</span><span>Aprovar Alterações do Pedido</span>';
-            }
+            modalApproveBtn.disabled = false;
+            modalApproveBtn.innerHTML = '<span>✓ Confirmar Alterações</span>';
           }
         } catch (err) {
           alert('Erro de conexão ao aprovar alterações. Tente novamente.');
-          if (btnEl) {
-            btnEl.disabled = false;
-            btnEl.innerHTML = '<span class="btn-icon">✓</span><span>Aprovar Alterações do Pedido</span>';
-          }
+          modalApproveBtn.disabled = false;
+          modalApproveBtn.innerHTML = '<span>✓ Confirmar Alterações</span>';
         }
-      }
+      });
 
       function checkPendingCart() {
         var banner = document.getElementById('pending-cart-banner');
@@ -876,8 +939,8 @@ const siteSettings = {
     .alert-box[hidden],
     .orders-loading[hidden],
     .orders-empty[hidden],
-    .orders-list[hidden],
-    .order-details-drawer[hidden] {
+    .orders-table-card[hidden],
+    .modal-backdrop[hidden] {
       display: none !important;
     }
 
@@ -1161,118 +1224,101 @@ const siteSettings = {
     }
 
     /* ========================================================
-       ACCORDION ORDERS LIST
+       TABELA DE PEDIDOS PROFISSIONAL (1 LINHA POR PEDIDO)
        ======================================================== */
-    .orders-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .order-accordion-card {
+    .orders-table-card {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
     }
 
-    .order-accordion-card:hover {
-      border-color: #93c5fd;
-      box-shadow: 0 4px 14px rgba(8, 102, 200, 0.06);
+    .orders-table-scroll {
+      width: 100%;
+      overflow-x: auto;
     }
 
-    .order-accordion-card.is-expanded {
-      border-color: #0866c8;
-      box-shadow: 0 6px 18px rgba(8, 102, 200, 0.09);
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13.5px;
     }
 
-    /* Linha Resumo do Pedido */
-    .order-summary-row {
-      display: grid;
-      grid-template-columns: 2fr 1.2fr 1.4fr 1.8fr 1.2fr;
-      align-items: center;
-      padding: 16px 22px;
-      background: var(--panel);
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.15s ease;
-      gap: 12px;
-    }
-
-    .order-summary-row:hover {
-      background: var(--panel2);
-    }
-
-    .order-accordion-card.is-expanded .order-summary-row {
+    .orders-table thead tr {
       background: var(--panel2);
       border-bottom: 1px solid var(--line);
     }
 
-    .summary-col {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    /* Coluna 1: ID & Data */
-    .col-order-id {
-      gap: 2px;
-    }
-
-    .order-hash-id {
-      display: flex;
-      align-items: baseline;
-      gap: 2px;
-    }
-
-    .hash-symbol {
-      color: #0866c8;
-      font-weight: 800;
-      font-size: 13px;
-    }
-
-    .hash-number {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 14.5px;
-      font-weight: 800;
-      color: var(--ink);
-    }
-
-    .order-created-date {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    /* Colunas Centrais: Qtd e Total */
-    .col-caption {
+    .orders-table th {
+      padding: 14px 18px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       color: var(--muted);
-      margin-bottom: 2px;
+      white-space: nowrap;
     }
 
-    .col-value-qty {
-      font-size: 13.5px;
+    .orders-table tbody tr.order-row {
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .orders-table tbody tr.order-row:last-child {
+      border-bottom: none;
+    }
+
+    .orders-table tbody tr.order-row:hover {
+      background: rgba(8, 102, 200, 0.04);
+    }
+
+    .orders-table td {
+      padding: 16px 18px;
+      vertical-align: middle;
       color: var(--ink);
     }
 
-    .col-value-qty strong {
-      font-size: 14.5px;
+    /* Células da Tabela */
+    .td-code .order-code-badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13.5px;
       font-weight: 800;
       color: #0866c8;
+      background: rgba(8, 102, 200, 0.08);
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      white-space: nowrap;
     }
 
-    .col-value-total {
-      font-size: 15.5px;
-      font-weight: 850;
+    .td-date .order-date-text {
+      font-size: 12.5px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .td-qty .qty-pill {
+      font-size: 12.5px;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .td-qty .qty-pill strong {
       color: #0866c8;
+      font-weight: 800;
     }
 
-    /* Coluna Status */
+    .td-total .total-val {
+      font-size: 14.5px;
+      font-weight: 850;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    /* Badges de Status */
     .badge-status-pill {
       display: inline-flex;
       align-items: center;
@@ -1292,7 +1338,6 @@ const siteSettings = {
       background: currentColor;
     }
 
-    /* Cores de Status */
     .badge-status-enviado {
       background: #EFF6FF;
       color: #1D4ED8;
@@ -1335,282 +1380,303 @@ const siteSettings = {
       border: 1px solid #FECACA;
     }
 
-    /* Coluna Toggle */
-    .col-order-toggle {
-      align-items: flex-end;
-      flex-direction: row;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    .toggle-link-text {
+    /* Botão Ver Detalhes */
+    .btn-open-order {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0866c8;
+      color: #ffffff !important;
+      border: none;
       font-size: 12px;
-      font-weight: 700;
-      color: #0866c8;
+      font-weight: 750;
+      padding: 7px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
     }
 
-    .toggle-chevron {
-      font-size: 10px;
-      color: #0866c8;
-      transition: transform 0.2s ease;
-      display: inline-block;
+    .btn-open-order:hover {
+      background: #0652a1 !important;
+      transform: translateY(-1px);
     }
 
-    .toggle-chevron.rotated {
-      transform: rotate(180deg);
+    .arrow-icon {
+      font-size: 13px;
+    }
+
+    .text-right {
+      text-align: right;
     }
 
     /* ========================================================
-       GAVETA DE DETALHES DO PEDIDO (DRAWER)
+       MODAL / POP-UP DE DETALHES DO PEDIDO
        ======================================================== */
-    .order-details-drawer {
-      padding: 22px 24px;
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      animation: fadeInModal 0.2s ease;
+    }
+
+    @keyframes fadeInModal {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-container {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      animation: scaleInModal 0.2s ease;
+      overflow: hidden;
+    }
+
+    @keyframes scaleInModal {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* Modal Header */
+    .modal-header {
+      background: var(--panel2);
+      border-bottom: 1px solid var(--line);
+      padding: 18px 24px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .modal-eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #0866c8;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .modal-title {
+      font-size: 19px;
+      font-weight: 850;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--ink);
+      margin: 0;
+    }
+
+    .modal-date {
+      font-size: 12px;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .modal-close:hover {
+      background: rgba(247, 86, 86, 0.1);
+      border-color: #F75656;
+      color: #F75656;
+    }
+
+    /* Modal Body (Scrollable) */
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
       background: var(--bg);
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      animation: fadeInDrawer 0.2s ease;
     }
 
-    @keyframes fadeInDrawer {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Caixas de Alerta e Notificação */
-    .order-notice-box {
+    /* Notice Card dentro do Modal */
+    .modal-notice-card {
       border-radius: 12px;
-      padding: 16px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+      padding: 14px 18px;
+      font-size: 13px;
     }
 
     .notice-top {
       display: flex;
-      gap: 14px;
+      gap: 12px;
       align-items: flex-start;
     }
 
-    .notice-icon-circle {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
+    .notice-icon {
+      font-size: 18px;
       flex-shrink: 0;
-      font-weight: 800;
+      line-height: 1.2;
     }
 
-    .notice-text strong {
+    .notice-desc strong {
       display: block;
-      font-size: 14.5px;
-      margin-bottom: 4px;
+      font-size: 13.5px;
+      margin-bottom: 3px;
     }
 
-    .notice-text p {
+    .notice-desc p {
       margin: 0;
-      font-size: 13px;
+      font-size: 12.5px;
       line-height: 1.5;
     }
 
-    .admin-notice-quote {
-      margin-top: 8px !important;
-      padding: 8px 12px;
-      border-radius: 6px;
+    .admin-quote {
+      margin-top: 6px !important;
+      padding: 6px 10px;
       background: rgba(0, 0, 0, 0.05);
+      border-radius: 6px;
       font-style: italic;
     }
 
-    /* Notice Warning (Alterações Pendentes) */
     .notice-warning {
       background: #FFFBEB;
       border: 1px solid #FCD34D;
       color: #78350F;
     }
 
-    .notice-warning .notice-icon-circle {
-      background: #FEF3C7;
-      color: #D97706;
-      border: 1px solid #FBBF24;
-    }
-
-    .notice-bottom-action {
-      display: flex;
-      justify-content: flex-end;
-      padding-top: 6px;
-    }
-
-    .btn-approve-changes {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #0866c8 !important;
-      color: #ffffff !important;
-      border: none;
-      font-size: 13.5px;
-      font-weight: 800;
-      padding: 11px 22px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 3px 8px rgba(8, 102, 200, 0.3);
-    }
-
-    .btn-approve-changes:hover {
-      background: #0652a1 !important;
-      color: #ffffff !important;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(8, 102, 200, 0.4);
-    }
-
-    .btn-approve-changes:disabled {
-      opacity: 0.75;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .btn-icon {
-      font-size: 15px;
-      font-weight: 900;
-    }
-
-    /* Notice Success (Aprovado / Aceito) */
     .notice-success {
       background: #ECFDF5;
       border: 1px solid #A7F3D0;
       color: #065F46;
     }
 
-    .notice-success .notice-icon-circle {
-      background: #D1FAE5;
-      color: #059669;
-      border: 1px solid #6EE7B7;
-    }
-
-    /* Notice Dispatched */
     .notice-dispatched {
       background: #F5F3FF;
       border: 1px solid #DDD6FE;
       color: #4C1D95;
     }
 
-    .notice-dispatched .notice-icon-circle {
-      background: #EDE9FE;
-      color: #7C3AED;
-      border: 1px solid #C4B5FD;
-    }
-
-    /* Notice Info */
     .notice-info {
       background: #EFF6FF;
       border: 1px solid #BFDBFE;
       color: #1E3A8A;
     }
 
-    .notice-info .notice-icon-circle {
-      background: #DBEAFE;
-      color: #2563EB;
-      border: 1px solid #93C5FD;
-    }
-
-    /* Seção de Discos */
-    .discs-section {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .discs-section-header {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .discs-section-header h3 {
-      font-size: 15px;
-      font-weight: 800;
-      color: var(--ink);
-      margin: 0;
-    }
-
-    .discs-hint {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .discs-list {
+    /* Seção de Discos no Modal */
+    .modal-discs-section {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    /* Linhas de Itens */
-    .order-disc-row {
+    .modal-discs-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 12px 16px;
-      border-radius: 10px;
-      transition: all 0.15s ease;
     }
 
-    /* Item Normal */
-    .item-row-normal {
+    .modal-discs-header h4 {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ink);
+      margin: 0;
+    }
+
+    .modal-count-badge {
+      font-size: 11.5px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .modal-discs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Linha do Disco (Capa bem pequena, dados limpos) */
+    .modal-disc-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      transition: background 0.15s ease;
+    }
+
+    .disc-row-normal {
       background: var(--panel);
       border: 1px solid var(--line);
     }
 
-    /* Item Cancelado / Esgotado (VERMELHO) */
-    .item-row-cancelled {
+    /* Item Cancelado em Vermelho */
+    .disc-row-cancelled {
       background: #FEF2F2 !important;
       border: 1.5px solid #F87171 !important;
     }
 
-    /* Item Modificado / Quantidade reduzida (AMARELO) */
-    .item-row-modified {
+    /* Item Modificado em Amarelo */
+    .disc-row-modified {
       background: #FFFBEB !important;
       border: 1.5px solid #FBBF24 !important;
     }
 
-    .disc-left {
+    .disc-row-left {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       flex: 1;
       min-width: 0;
     }
 
-    .disc-cover {
-      width: 48px;
-      height: 48px;
-      border-radius: 8px;
+    /* Capa bem pequena como solicitado */
+    .disc-thumb {
+      width: 42px;
+      height: 42px;
+      border-radius: 6px;
       object-fit: cover;
       flex-shrink: 0;
       border: 1px solid var(--line);
       background: var(--panel2);
     }
 
-    .disc-meta {
+    .disc-info {
       flex: 1;
       min-width: 0;
     }
 
-    .disc-title-row {
+    .disc-title-line {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 2px;
     }
 
     .disc-title {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 800;
       color: var(--ink);
       white-space: nowrap;
@@ -1619,50 +1685,49 @@ const siteSettings = {
       max-width: 100%;
     }
 
-    .disc-title.strike-title {
-      text-decoration: line-through;
+    .title-cancelled s {
+      font-size: 13.5px;
       color: #991B1B;
-      opacity: 0.75;
+      opacity: 0.8;
     }
 
     .disc-sub {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--muted);
       display: block;
     }
 
-    /* Badges de Destaque por Item */
-    .item-tag {
-      font-size: 11px;
-      font-weight: 750;
-      padding: 2px 8px;
-      border-radius: 6px;
-      display: inline-block;
-      white-space: nowrap;
-    }
-
     .tag-cancelled {
+      font-size: 10.5px;
+      font-weight: 800;
       background: #FEE2E2;
       color: #991B1B;
       border: 1px solid #FCA5A5;
+      padding: 1px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
     }
 
     .tag-modified {
+      font-size: 10.5px;
+      font-weight: 800;
       background: #FEF3C7;
       color: #92400E;
       border: 1px solid #FCD34D;
+      padding: 1px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
     }
 
-    /* Right Col dos Discos (Qtd & Preço) */
-    .disc-right {
+    .disc-row-right {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 18px;
       flex-shrink: 0;
       text-align: right;
     }
 
-    .item-qty-box {
+    .disc-qty-col {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
@@ -1671,9 +1736,9 @@ const siteSettings = {
     .qty-badge-normal {
       background: var(--panel2);
       border: 1px solid var(--line);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 11.5px;
       font-weight: 800;
       color: var(--ink);
     }
@@ -1681,76 +1746,76 @@ const siteSettings = {
     .qty-badge-modified {
       background: #FEF3C7;
       border: 1px solid #F59E0B;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12.5px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 11.5px;
       font-weight: 850;
       color: #92400E;
     }
 
     .qty-sub-modified {
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 700;
       color: #B45309;
-      margin-top: 2px;
+      margin-top: 1px;
     }
 
     .qty-badge-cancelled {
       background: #FEE2E2;
       border: 1px solid #EF4444;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12.5px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 11.5px;
       font-weight: 850;
       color: #991B1B;
     }
 
     .qty-sub-cancelled {
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 700;
       color: #DC2626;
-      margin-top: 2px;
+      margin-top: 1px;
       text-decoration: line-through;
     }
 
-    .item-price-box {
+    .disc-price-col {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      min-width: 90px;
+      min-width: 80px;
     }
 
-    .item-unit-price {
-      font-size: 11px;
+    .disc-unit-price {
+      font-size: 10.5px;
       color: var(--muted);
     }
 
-    .price-val-normal {
-      font-size: 14px;
+    .price-normal {
+      font-size: 13.5px;
       font-weight: 850;
       color: #0866c8;
     }
 
-    .price-val-modified {
-      font-size: 14px;
+    .price-modified {
+      font-size: 13.5px;
       font-weight: 850;
       color: #B45309;
     }
 
-    .price-val-cancelled {
-      font-size: 14px;
+    .price-cancelled {
+      font-size: 13.5px;
       font-weight: 850;
       color: #991B1B;
     }
 
     .old-price-strike {
-      font-size: 11px;
+      font-size: 10.5px;
       color: #991B1B;
       opacity: 0.7;
     }
 
     /* Observações */
-    .order-notes-bar {
+    .modal-notes-box {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -1758,73 +1823,114 @@ const siteSettings = {
       font-size: 12.5px;
     }
 
-    .notes-label {
+    .modal-notes-label {
       font-weight: 750;
       color: var(--muted);
       display: block;
       margin-bottom: 2px;
     }
 
-    .notes-content {
+    .modal-notes-text {
       margin: 0;
       color: var(--ink);
     }
 
-    /* Rodapé da Gaveta */
-    .order-drawer-footer {
+    /* Modal Footer */
+    .modal-footer {
+      background: var(--panel);
       border-top: 1px solid var(--line);
-      padding-top: 16px;
+      padding: 16px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 16px;
+      gap: 14px;
+      flex-shrink: 0;
     }
 
-    .footer-total-line {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-    }
-
-    .footer-total-line .label {
-      font-size: 13px;
-      font-weight: 700;
+    .modal-footer-caption {
+      font-size: 12px;
       color: var(--muted);
+      display: block;
     }
 
-    .footer-total-line .value {
-      font-size: 20px;
+    .modal-footer-total {
+      font-size: 19px;
       font-weight: 900;
       color: #0866c8;
     }
 
-    .footer-actions {
+    .modal-footer-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
-    .btn-whatsapp-order {
+    .btn-modal-whatsapp {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       background: #25D366 !important;
       color: #ffffff !important;
       font-size: 13px;
       font-weight: 750;
-      padding: 10px 18px;
-      border-radius: 8px;
+      padding: 9px 16px;
+      border-radius: 7px;
       text-decoration: none;
       transition: all 0.2s ease;
       box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);
     }
 
-    .btn-whatsapp-order:hover {
+    .btn-modal-whatsapp:hover {
       background: #1ebe5d !important;
       color: #ffffff !important;
       transform: translateY(-1px);
+    }
+
+    .btn-modal-approve {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0866c8 !important;
+      color: #ffffff !important;
+      border: none;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 9px 18px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(8, 102, 200, 0.3);
+    }
+
+    .btn-modal-approve:hover {
+      background: #0652a1 !important;
+      color: #ffffff !important;
+      transform: translateY(-1px);
+    }
+
+    .btn-modal-approve:disabled {
+      opacity: 0.75;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-modal-close {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-modal-close:hover {
+      background: var(--panel2);
+      color: var(--ink);
     }
 
     .w-4 {
@@ -1835,25 +1941,7 @@ const siteSettings = {
     /* ========================================================
        RESPONSIVIDADE (MOBILE BREAKPOINTS)
        ======================================================== */
-    @media (max-width: 860px) {
-      .order-summary-row {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        padding: 14px 16px;
-      }
-      .col-order-id {
-        grid-column: span 2;
-      }
-      .col-order-toggle {
-        grid-column: span 2;
-        justify-content: space-between;
-        border-top: 1px dashed var(--line);
-        padding-top: 8px;
-        margin-top: 4px;
-      }
-    }
-
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       .portal-header {
         flex-direction: column;
         align-items: flex-start;
@@ -1863,37 +1951,35 @@ const siteSettings = {
         width: 100%;
         justify-content: space-between;
       }
-      .order-summary-row {
-        grid-template-columns: 1fr;
+      .modal-container {
+        max-height: 95vh;
       }
-      .col-order-id,
-      .col-order-qty,
-      .col-order-total,
-      .col-order-status,
-      .col-order-toggle {
-        grid-column: span 1;
+      .modal-header,
+      .modal-body,
+      .modal-footer {
+        padding: 16px 18px;
       }
-      .order-disc-row {
+      .modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .modal-footer-actions {
+        width: 100%;
+        flex-direction: column;
+      }
+      .modal-footer-actions > * {
+        width: 100%;
+        justify-content: center;
+      }
+      .modal-disc-row {
         flex-direction: column;
         align-items: flex-start;
       }
-      .disc-right {
+      .disc-row-right {
         width: 100%;
         justify-content: space-between;
         border-top: 1px dashed var(--line);
         padding-top: 8px;
-      }
-      .order-drawer-footer {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .footer-actions {
-        flex-direction: column;
-        width: 100%;
-      }
-      .footer-actions > * {
-        width: 100%;
-        justify-content: center;
       }
     }
   </style>
