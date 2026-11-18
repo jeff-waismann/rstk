@@ -40,7 +40,7 @@ const defaultWhatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${enco
 <dialog id="selection" class="selection-dialog" aria-labelledby="selection-title">
   <button class="close" id="close-selection" type="button" aria-label="Fechar seleção">×</button>
   <h2 id="selection-title">Seu Pedido</h2>
-  <p class="copy-note">Revise os títulos e quantidades para consultar e encomendar via WhatsApp.</p>
+  <p class="copy-note">Revise os títulos e quantidades para encomendar via WhatsApp ou copiar a lista.</p>
   <ul class="selected-list" id="selected-list"></ul>
   <div id="cart-delivery-container" class="cart-delivery-box" hidden>
     <div class="cart-delivery-top">
@@ -69,10 +69,24 @@ const defaultWhatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${enco
       Finalizar no WhatsApp ↗
     </a>
     <button
+      class="btn-copy-list"
+      id="btn-copy-list"
+      type="button"
+    >
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      <span>Copiar Lista</span>
+    </button>
+    {/* Botão Enviar Pedido oculto temporariamente (preservado para reativação futura) */}
+    <button
       class="btn-send-order"
       id="btn-submit-order"
       type="button"
-      style="background: #0866c8 !important; color: #ffffff !important; border: 1px solid #0866c8 !important;"
+      hidden
+      aria-hidden="true"
+      style="display: none !important;"
     >
       Enviar Pedido
     </button>

@@ -683,6 +683,8 @@
   }
 
   // --- Client Auth & Delivery Addresses Helpers ---
+  // Flag para reativação futura do Portal B2B (Login / Minha Conta / Enviar Pedido direto)
+  const CLIENT_PORTAL_ENABLED = false;
   let currentClient = null;
   let isSubmittingOrder = false;
 
@@ -896,6 +898,7 @@
 
   // --- Client Auth Status Hydration & Direct Order Submission ---
   async function initClientAuthState() {
+    if (!CLIENT_PORTAL_ENABLED) return;
     try {
       const res = await fetch('/api/client/me', { cache: 'no-store' });
       if (!res.ok) return;
@@ -1029,6 +1032,86 @@
 
   window.dispatchDirectOrder = dispatchDirectOrder;
 
+  let copyResetTimer = null;
+
+  function buildCopyOrderListText() {
+    const items = catalog.filter((p) => selected.has(Number(p.id)));
+    if (!items.length) return '';
+
+    let totalCents = 0;
+    let totalQty = 0;
+    const lines = items.map((p) => {
+      const qty = selected.get(Number(p.id)) || 1;
+      const unitLabel = formatAlbumUnits(p.units);
+      const unitPrice = p.priceCents ?? settings.priceCents ?? 18999;
+      const subtotal = unitPrice * qty;
+      totalCents += subtotal;
+      totalQty += qty;
+      return `• ${qty}x ${p.artist} — ${p.title} (${unitLabel}) — ${formatPriceBRL(unitPrice)} un. (${formatPriceBRL(subtotal)})`;
+    });
+
+    return [
+      'Pedido de Vinis — RSTK Atacado',
+      '',
+      ...lines,
+      '',
+      `Total: ${totalQty} ${totalQty === 1 ? 'vinil' : 'vinis'} — ${formatPriceBRL(totalCents)}`
+    ].join('\n');
+  }
+
+  async function copyOrderList() {
+    if (selected.size === 0) {
+      toast('Seu pedido está vazio. Adicione vinis antes de copiar a lista.');
+      return;
+    }
+
+    const text = buildCopyOrderListText();
+    const fallbackEl = $('copy-fallback');
+    let copied = false;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      } catch {
+        copied = false;
+      }
+    }
+
+    if (!copied && fallbackEl) {
+      fallbackEl.value = text;
+      fallbackEl.hidden = false;
+      fallbackEl.focus();
+      fallbackEl.select();
+      try {
+        fallbackEl.setSelectionRange(0, text.length);
+        copied = document.execCommand('copy');
+      } catch {
+        copied = false;
+      }
+      if (copied) {
+        fallbackEl.hidden = true;
+      }
+    }
+
+    const copyBtn = $('btn-copy-list');
+    if (copied) {
+      if (copyBtn) {
+        const labelSpan = copyBtn.querySelector('span');
+        copyBtn.classList.add('copied');
+        if (labelSpan) labelSpan.textContent = '✓ Lista Copiada!';
+        clearTimeout(copyResetTimer);
+        copyResetTimer = setTimeout(() => {
+          copyBtn.classList.remove('copied');
+          if (labelSpan) labelSpan.textContent = 'Copiar Lista';
+        }, 2200);
+      }
+      toast('Lista copiada para a área de transferência!');
+    } else {
+      toast('Selecione e copie o texto exibido abaixo.');
+    }
+  }
+
   $('view-selection')?.addEventListener('click', () => {
     renderSelection();
     $('selection')?.showModal();
@@ -1059,6 +1142,13 @@
 
   document.addEventListener('click', (event) => {
     const rawTarget = event.target instanceof Element ? event.target : null;
+    if (rawTarget && (rawTarget.id === 'btn-copy-list' || rawTarget.closest('#btn-copy-list, .btn-copy-list'))) {
+      event.preventDefault();
+      event.stopPropagation();
+      copyOrderList();
+      return;
+    }
+
     if (rawTarget && (rawTarget.id === 'btn-submit-order' || rawTarget.closest('#btn-submit-order, .btn-send-order'))) {
       event.preventDefault();
       event.stopPropagation();

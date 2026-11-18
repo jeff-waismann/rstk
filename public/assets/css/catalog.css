@@ -270,7 +270,9 @@ html[data-theme="dark"] .brand img {
 #btn-customer-login,
 .btn-client-auth-modal,
 #btn-submit-order,
-.btn-send-order {
+.btn-send-order,
+#btn-copy-list,
+.btn-copy-list {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -293,14 +295,18 @@ html[data-theme="dark"] .brand img {
 #btn-customer-login *,
 .btn-client-auth-modal *,
 #btn-submit-order *,
-.btn-send-order * {
+.btn-send-order *,
+#btn-copy-list *,
+.btn-copy-list * {
   color: #ffffff !important;
 }
 
 #btn-customer-login:hover,
 .btn-client-auth-modal:hover,
 #btn-submit-order:hover,
-.btn-send-order:hover {
+.btn-send-order:hover,
+#btn-copy-list:hover,
+.btn-copy-list:hover {
   background: #0652a1 !important;
   border-color: #0652a1 !important;
   color: #ffffff !important;
@@ -311,16 +317,34 @@ html[data-theme="dark"] .brand img {
 #btn-customer-login:hover *,
 .btn-client-auth-modal:hover *,
 #btn-submit-order:hover *,
-.btn-send-order:hover * {
+.btn-send-order:hover *,
+#btn-copy-list:hover *,
+.btn-copy-list:hover * {
   color: #ffffff !important;
 }
 
+#btn-copy-list.copied,
+.btn-copy-list.copied {
+  background: #0f766e !important;
+  border-color: #0f766e !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3);
+}
+
 #btn-submit-order:disabled,
-.btn-send-order:disabled {
+.btn-send-order:disabled,
+#btn-copy-list:disabled,
+.btn-copy-list:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+.header-login-btn[hidden],
+#btn-submit-order[hidden],
+.btn-send-order[hidden],
+.cart-delivery-box[hidden] {
+  display: none !important;
 }
 
 /* --- Hero Section --- */
